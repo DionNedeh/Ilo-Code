@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2026 Sci‑Fi Movies — Cosmic Atlas</title>
+  <style>
+    :root{
+      --bg0:#05060a;
+      --bg1:#070a1a;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.09);
+      --text:#e9ecff;
+      --muted:rgba(233,236,255,.72);
+      --line:rgba(255,255,255,.12);
+      --shadow: 0 20px 70px rgba(0,0,0,.55);
+      --glow: 0 0 25px rgba(122,92,255,.55), 0 0 55px rgba(0,245,255,.25);
+      --a:#7a5cff;
+      --b:#00f5ff;
+      --c:#ff4fd8;
+      --d:#ffe66a;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1100px 650px at 20% 10%, rgba(122,92,255,.35), transparent 60%),
+        radial-gradient(900px 520px at 85% 15%, rgba(0,245,255,.22), transparent 60%),
+        radial-gradient(1000px 700px at 60% 90%, rgba(255,79,216,.18), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* Stars */
+    #stars{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.9), transparent 55%),
+        radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,.7), transparent 55%),
+        radial-gradient(1px 1px at 60% 30%, rgba(255,255,255,.65), transparent 55%),
+        radial-gradient(1px 1px at 80% 70%, rgba(255,255,255,.9), transparent 55%),
+        radial-gradient(1.5px 1.5px at 50% 50%, rgba(0,245,255,.85), transparent 55%),
+        radial-gradient(1px 1px at 15% 65%, rgba(255,79,216,.7), transparent 55%);
+      filter: drop-shadow(0 0 10px rgba(0,245,255,.08));
+      opacity:.65;
+      pointer-events:none;
+      transform: translateZ(0);
+    }
+
+    canvas{
+      position:fixed;
+      inset:0;
+      width:100%; height:100%;
+      pointer-events:none;
+      opacity:.9;
+      filter: saturate(1.1);
+    }
+
+    header{
+      position:relative;
+      padding: 56px 18px 22px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:14px;
+    }
+
+    .logo{
+      width:42px; height:42px;
+      border-radius:14px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 40%),
+        linear-gradient(135deg, rgba(122,92,255,.9), rgba(0,245,255,.65));
+      box-shadow: var(--glow);
+      border:1px solid rgba(255,255,255,.18);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: conic-gradient(from 90deg, rgba(255,79,216,.8), rgba(0,245,255,.65), rgba(122,92,255,.9), rgba(255,79,216,.8));
+      animation: spin 9s linear infinite;
+      opacity:.35;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    h1{
+      margin:0;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height:1.05;
+      letter-spacing:-.02em;
+      text-shadow: 0 0 28px rgba(122,92,255,.25);
+    }
+
+    .subtitle{
+      margin-top:8px;
+      color:var(--muted);
+      max-width:70ch;
+      font-size:14px;
+    }
+
+    .controls{
+      margin-top:22px;
+      display:grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 860px){
+      .controls{grid-template-columns: 1fr;}
+    }
+
+    .control{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 35px rgba(0,0,0,.25);
+      border-radius:16px;
+      padding:12px 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .label{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-size:12px;
+      color:rgba(233,236,255,.75);
+      margin-bottom:8px;
+      letter-spacing:.02em;
+    }
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(233,236,255,.86);
+    }
+
+    input[type="text"], select{
+      width:100%;
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      font-size:14px;
+      transition: border-color .2s ease, transform .05s ease;
+    }
+    input[type="text"]:focus, select:focus{
+      border-color: rgba(0,245,255,.45);
+      box-shadow: 0 0 0 4px rgba(0,245,255,.12);
+    }
+
+    .main{
+      position:relative;
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 16px 18px 60px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr;}
+    }
+
+    .stage{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:22px;
+      padding:14px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .stageHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 6px 6px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      margin-bottom:12px;
+    }
+    .stageTitle{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .stageTitle b{font-size:14px}
+    .stageTitle span{color:var(--muted); font-size:12px}
+
+    .statsRow{
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .stat{
+      min-width:126px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      padding:10px 10px;
+    }
+    .stat .k{font-size:12px; color:rgba(233,236,255,.74)}
+    .stat .v{font-size:16px; margin-top:4px}
+
+    .cardGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:12px;
+    }
+    @media (max-width: 640px){
+      .cardGrid{grid-template-columns: 1fr;}
+    }
+
+    .movie{
+      position:relative;
+      border-radius:18px;
+      padding:12px;
+      background:
+        radial-gradient(400px 160px at 20% 10%, rgba(122,92,255,.22), transparent 55%),
+        radial-gradient(300px 140px at 85% 0%, rgba(0,245,255,.16), transparent 60%),
+        rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+      min-height:116px;
+      overflow:hidden;
+    }
+    .movie:hover{
+      transform: translateY(-3px);
+      border-color: rgba(0,245,255,.35);
+      background:
+        radial-gradient(450px 180px at 20% 10%, rgba(122,92,255,.28), transparent 55%),
+        radial-gradient(320px 150px at 85% 0%, rgba(0,245,255,.2), transparent 60%),
+        rgba(255,255,255,.06);
+    }
+    .movie.selected{
+      border-color: rgba(255,79,216,.45);
+      box-shadow: 0 0 0 4px rgba(255,79,216,.12);
+      background:
+        radial-gradient(460px 180px at 20% 10%, rgba(255,79,216,.22), transparent 55%),
+        radial-gradient(320px 150px at 85% 0%, rgba(0,245,255,.22), transparent 60%),
+        rgba(255,255,255,.06);
+    }
+
+    .movieTop{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .badge{
+      width:40px; height:40px;
+      border-radius:14px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 42%),
+        linear-gradient(135deg, rgba(122,92,255,.8), rgba(0,245,255,.55));
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 0 18px rgba(122,92,255,.25);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800;
+      letter-spacing:-.03em;
+      flex:0 0 auto;
+    }
+
+    .movie h3{
+      margin:0;
+      font-size:15px;
+      line-height:1.2;
+      letter-spacing:-.01em;
+    }
+
+    .meta{
+      margin-top:6px;
+      color:rgba(233,236,255,.72);
+      font-size:12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+    }
+
+    .movieDesc{
+      margin-top:10px;
+      color:rgba(233,236,255,.76);
+      font-size:12px;
+      line-height:1.35;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+    }
+
+    .side{
+      position:sticky;
+      top: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:22px;
+      padding:14px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .hero{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(700px 260px at 30% 10%, rgba(122,92,255,.32), transparent 55%),
+        radial-gradient(500px 220px at 90% 25%, rgba(0,245,255,.22), transparent 60%),
+        radial-gradient(400px 220px at 45% 100%, rgba(255,79,216,.18), transparent 60%),
+        rgba(255,255,255,.04);
+      padding:14px;
+      position:relative;
+      overflow:hidden;
+      min-height:170px;
+    }
+
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: conic-gradient(from 180deg, rgba(122,92,255,.0), rgba(122,92,255,.35), rgba(0,245,255,.25), rgba(255,79,216,.22), rgba(122,92,255,.0));
+      filter: blur(10px);
+      opacity:.8;
+      animation: shimmer 7.5s ease-in-out infinite;
+    }
+    @keyframes shimmer{
+      0%,100%{transform: translateX(-8px) translateY(6px) rotate(-4deg)}
+      50%{transform: translateX(10px) translateY(-6px) rotate(6deg)}
+    }
+
+    .heroInner{position:relative; z-index:1;}
+
+    .heroTitle{display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
+    .heroTitle h2{margin:0; font-size:18px; line-height:1.2; letter-spacing:-.02em}
+    .heroTitle .year{color:rgba(233,236,255,.78); font-size:12px; margin-top:2px}
+
+    .bigMeta{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap}
+
+    .heroP{
+      margin-top:10px;
+      color:rgba(233,236,255,.78);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .ctaRow{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
+    .btn{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:13px;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-2px); border-color: rgba(0,245,255,.45)}
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(122,92,255,.35), rgba(0,245,255,.18));
+      box-shadow: 0 0 28px rgba(122,92,255,.18);
+    }
+
+    .divider{height:1px; background: rgba(255,255,255,.1); margin:14px 0;}
+
+    .timeline{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .tlabel{display:flex; justify-content:space-between; color:rgba(233,236,255,.75); font-size:12px}
+    .barWrap{
+      height:12px;
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+    .bar{
+      height:100%;
+      width:50%;
+      background: linear-gradient(90deg, rgba(122,92,255,.85), rgba(0,245,255,.65), rgba(255,79,216,.55));
+      box-shadow: var(--glow);
+    }
+
+    .source{
+      margin-top:14px;
+      font-size:12px;
+      color:rgba(233,236,255,.62);
+      line-height:1.35;
+    }
+    .source a{color:rgba(0,245,255,.9)}
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:11px;
+      padding:4px 7px;
+      border-radius:10px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
+      color:rgba(233,236,255,.8);
+    }
+
+    .footerNote{
+      margin-top:16px;
+      color:rgba(233,236,255,.55);
+      font-size:12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+  <canvas id="orbits" aria-hidden="true"></canvas>
+
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Cosmic Atlas: 2026 Sci‑Fi</h1>
+          <div class="subtitle">Explore a hand-picked set of 2026 sci‑fi releases. Use search, filter, and keyboard shortcuts to chart your favorites.</div>
+        </div>
+      </div>
+      <div class="pill">Tip: <span class="kbd">↑</span>/<span class="kbd">↓</span> to move · <span class="kbd">Enter</span> to select</div>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <div class="label"><span>Search titles</span><span id="resultCount" class="pill">—</span></div>
+        <input id="search" type="text" placeholder="Try: hail, mandalorian, mercy…" />
+      </div>
+      <div class="control">
+        <div class="label"><span>Sort by</span><span class="pill">Interactive</span></div>
+        <select id="sort">
+          <option value="releaseAsc">Release date (soonest)</option>
+          <option value="releaseDesc">Release date (latest)</option>
+          <option value="titleAsc">Title (A→Z)</option>
+          <option value="titleDesc">Title (Z→A)</option>
+        </select>
+      </div>
+      <div class="control">
+        <div class="label"><span>Filter vibe</span><span class="pill" id="activeFilter">All</span></div>
+        <select id="filter">
+          <option value="All">All</option>
+          <option value="AI">AI / Futures</option>
+          <option value="Space">Space / Alien</option>
+          <option value="Time">Time / Timeline</option>
+          <option value="Franchise">Franchise / Big Worlds</option>
+          <option value="Postapoc">Post‑apocalypse</option>
+          <option value="Animation">Animation</option>
+          <option value="Monster">Monsters</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="grid">
+      <section class="stage" aria-label="Movie list">
+        <div class="stageHeader">
+          <div class="stageTitle">
+            <b id="stageHeading">Your 2026 launchpad</b>
+            <span id="stageSub">Click a card to see its details.</span>
+          </div>
+          <div class="statsRow">
+            <div class="stat"><div class="k">Selected</div><div class="v" id="statSelected">—</div></div>
+            <div class="stat"><div class="k">Shown</div><div class="v" id="statShown">0</div></div>
+          </div>
+        </div>
+
+        <div class="cardGrid" id="cards"></div>
+        <div class="footerNote" id="empty" style="display:none">No matches. Try a different search or filter.</div>
+      </section>
+
+      <aside class="side" aria-label="Selected movie details">
+        <div class="hero">
+          <div class="heroInner" id="heroInner">
+            <div class="heroTitle">
+              <div>
+                <h2 id="heroTitle">Select a movie</h2>
+                <div class="year" id="heroYear">—</div>
+              </div>
+              <div class="pill" id="heroCategory">—</div>
+            </div>
+            <div class="bigMeta" id="heroMeta"></div>
+            <div class="heroP" id="heroDesc">Pick a card to reveal a mini “cinematic readout” and timeline placement.</div>
+            <div class="ctaRow">
+              <div class="btn primary" id="btnFocus" role="button" tabindex="0">Focus on stars</div>
+              <div class="btn" id="btnRandom" role="button" tabindex="0">Random pick</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="timeline">
+          <div class="tlabel"><span>Timeline position (relative)</span><span class="pill" id="heroMonth">—</span></div>
+          <div class="barWrap"><div class="bar" id="timelineBar"></div></div>
+          <div class="source" id="heroSource">
+            Source: <a href="https://screenrant.com/2026-sci-fi-movies-release-dates/" target="_blank" rel="noreferrer">ScreenRant</a> (release date context).
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+<script>
+  const MOVIES = [
+    { title: "We Bury the Dead", release: "2026-01-02", vibe: "Postapoc", category: "Post‑apocalypse", short: "A zombie outbreak follows a military experiment; Daisy Ridley searches for the truth behind the chaos.", badge: "W" },
+    { title: "28 Years Later: The Bone Temple", release: "2026-01-16", vibe: "Postapoc", category: "Post‑apocalypse", short: "A larger focus on new survival realities, cults, and factions after the outbreak.", badge: "2" },
+    { title: "Mercy", release: "2026-01-23", vibe: "AI", category: "AI / Futures", short: "Near-future AI justice puts Chris Pratt’s character on trial—his innocence is the battleground.", badge: "M" },
+    { title: "Good Luck, Have Fun, Don't Die", release: "2026-02-13", vibe: "Time", category: "Time / Timeline", short: "A time traveler recruits allies to stop a rogue AI; action-comedy with sci‑fi stakes.", badge: "G" },
+    { title: "The Bride!", release: "2026-03-06", vibe: "Monster", category: "Monsters", short: "A new take on Mary Shelley—Frankenstein’s monster enters a chilling, cinematic retelling.", badge: "B" },
+    { title: "Hoppers", release: "2026-03-06", vibe: "Animation", category: "Animation", short: "Pixar science-fantasy energy: a teenager transforms into a robotic beaver to protect wildlife.", badge: "H" },
+    { title: "Project Hail Mary", release: "2026-03-20", vibe: "Space", category: "Space / Alien", short: "A man with lost memories embarks on a mission in space to stop Earth’s destruction.", badge: "P" },
+    { title: "Mortal Kombat II", release: "2026-05-08", vibe: "Franchise", category: "Franchise / Big Worlds", short: "Earthrealm braces for another invasion as new and returning characters collide.", badge: "K" },
+    { title: "The Mandalorian and Grogu", release: "2026-05-22", vibe: "Franchise", category: "Franchise / Big Worlds", short: "The Star Wars story expands big‑screen scale with Din Djarin and Grogu for a fresh galactic adventure.", badge: "D" },
+    { title: "Masters of the Universe", release: "2026-06-05", vibe: "Franchise", category: "Franchise / Big Worlds", short: "He‑Man returns with a bold new look—epic mythology and iconic power in a modern reboot.", badge: "U" }
+  ];
+
+  const $ = (id)=>document.getElementById(id);
+  const cardsEl = $("cards");
+
+  const searchEl = $("search");
+  const sortEl = $("sort");
+  const filterEl = $("filter");
+  const emptyEl = $("empty");
+
+  let selectedIndex = 0;
+  let lastFocusAt = null;
+
+  const parseDate = (s)=>{
+    const [y,m,d]=s.split('-').map(Number);
+    return new Date(Date.UTC(y,m-1,d));
+  };
+
+  function getFilteredSorted(){
+    const q = (searchEl.value||"").trim().toLowerCase();
+    const filter = filterEl.value;
+    let list = MOVIES.slice();
+    if(q){
+      list = list.filter(m=> m.title.toLowerCase().includes(q));
+    }
+    if(filter !== "All"){
+      list = list.filter(m=> m.vibe === filter);
+    }
+    const sort = sortEl.value;
+    list.sort((a,b)=>{
+      if(sort === "releaseAsc") return parseDate(a.release) - parseDate(b.release);
+      if(sort === "releaseDesc") return parseDate(b.release) - parseDate(a.release);
+      if(sort === "titleAsc") return a.title.localeCompare(b.title);
+      if(sort === "titleDesc") return b.title.localeCompare(a.title);
+      return 0;
+    });
+    return list;
+  }
+
+  function monthLabel(iso){
+    const dt = parseDate(iso);
+    return dt.toLocaleString(undefined, {month:'long'});
+  }
+
+  function timelinePercent(iso){
+    // relative across 2026
+    const dt = parseDate(iso);
+    const start = parseDate("2026-01-01");
+    const end = parseDate("2026-12-31");
+    const t = (dt - start) / (end - start);
+    return Math.max(0, Math.min(100, t*100));
+  }
+
+  function render(){
+    const list = getFilteredSorted();
+    const shown = list.length;
+    $("statShown").textContent = shown;
+    $("resultCount").textContent = shown + " match" + (shown===1?"":"es");
+    $("activeFilter").textContent = (filterEl.value === "All") ? "All" : filterEl.options[filterEl.selectedIndex].text;
+
+    if(shown===0){
+      emptyEl.style.display = "block";
+      cardsEl.innerHTML = "";
+      return;
+    }
+    emptyEl.style.display = "none";
+
+    // clamp selectedIndex to new list size
+    selectedIndex = Math.min(selectedIndex, shown-1);
+
+    cardsEl.innerHTML = list.map((m,i)=>{
+      const globalIdx = i;
+      const sel = i===selectedIndex ? " selected" : "";
+      return `
+        <div class="movie${sel}" data-idx="${globalIdx}" role="button" tabindex="0" aria-label="${m.title}">
+          <div class="movieTop">
+            <div class="badge" aria-hidden="true">${m.badge}</div>
+            <div>
+              <h3>${m.title}</h3>
+              <div class="meta">
+                <span class="chip">${m.release}</span>
+                <span class="chip">${m.category}</span>
+              </div>
+            </div>
+          </div>
+          <div class="movieDesc">${m.short}</div>
+        </div>
+      `;
+    }).join("");
+
+    [...cardsEl.querySelectorAll('.movie')].forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const idx = Number(el.dataset.idx);
+        selectedIndex = idx;
+        syncHero();
+        render();
+      });
+      el.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          el.click();
+        }
+      });
+    });
+
+    // keep hero in sync after render
+    syncHero();
+  }
+
+  function syncHero(){
+    const list = getFilteredSorted();
+    if(!list.length) return;
+    const m = list[selectedIndex];
+
+    $("heroTitle").textContent = m.title;
+    $("heroYear").textContent = "Release: " + m.release;
+    $("heroCategory").textContent = m.category;
+    $("heroMeta").innerHTML = `
+      <span class="chip">Vibe: ${m.vibe}</span>
+      <span class="chip">Month: ${monthLabel(m.release)}</span>
+    `;
+    $("heroDesc").textContent = m.short;
+
+    const pct = timelinePercent(m.release);
+    $("timelineBar").style.width = pct + "%";
+    $("heroMonth").textContent = monthLabel(m.release);
+
+    $("statSelected").textContent = m.title;
+
+    // update star focus point for subtle motion
+    lastFocusAt = pct;
+    applyOrbitFocus(pct);
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e)=>{
+    const list = getFilteredSorted();
+    if(!list.length) return;
+
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    const typing = (tag === 'input' || tag === 'select' || e.target.isContentEditable);
+    if(typing) return;
+
+    if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      selectedIndex = Math.min(list.length-1, selectedIndex+1);
+      render();
+    }
+    if(e.key === 'ArrowUp'){
+      e.preventDefault();
+      selectedIndex = Math.max(0, selectedIndex-1);
+      render();
+    }
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      syncHero();
+    }
+  });
+
+  $("btnRandom").addEventListener('click', ()=>{
+    const list = getFilteredSorted();
+    if(!list.length) return;
+    selectedIndex = Math.floor(Math.random()*list.length);
+    render();
+  });
+
+  $("btnFocus").addEventListener('click', ()=>{
+    const list = getFilteredSorted();
+    if(!list.length) return;
+    const m = list[selectedIndex];
+    const pct = timelinePercent(m.release);
+    lastFocusAt = pct;
+    applyOrbitFocus(pct, true);
+  });
+
+  function setupOrbitCanvas(){
+    const canvas = document.getElementById('orbits');
+    const ctx = canvas.getContext('2d');
+
+    let w=0,h=0, dpr=1;
+    const particles = [];
+    const N = 160;
+
+    function resize(){
+      dpr = Math.max(1, Math.min(2.2, window.devicePixelRatio || 1));
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = Math.floor(w*dpr);
+      canvas.height = Math.floor(h*dpr);
+      canvas.style.width = w+'px';
+      canvas.style.height = h+'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+
+    function rand(min,max){return Math.random()*(max-min)+min;}
+
+    function init(){
+      particles.length = 0;
+      for(let i=0;i<N;i++){
+        const radius = rand(20, Math.min(w,h)*0.55);
+        const angle = rand(0, Math.PI*2);
+        const speed = rand(0.0006, 0.0022);
+        const size = rand(0.6, 2.3);
+        const hue = rand(185, 295);
+        const alpha = rand(0.12, 0.55);
+        particles.push({radius, angle, speed, size, hue, alpha});
+      }
+    }
+
+    let focusPct = 50;
+    let focusStrong = false;
+    function applyOrbitFocus(pct, strong=false){
+      focusPct = pct;
+      focusStrong = strong;
+    }
+
+    function draw(t){
+      ctx.clearRect(0,0,w,h);
+
+      // center shifts slightly with focus
+      const cx = w*0.5 + (focusPct-50) * (w*0.0022);
+      const cy = h*0.46 + (focusPct-50) * (h*0.0015);
+
+      const time = t*0.001;
+      for(const p of particles){
+        p.angle += p.speed*(focusStrong?1.8:1);
+
+        const wobble = Math.sin(time + p.hue*0.02) * (focusStrong ? 16 : 8);
+        const r = p.radius + wobble;
+        const x = cx + Math.cos(p.angle)*r;
+        const y = cy + Math.sin(p.angle)*r*0.62;
+
+        // glow
+        ctx.beginPath();
+        ctx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${p.alpha})`;
+        ctx.arc(x,y,p.size,0,Math.PI*2);
+        ctx.fill();
+
+        if(focusStrong){
+          // draw occasional streaks
+          if(Math.random()<0.012){
+            ctx.strokeStyle = `hsla(${p.hue}, 100%, 70%, ${p.alpha*0.65})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x,y);
+            ctx.lineTo(x - Math.cos(p.angle)*18, y - Math.sin(p.angle)*12);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // subtle orbit ring
+      const ringR = Math.min(w,h)*0.23;
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate((focusPct-50)*0.01);
+      ctx.globalAlpha = focusStrong ? 0.55 : 0.25;
+      const grad = ctx.createLinearGradient(-ringR,0,ringR,0);
+      grad.addColorStop(0, 'rgba(122,92,255,.0)');
+      grad.addColorStop(0.25, 'rgba(122,92,255,.35)');
+      grad.addColorStop(0.5, 'rgba(0,245,255,.35)');
+      grad.addColorStop(0.75, 'rgba(255,79,216,.25)');
+      grad.addColorStop(1, 'rgba(255,79,216,.0)');
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(0,0,ringR, ringR*0.62, 0, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+
+      focusStrong = false;
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    init();
+    window.addEventListener('resize', ()=>{resize(); init();});
+    requestAnimationFrame(draw);
+
+    // expose focus apply to outer scope
+    window.applyOrbitFocus = applyOrbitFocus;
+  }
+
+  function applyOrbitFocus(pct, strong=false){
+    if(typeof window.applyOrbitFocus === 'function') window.applyOrbitFocus(pct, strong);
+  }
+
+  // Wire inputs
+  searchEl.addEventListener('input', ()=>{selectedIndex=0; render();});
+  sortEl.addEventListener('change', ()=>{selectedIndex=0; render();});
+  filterEl.addEventListener('change', ()=>{selectedIndex=0; render();});
+
+  // buttons work with keyboard too
+  for(const id of ['btnRandom','btnFocus']){
+    const el = $(id);
+    el.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); el.click(); }
+    });
+  }
+
+  // Initialize
+  setupOrbitCanvas();
+  render();
+</script>
+</body>
+</html>
