@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lively Nebula — Animated HTML</title>
+  <style>
+    :root{
+      --bg0:#05060a;
+      --bg1:#070a16;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.72);
+      --line: rgba(255,255,255,.18);
+      --shadow: 0 30px 90px rgba(0,0,0,.55);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 18% 10%, rgba(123,92,255,.28), transparent 55%),
+        radial-gradient(900px 600px at 85% 18%, rgba(0,224,255,.22), transparent 60%),
+        radial-gradient(900px 700px at 50% 92%, rgba(255,64,185,.20), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow:hidden;
+    }
+
+    /* Ambient background layers */
+    .stage{
+      position:relative;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding: clamp(18px, 3.5vw, 42px);
+    }
+
+    .grain{
+      pointer-events:none;
+      position:absolute; inset:-40px;
+      background-image:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="120" height="120"%3E%3Cfilter id="n"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="120" height="120" filter="url(%23n)" opacity="0.35"/%3E%3C/svg%3E');
+      mix-blend-mode: overlay;
+      opacity:.22;
+      transform: translateZ(0);
+      animation: grainMove 10s steps(10) infinite;
+    }
+    @keyframes grainMove{
+      0%{transform:translate3d(0,0,0)}
+      20%{transform:translate3d(-12px, 10px,0)}
+      40%{transform:translate3d(10px,-18px,0)}
+      60%{transform:translate3d(-6px,-6px,0)}
+      80%{transform:translate3d(15px, 8px,0)}
+      100%{transform:translate3d(0,0,0)}
+    }
+
+    .orbs{position:absolute; inset:-80px; pointer-events:none;}
+    .orb{
+      position:absolute;
+      width: clamp(260px, 38vw, 560px);
+      height: clamp(260px, 38vw, 560px);
+      border-radius: 50%;
+      filter: blur(34px);
+      opacity:.65;
+      transform: translate3d(0,0,0);
+      animation: drift 12s ease-in-out infinite;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,.15) 15%, rgba(255,255,255,0) 55%),
+        radial-gradient(circle at 60% 70%, rgba(0,255,240,.55), rgba(0,255,240,0) 60%);
+      mix-blend-mode: screen;
+    }
+    .orb.o1{left:-6%; top:10%; animation-duration: 14s; background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,.15) 15%, rgba(255,255,255,0) 55%),
+        radial-gradient(circle at 65% 75%, rgba(123,92,255,.75), rgba(123,92,255,0) 60%);
+    }
+    .orb.o2{right:-10%; top:0%; animation-duration: 16s; background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,.15) 15%, rgba(255,255,255,0) 55%),
+        radial-gradient(circle at 55% 70%, rgba(0,224,255,.7), rgba(0,224,255,0) 60%);
+    }
+    .orb.o3{left:28%; bottom:-18%; animation-duration: 18s; opacity:.55; background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,.15) 15%, rgba(255,255,255,0) 55%),
+        radial-gradient(circle at 55% 65%, rgba(255,64,185,.7), rgba(255,64,185,0) 60%);
+    }
+
+    @keyframes drift{
+      0%,100%{transform: translate3d(0,0,0) scale(1)}
+      25%{transform: translate3d(16px,-22px,0) scale(1.05)}
+      50%{transform: translate3d(-18px,14px,0) scale(.98)}
+      75%{transform: translate3d(10px,18px,0) scale(1.03)}
+    }
+
+    /* Stars */
+    canvas#stars{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      pointer-events:none;
+      opacity:.85;
+    }
+
+    /* Main content */
+    .shell{
+      position:relative;
+      width:min(1080px, 100%);
+      z-index:2;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: clamp(14px, 3vw, 28px);
+      align-items:stretch;
+    }
+    @media (max-width: 880px){
+      .shell{grid-template-columns: 1fr;}
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      border-radius: 26px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .panel::before{
+      content:"";
+      position:absolute; inset:-1px;
+      background:
+        radial-gradient(600px 240px at var(--mx,50%) var(--my,50%), rgba(0,255,240,.30), transparent 60%),
+        radial-gradient(520px 220px at calc(var(--mx,50%) + 12%) calc(var(--my,50%) + 10%), rgba(255,64,185,.22), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+      opacity:.95;
+      pointer-events:none;
+      transition: opacity .25s ease;
+    }
+
+    .hero{
+      padding: clamp(20px, 3.4vw, 34px);
+      display:flex;
+      flex-direction:column;
+      min-height: 420px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      width: fit-content;
+      position:relative;
+      z-index:1;
+    }
+    .pulseDot{
+      width:10px; height:10px; border-radius:50%;
+      background: conic-gradient(from 180deg, #00e0ff, #7b5cff, #ff40b9, #00e0ff);
+      box-shadow: 0 0 0 0 rgba(0,224,255,.6);
+      animation: dotPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes dotPulse{
+      0%{box-shadow: 0 0 0 0 rgba(0,224,255,.55)}
+      70%{box-shadow: 0 0 0 14px rgba(0,224,255,0)}
+      100%{box-shadow: 0 0 0 0 rgba(0,224,255,0)}
+    }
+    .badge span{color:var(--muted); font-size: 13px; letter-spacing:.2px}
+
+    .title{
+      margin: 18px 0 10px;
+      font-size: clamp(34px, 4.8vw, 58px);
+      line-height:1.02;
+      letter-spacing:-.02em;
+      position:relative;
+      z-index:1;
+    }
+    .title .grad{
+      background: linear-gradient(90deg, #00e0ff, #7b5cff 45%, #ff40b9);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      filter: drop-shadow(0 14px 40px rgba(123,92,255,.25));
+    }
+
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(14px, 1.8vw, 17px);
+      max-width: 52ch;
+      position:relative;
+      z-index:1;
+    }
+
+    .controls{
+      margin-top:auto;
+      display:flex;
+      flex-wrap:wrap;
+      gap: 12px;
+      align-items:center;
+      padding-top: 22px;
+      position:relative;
+      z-index:1;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      color: rgba(255,255,255,.96);
+      font-weight: 650;
+      letter-spacing:.2px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.09);
+      border:1px solid rgba(255,255,255,.16);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-2px); background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.24)}
+    .btn:active{transform: translateY(0px) scale(.99)}
+
+    .btnPrimary{
+      background:
+        radial-gradient(120px 80px at 30% 30%, rgba(255,255,255,.26), rgba(255,255,255,0) 60%),
+        linear-gradient(90deg, rgba(0,224,255,.20), rgba(123,92,255,.24), rgba(255,64,185,.18));
+      border-color: rgba(255,255,255,.22);
+      box-shadow: 0 18px 50px rgba(123,92,255,.18);
+    }
+
+    .icon{
+      width: 18px; height: 18px;
+      display:inline-block;
+      border-radius: 6px;
+      background: conic-gradient(from 200deg, #00e0ff, #7b5cff, #ff40b9, #00e0ff);
+      box-shadow: 0 10px 30px rgba(0,224,255,.12);
+    }
+
+    /* Right panel */
+    .side{
+      padding: clamp(18px, 2.8vw, 26px);
+      min-height: 420px;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+
+    .card{
+      position:relative;
+      z-index:1;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      padding: 14px 14px;
+      overflow:hidden;
+    }
+
+    .card::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(260px 130px at var(--rx,50%) var(--ry,50%), rgba(0,224,255,.18), transparent 55%);
+      opacity:.9;
+      pointer-events:none;
+      transition: opacity .25s ease;
+    }
+
+    .kicker{color: var(--muted); font-size: 12px; letter-spacing:.16em; text-transform: uppercase; margin:0 0 8px; position:relative; z-index:1}
+    .big{
+      margin:0;
+      font-size: 22px;
+      letter-spacing:-.01em;
+      position:relative; z-index:1;
+    }
+    .small{margin:8px 0 0; color: rgba(255,255,255,.74); font-size: 13px; line-height:1.45; position:relative; z-index:1}
+
+    .meter{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top:auto;
+    }
+    .barRow{display:flex; align-items:center; justify-content:space-between; gap:10px; position:relative; z-index:1}
+    .barRow label{font-size: 13px; color: rgba(255,255,255,.76)}
+    .barRow .val{font-size: 13px; color: rgba(255,255,255,.90); font-variant-numeric: tabular-nums;}
+
+    .bar{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      overflow:hidden;
+      position:relative; z-index:1;
+    }
+    .bar i{
+      display:block;
+      height:100%;
+      width: var(--w,60%);
+      background: linear-gradient(90deg, rgba(0,224,255,.85), rgba(123,92,255,.85), rgba(255,64,185,.85));
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(123,92,255,.22);
+      transform-origin:left;
+      animation: fillPop 2.2s ease-in-out infinite;
+    }
+    @keyframes fillPop{
+      0%,100%{transform: scaleX(.98)}
+      50%{transform: scaleX(1.02)}
+    }
+
+    /* Floating kinetic ornaments */
+    .floaters{position:absolute; inset:0; pointer-events:none; z-index:1;}
+    .floater{
+      position:absolute;
+      width: 130px; height: 130px;
+      border-radius: 28px;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      backdrop-filter: blur(6px);
+      box-shadow: 0 30px 90px rgba(0,0,0,.25);
+      animation: floatSpin 9s ease-in-out infinite;
+    }
+    .floater.f1{left: 18px; top: 110px; transform: rotate(10deg); animation-duration: 10s;}
+    .floater.f2{right: 22px; top: 78px; width: 110px; height: 110px; transform: rotate(-8deg); animation-duration: 12.5s; opacity:.95}
+    .floater.f3{left: 56%; bottom: 40px; width: 90px; height: 90px; border-radius: 22px; transform: rotate(18deg); animation-duration: 11s; opacity:.9}
+
+    @keyframes floatSpin{
+      0%,100%{transform: translate3d(0,0,0) rotate(10deg)}
+      35%{transform: translate3d(18px,-14px,0) rotate(18deg)}
+      65%{transform: translate3d(-12px,12px,0) rotate(2deg)}
+    }
+
+    /* SVG marquee */
+    .ticker{
+      margin-top: 16px;
+      position:relative;
+      z-index:1;
+      overflow:hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+    }
+    .ticker .inner{
+      display:flex;
+      gap: 26px;
+      padding: 12px 0;
+      width: max-content;
+      animation: marquee 14s linear infinite;
+    }
+    @keyframes marquee{
+      from{transform: translateX(0)}
+      to{transform: translateX(-50%)}
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.82);
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .chip b{font-weight:750; color: rgba(255,255,255,.94)}
+    .spark{
+      width: 10px; height: 10px; border-radius: 3px;
+      background: conic-gradient(from 180deg, #00e0ff, #7b5cff, #ff40b9, #00e0ff);
+      box-shadow: 0 0 0 0 rgba(0,224,255,.5);
+      animation: spark 1.6s ease-in-out infinite;
+    }
+    @keyframes spark{
+      0%{transform: translateY(0) scale(.95); opacity:.9}
+      50%{transform: translateY(-2px) scale(1.05); opacity:1}
+      100%{transform: translateY(0) scale(.95); opacity:.9}
+    }
+
+    /* Accessibility */
+    @media (prefers-reduced-motion: reduce){
+      .orb,.grain,.ticker .inner,.floater,.bar i,.pulseDot{animation:none !important}
+      canvas#stars{display:none}
+    }
+
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="stars" aria-hidden="true"></canvas>
+    <div class="orbs" aria-hidden="true">
+      <div class="orb o1"></div>
+      <div class="orb o2"></div>
+      <div class="orb o3"></div>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="shell">
+      <section class="panel hero" id="heroPanel">
+        <div class="floaters" aria-hidden="true">
+          <div class="floater f1"></div>
+          <div class="floater f2"></div>
+          <div class="floater f3"></div>
+        </div>
+
+        <div class="badge" role="note" aria-label="Live effects badge">
+          <div class="pulseDot"></div>
+          <span>NEBULA MODE: <b id="modeLabel" style="color:rgba(255,255,255,.95)">ACTIVE</b></span>
+        </div>
+
+        <h1 class="title">
+          <span class="grad">Lively Nebula</span>
+          <br />for bright, moving moments.
+        </h1>
+
+        <p class="subtitle">
+          A single-page, animation-rich experience: drifting light, responsive glows, kinetic ornaments, and a starfield that reacts to your movement.
+        </p>
+
+        <div class="ticker" aria-hidden="true">
+          <div class="inner" id="marqueeInner">
+            <div class="chip"><span class="spark"></span><b>Glows</b> that follow your cursor</div>
+            <div class="chip"><span class="spark"></span><b>Stars</b> that drift & twinkle</div>
+            <div class="chip"><span class="spark"></span><b>Orbs</b> in slow motion</div>
+            <div class="chip"><span class="spark"></span><b>Kinetic</b> shapes floating</div>
+            <div class="chip"><span class="spark"></span><b>Motion</b> tuned for life</div>
+            <div class="chip"><span class="spark"></span><b>Glows</b> that follow your cursor</div>
+            <div class="chip"><span class="spark"></span><b>Stars</b> that drift & twinkle</div>
+            <div class="chip"><span class="spark"></span><b>Orbs</b> in slow motion</div>
+            <div class="chip"><span class="spark"></span><b>Kinetic</b> shapes floating</div>
+            <div class="chip"><span class="spark"></span><b>Motion</b> tuned for life</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="btn btnPrimary" id="btnBoost" type="button" aria-label="Boost motion">
+            <span class="icon" aria-hidden="true"></span>
+            Boost Motion
+          </button>
+          <button class="btn" id="btnCalm" type="button" aria-label="Calm motion">
+            <span class="icon" aria-hidden="true" style="filter:hue-rotate(120deg)"></span>
+            Calm It Down
+          </button>
+        </div>
+      </section>
+
+      <aside class="panel side" id="sidePanel">
+        <div class="card" id="cardEnergy">
+          <p class="kicker">ENERGY</p>
+          <p class="big" id="energyText">Vivid & Responsive</p>
+          <p class="small">Move your mouse (or touch & drag) to bend the light. The starfield and glows will track you.</p>
+        </div>
+
+        <div class="card" id="cardFeel">
+          <p class="kicker">FEEL</p>
+          <p class="big" id="feelText">Nebula Drift</p>
+          <p class="small">Soft waves, glowing gradients, and tiny spark motions create a lively, “breathing” mood.</p>
+        </div>
+
+        <div class="meter" aria-label="Motion indicators">
+          <div class="barRow"><label>Twinkle</label><span class="val" id="twinkleVal">82%</span></div>
+          <div class="bar" aria-hidden="true"><i id="twinkleBar" style="--w:82%"></i></div>
+
+          <div class="barRow"><label>Drift</label><span class="val" id="driftVal">76%</span></div>
+          <div class="bar" aria-hidden="true"><i id="driftBar" style="--w:76%"></i></div>
+
+          <div class="barRow"><label>Glow</label><span class="val" id="glowVal">88%</span></div>
+          <div class="bar" aria-hidden="true"><i id="glowBar" style="--w:88%"></i></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const canvas = document.getElementById('stars');
+      const ctx = canvas.getContext('2d', { alpha: true });
+
+      const state = {
+        w: 0, h: 0,
+        dpr: Math.max(1, Math.min(2, window.devicePixelRatio || 1)),
+        t: 0,
+        // motion multipliers
+        boost: 1,
+        twinkle: 0.82,
+        drift: 0.76,
+        glow: 0.88,
+        mx: 0.5,
+        my: 0.5,
+        vx: 0,
+        vy: 0,
+        px: 0.5,
+        py: 0.5,
+        stars: []
+      };
+
+      const heroPanel = document.getElementById('heroPanel');
+      const sidePanel = document.getElementById('sidePanel');
+      const stage = document.getElementById('stage');
+      const modeLabel = document.getElementById('modeLabel');
+
+      const twinkleVal = document.getElementById('twinkleVal');
+      const driftVal = document.getElementById('driftVal');
+      const glowVal = document.getElementById('glowVal');
+      const twinkleBar = document.getElementById('twinkleBar');
+      const driftBar = document.getElementById('driftBar');
+      const glowBar = document.getElementById('glowBar');
+      const energyText = document.getElementById('energyText');
+      const feelText = document.getElementById('feelText');
+
+      function resize(){
+        state.w = window.innerWidth;
+        state.h = window.innerHeight;
+        canvas.width = Math.floor(state.w * state.dpr);
+        canvas.height = Math.floor(state.h * state.dpr);
+        canvas.style.width = state.w + 'px';
+        canvas.style.height = state.h + 'px';
+
+        const count = Math.floor(Math.min(1200, Math.max(520, (state.w * state.h) / 2200)));
+        const stars = [];
+        for(let i=0;i<count;i++){
+          // density bias toward center
+          const rx = Math.random(), ry = Math.random();
+          const cxBias = (Math.random() < 0.55) ? (0.5 + (rx-0.5)*0.65) : rx;
+          const cyBias = (Math.random() < 0.55) ? (0.5 + (ry-0.5)*0.65) : ry;
+
+          const z = Math.pow(Math.random(), 0.65); // closer stars more likely
+          stars.push({
+            x: cxBias * state.w,
+            y: cyBias * state.h,
+            z,
+            r: (0.45 + z*1.55) * (0.75 + Math.random()*0.6),
+            a: 0.25 + z*0.65,
+            tw: Math.random()*Math.PI*2,
+            sp: (0.08 + z*0.55)
+          });
+        }
+        state.stars = stars;
+      }
+
+      function setMode(mode){
+        // mode: 'boost'|'calm'|'default'
+        if (mode === 'boost') {
+          state.boost = 1.25;
+          state.twinkle = 0.92;
+          state.drift = 0.86;
+          state.glow = 0.95;
+          modeLabel.textContent = 'BOOSTED';
+          energyText.textContent = 'High Voltage Glow';
+          feelText.textContent = 'Faster Nebula Drift';
+        } else if (mode === 'calm') {
+          state.boost = 0.75;
+          state.twinkle = 0.62;
+          state.drift = 0.58;
+          state.glow = 0.72;
+          modeLabel.textContent = 'CALM';
+          energyText.textContent = 'Soft & Steady';
+          feelText.textContent = 'Gentle Nebula Drift';
+        } else {
+          state.boost = 1;
+          state.twinkle = 0.82;
+          state.drift = 0.76;
+          state.glow = 0.88;
+          modeLabel.textContent = 'ACTIVE';
+          energyText.textContent = 'Vivid & Responsive';
+          feelText.textContent = 'Nebula Drift';
+        }
+
+        twinkleVal.textContent = Math.round(state.twinkle * 100) + '%';
+        driftVal.textContent = Math.round(state.drift * 100) + '%';
+        glowVal.textContent = Math.round(state.glow * 100) + '%';
+        twinkleBar.style.setProperty('--w', (state.twinkle*100).toFixed(0) + '%');
+        driftBar.style.setProperty('--w', (state.drift*100).toFixed(0) + '%');
+        glowBar.style.setProperty('--w', (state.glow*100).toFixed(0) + '%');
+      }
+
+      function clamp01(n){ return Math.max(0, Math.min(1, n)); }
+
+      function updatePointer(clientX, clientY){
+        const nx = clamp01(clientX / state.w);
+        const ny = clamp01(clientY / state.h);
+        // velocity (for subtle parallax)
+        state.vx = nx - state.px;
+        state.vy = ny - state.py;
+        state.px = nx; state.py = ny;
+
+        // smooth follow
+        state.mx += (nx - state.mx) * 0.12;
+        state.my += (ny - state.my) * 0.12;
+
+        const px = (state.mx*100).toFixed(2) + '%';
+        const py = (state.my*100).toFixed(2) + '%';
+        heroPanel.style.setProperty('--mx', px);
+        heroPanel.style.setProperty('--my', py);
+        // side cards
+        document.querySelectorAll('.card').forEach((el) => {
+          el.style.setProperty('--rx', px);
+          el.style.setProperty('--ry', py);
+        });
+
+        // stage slight tilt via CSS vars? keep JS-driven with subtle transform
+        const tiltX = (state.my - 0.5) * -7; // degrees
+        const tiltY = (state.mx - 0.5) * 10;
+        stage.style.transform = `perspective(900px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+      }
+
+      // pointer events
+      let pointerActive = false;
+      function onMove(e){ pointerActive = true; updatePointer(e.clientX, e.clientY); }
+      function onTouch(e){ if(!e.touches || !e.touches.length) return; pointerActive = true; updatePointer(e.touches[0].clientX, e.touches[0].clientY); }
+
+      window.addEventListener('mousemove', onMove, { passive:true });
+      window.addEventListener('touchmove', onTouch, { passive:true });
+      window.addEventListener('mouseleave', () => { pointerActive = false; });
+
+      // buttons
+      document.getElementById('btnBoost').addEventListener('click', () => setMode('boost'));
+      document.getElementById('btnCalm').addEventListener('click', () => setMode('calm'));
+
+      function draw(t){
+        state.t = t;
+        const w = state.w, h = state.h;
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+        ctx.clearRect(0,0,w,h);
+
+        // If no pointer movement, gently return to center
+        if(!pointerActive){
+          state.mx += (0.5 - state.mx) * 0.02;
+          state.my += (0.5 - state.my) * 0.02;
+        }
+
+        const mx = (state.mx - 0.5);
+        const my = (state.my - 0.5);
+        const parX = mx * 26 * state.boost;
+        const parY = my * 18 * state.boost;
+
+        // starfield
+        for(const s of state.stars){
+          // twinkle
+          const tw = Math.sin(state.t * 0.0012 * (0.55 + s.z) * state.boost + s.tw);
+          const twFactor = (0.65 + (tw * 0.35)) * (0.55 + state.twinkle);
+
+          // drift
+          s.y += (s.sp * 0.22) * state.boost * (0.45 + state.drift);
+          s.x += (parX * 0.0004) * (0.5 + s.z);
+
+          // wrap
+          if(s.y > h + 10) { s.y = -10; s.x = Math.random()*w; }
+
+          const x = s.x + parX * (0.12 + s.z*0.22);
+          const y = s.y + parY * (0.08 + s.z*0.20);
+
+          const alpha = s.a * twFactor * (0.38 + state.glow*0.72);
+          const radius = s.r * (0.7 + state.glow*0.45) * (0.65 + s.z*0.65);
+
+          // glow
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(180,220,255,${alpha.toFixed(3)})`;
+          ctx.arc(x, y, radius, 0, Math.PI*2);
+          ctx.fill();
+
+          // small colored core (subtle)
+          if(s.z > 0.55){
+            const hueShift = (s.tw % (Math.PI*2)) / (Math.PI*2);
+            const col = hueShift < 0.33 ? [0,224,255] : (hueShift < 0.66 ? [123,92,255] : [255,64,185]);
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${(alpha*0.55).toFixed(3)})`;
+            ctx.arc(x, y, Math.max(0.6, radius*0.45), 0, Math.PI*2);
+            ctx.fill();
+          }
+        }
+
+        // vignette
+        const grad = ctx.createRadialGradient(w*0.5, h*0.42, Math.min(w,h)*0.15, w*0.5, h*0.42, Math.min(w,h)*0.78);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(0,0,0,.40)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,w,h);
+
+        if(!prefersReduced) requestAnimationFrame(draw);
+      }
+
+      // initialize
+      resize();
+      setMode('default');
+      // initial pointer center glows
+      heroPanel.style.setProperty('--mx','50%');
+      heroPanel.style.setProperty('--my','45%');
+      document.querySelectorAll('.card').forEach((el)=>{ el.style.setProperty('--rx','50%'); el.style.setProperty('--ry','45%'); });
+
+      // kick off loop
+      if(prefersReduced){
+        // Draw one frame only
+        if(canvas){
+          const now = performance.now();
+          draw(now);
+        }
+        modeLabel.textContent = 'ACTIVE (Reduced Motion)';
+      } else {
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', () => {
+        resize();
+      });
+    })();
+  </script>
+</body>
+</html>

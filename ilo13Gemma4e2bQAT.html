@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lively Neon Nexus</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300&display=swap" rel="stylesheet">
+    <style>
+        /* --- Global Styles & Variables --- */
+        :root {
+            --color-primary: #00f2ff;
+            --color-secondary: #ff007a;
+            --color-background: #0a0a1a;
+            --color-text: #e0e0ff;
+            --font-heading: 'Orbitron', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-background);
+            color: var(--color-text);
+            overflow-x: hidden; /* Prevent horizontal scroll from animations */
+            line-height: 1.6;
+        }
+
+        /* --- Keyframe Animations --- */
+        @keyframes neon-pulse {
+            0% { box-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-primary), 0 0 40px rgba(0, 242, 255, 0.5); }
+            50% { box-shadow: 0 0 15px var(--color-primary), 0 0 30px var(--color-primary), 0 0 60px rgba(0, 242, 255, 0.8); }
+            100% { box-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-primary), 0 0 40px rgba(0, 242, 255, 0.5); }
+        }
+
+        @keyframes background-glow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .animated-text {
+            animation: neon-pulse 3s infinite alternate;
+            text-shadow: 0 0 5px var(--color-primary), 0 0 10px var(--color-primary), 0 0 15px rgba(0, 242, 255, 0.6);
+        }
+
+        /* --- Layout --- */
+        header {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-primary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-family: var(--font-heading);
+            font-size: 1.8em;
+            color: var(--color-primary);
+            text-shadow: 0 0 10px var(--color-primary);
+        }
+
+        nav a {
+            color: var(--color-text);
+            text-decoration: none;
+            margin-left: 20px;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--color-secondary);
+            text-shadow: 0 0 5px var(--color-secondary);
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 5%;
+            /* Stunning Gradient Background */
+            background: linear-gradient(135deg, var(--color-background) 0%, #1a0033 50%, var(--color-background) 100%);
+            overflow: hidden;
+        }
+
+        .hero h2 {
+            font-family: var(--font-heading);
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: var(--color-text);
+            /* Animated text shadow for flair */
+            text-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-primary), 0 0 40px rgba(0, 242, 255, 0.4);
+        }
+
+        .hero p {
+            font-size: 1.3em;
+            max-width: 600px;
+            margin-bottom: 30px;
+            color: #aaaaff;
+        }
+
+        .cta-button {
+            background: transparent;
+            border: 2px solid var(--color-primary);
+            color: var(--color-primary);
+            padding: 12px 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+        }
+
+        .cta-button:hover {
+            background: var(--color-primary);
+            color: var(--color-background);
+            box-shadow: 0 0 15px var(--color-primary);
+        }
+
+        /* --- Content Sections --- */
+        .content-section {
+            padding: 80px 5%;
+            text-align: center;
+            border-top: 1px dashed rgba(0, 242, 255, 0.3);
+        }
+
+        .content-section h3 {
+            font-family: var(--font-heading);
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            color: var(--color-secondary);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .feature-grid {
+            display: flex;
+            justify-content: space-around;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 242, 255, 0.4);
+            padding: 30px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 280px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 0 20px var(--color-primary), 0 0 40px rgba(0, 242, 255, 0.6);
+        }
+
+        .feature-card h4 {
+            color: var(--color-primary);
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        /* --- Footer --- */
+        footer {
+            background: #000000;
+            padding: 20px 5%;
+            text-align: center;
+            border-top: 2px solid var(--color-secondary);
+            color: #888;
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+            }
+            nav {
+                margin-top: 15px;
+            }
+            nav a {
+                margin: 0 10px;
+            }
+            .hero h2 {
+                font-size: 2.5em;
+            }
+            .feature-grid {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>NEON NEXUS</h1>
+        <nav>
+            <a href="#hero">Home</a>
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero" id="hero">
+            <h2 class="animated-text">Welcome to the Digital Frontier</h2>
+            <p>Experience the convergence of modern aesthetics and fluid motion. A truly unique visual journey awaits you.</p>
+            <a href="#features" class="cta-button">Explore Systems</a>
+        </section>
+
+        <section class="content-section" id="features">
+            <h3>Core Systems</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Vibrant UI</h4>
+                    <p>Designed with high-contrast, neon-infused color palettes for maximum visual impact and a lively feel.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Smooth Motion</h4>
+                    <p>Immersive CSS animations and transitions ensure every interaction is fluid and responsive.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Unique Design</h4>
+                    <p>A custom, dark-mode theme built from the ground up with geometric and futuristic elements.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section" id="about">
+            <h3>About the Experience</h3>
+            <p style="max-width: 800px; margin: 0 auto; font-size: 1.1em;">
+                This site is a testament to the power of modern web design. We utilize advanced CSS techniques—including complex gradients, box shadows, and keyframe animations—to create a dynamic, almost living interface. The goal is not just to display information, but to create an engaging, visually stunning atmosphere that keeps the user captivated.
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Neon Nexus. Powered by CSS Magic.</p>
+    </footer>
+
+</body>
+</html>
