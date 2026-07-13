@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Color Puzzle</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #puzzle {
+            width: 200px;
+            height: 200px;
+            border: 2px solid #333;
+            margin-bottom: 20px;
+            background-color: blue; /* Initial color */
+            cursor: pointer;
+            transition: background-color 0.5s;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Color Puzzle</h1>
+    <div id="puzzle"></div>
+    <button id="changeColorBtn">Change Color</button>
+
+    <script>
+        const puzzle = document.getElementById('puzzle');
+        const changeColorBtn = document.getElementById('changeColorBtn');
+        let currentColor = 'blue';
+
+        function changeColor() {
+            if (currentColor === 'red') {
+                currentColor = 'green';
+            } else if (currentColor === 'green') {
+                currentColor = 'yellow';
+            } else {
+                currentColor = 'blue'; // Cycle back to blue
+            }
+            puzzle.style.backgroundColor = currentColor;
+        }
+
+        changeColorBtn.addEventListener('click', changeColor);
+    </script>
+</body>
+</html>

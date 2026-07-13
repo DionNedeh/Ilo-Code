@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Sci-Fi Movies</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #0a0a1e; color: white; }
+        header { background-color: #1a237e; padding: 20px; text-align: center; border-bottom: 5px solid #4CAF50; }
+        nav { background-color: #283593; padding: 10px 0; text-align: center; }
+        nav a { color: white; text-decoration: none; margin: 0 15px; font-weight: bold; transition: 0.3s; }
+        nav a:hover { color: #4CAF50; }
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        h1 { color: #4CAF50; text-align: center; }
+        .movie-card { background-color: #333e6a; border: 1px solid #4CAF50; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        .movie-card h2 { color: #FFC107; margin-top: 0; }
+        footer { text-align: center; padding: 15px; background-color: #1a237e; border-top: 5px solid #4CAF50; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🚀 2026 Sci-Fi Movies Showcase</h1>
+        <p>Exploring the frontiers of cinema in the year 2026</p>
+    </header>
+
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#movies">Movies</a>
+        <a href="#about">About</a>
+    </nav>
+
+    <div class="container" id="movies">
+        <h2>Featured Sci-Fi Titles</h2>
+        
+        <!-- Movie Card 1 -->
+        <div class="movie-card" id="movie-1">
+            <h2>Project Hail Mary</h2>
+            <p><strong>Synopsis:</strong> A thrilling journey into deep space with Ryan Gosling as the helm. Mixes jaw-dropping visuals, clever humor, and a surprising alliance with an alien companion.</p>
+            <p><small>Genre: Hard Sci-Fi</small></p>
+        </div>
+
+        <!-- Movie Card 2 (Placeholder based on general search trends) -->
+        <div class="movie-card" id="movie-2">
+            <h2>[Upcoming Title Placeholder]</h2>
+            <p><strong>Synopsis:</strong> A new original tale blending futuristic technology and philosophical dilemmas. Keep an eye out for major releases in this genre!</p>
+            <p><small>Genre: Space Opera / Thriller</small></p>
+        </div>
+
+    </div>
+
+    <div class="container" id="about">
+        <h2>About 2026 Sci-Fi</h2>
+        <p>The year 2026 is poised to be a banner year for sci-fi films, offering something for every kind of fan. From epic space adventures to mind-bending psychological thrillers, the genre continues to push creative boundaries.</p>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Sci-Fi Showcase Project. Data compiled from 2026 previews.</p>
+    </footer>
+
+    <script>
+        // Basic JavaScript for potential future interactivity (can be expanded)
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("Website loaded successfully.");
+            const movieCards = document.querySelectorAll('.movie-card');
+            movieCards.forEach(card => {
+                card.style.transition = 'transform 0.3s ease';
+                // Simple effect on hover for demonstration
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

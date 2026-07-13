@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abstract Swirl</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a; /* Dark background to make the blue pop */
+        }
+        .swirl {
+            width: 300px;
+            height: 200px;
+            /* Creating a swirling shape using a complex border-radius or SVG is ideal, but for simplicity and direct representation, we can use CSS gradients/transforms if needed. */
+            /* For a simple visual approximation of a swirl, let's focus on the color and shape. */
+            background: conic-gradient(from 0deg, #00ffff 0%, #00aaff 25%, #0066ff 50%, #00ffff 75%, #00aaff 100%);
+            border-radius: 50% 0 0 0; /* Start with a basic shape */
+            transform: rotate(45deg); /* Add rotation for a swirling effect */
+        }
+    </style>
+</head>
+<body>
+    <div class="swirl"></div>
+</body>
+</html>

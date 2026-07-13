@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robust Interactive Website</title>
+    <style>
+        /* --- Global Styles --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa; /* Light background */
+            color: #343a40;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* --- Header Styling --- */
+        header {
+            background-color: #007bff; /* Primary Blue */
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        /* --- Main Content Layout --- */
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Two columns layout */
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- Main Section Styling --- */
+        .main-section {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Sidebar Styling (For extra info/forms) --- */
+        .sidebar {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Card/Feature Styling --- */
+        .feature-card {
+            border-left: 4px solid #28a745; /* Green accent */
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f1fcfd;
+            border-radius: 5px;
+        }
+
+        /* --- Interactive Elements Styling --- */
+        .interactive-box {
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+            background-color: #fff3cd; /* Light Yellow for interaction */
+            border: 2px dashed #ffc107;
+            border-radius: 8px;
+        }
+
+        .interactive-box button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .interactive-box button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Robust Interactive Dashboard</h1>
+    </header>
+
+    <div class="content-wrapper">
+        <!-- Main Content Area -->
+        <main class="main-section">
+            <h2>About This System</h2>
+            <p>This page has been significantly expanded to be more robust, featuring detailed information, interactive elements, and a clear layout using CSS Grid. It demonstrates how modern web development combines structure (HTML), presentation (CSS), and basic behavior (JavaScript).</p>
+
+            <h3>Key Features</h3>
+            <div class="feature-card">
+                <strong>Structured Layout:</strong> Uses CSS Grid for a responsive two-column design.
+            </div>
+            <div class="feature-card">
+                <strong>Interactive Elements:</strong> Includes buttons that change the state dynamically (via JS).
+            </div>
+            <div class="feature-card">
+                <strong>Modern Styling:</strong> Uses a clean, modern color palette and shadows for better visual appeal.
+            </div>
+
+            <h2>System Status</h2>
+            <p>Current Mode: <strong id="modeDisplay" style="color: #dc3545;">Default Mode</strong></p>
+
+        </main>
+
+        <!-- Sidebar Area -->
+        <aside class="sidebar">
+            <h2>Quick Actions</h2>
+            <div class="feature-card">
+                <strong>Information Panel:</strong> View system details here.
+            </div>
+            <div class="feature-card">
+                <strong>Settings Link:</strong> Link to future configuration pages.
+            </div>
+
+            <h3>Interactive Demo</h3>
+            <div class="interactive-box">
+                <p>Click the buttons below to change the system mode:</p>
+                <button onclick="changeMode('default')">Default</button>
+                <button onclick="changeMode('active')">Active</button>
+                <button onclick="changeMode('maintenance')">Maintenance</button>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // --- JavaScript for Interactivity ---
+        function changeMode(mode) {
+            const modeDisplay = document.getElementById('modeDisplay');
+            
+            if (mode === 'default') {
+                modeDisplay.textContent = 'Default Mode';
+                modeDisplay.style.color = '#343a40'; // Dark Gray
+            } else if (mode === 'active') {
+                modeDisplay.textContent = 'Active Mode';
+                modeDisplay.style.color = '#28a745'; // Green
+            } else if (mode === 'maintenance') {
+                modeDisplay.textContent = 'Maintenance Mode';
+                modeDisplay.style.color = '#ffc107'; // Yellow/Amber
+            }
+        }
+
+        // Initialize the mode on load
+        document.addEventListener('DOMContentLoaded', () => {
+            changeMode('default');
+        });
+    </script>
+
+</body>
+</html>

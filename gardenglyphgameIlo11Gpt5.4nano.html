@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Garden Glyphs — a living puzzle</title>
+  <style>
+    :root{
+      --bg0:#071a12;
+      --bg1:#0f3a24;
+      --ink:#eafff3;
+      --muted:#b8e7cc;
+      --card:rgba(10, 30, 20, .62);
+      --stroke:rgba(190, 255, 216, .22);
+      --accent:#67f5a7;
+      --accent2:#ffd36e;
+      --danger:#ff6b7a;
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(1100px 600px at 20% 0%, rgba(103,245,167,.18), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(255,211,110,.12), transparent 62%),
+        radial-gradient(900px 700px at 50% 100%, rgba(120,255,225,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow:hidden;
+    }
+
+    /* subtle leaf noise */
+    body:before{
+      content:"";
+      position:fixed; inset:-40px;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,.05) 0 2px, transparent 2px),
+        radial-gradient(circle at 30% 70%, rgba(255,255,255,.04) 0 2px, transparent 2px),
+        radial-gradient(circle at 70% 30%, rgba(255,255,255,.04) 0 2px, transparent 2px),
+        radial-gradient(circle at 90% 60%, rgba(255,255,255,.03) 0 2px, transparent 2px);
+      background-size: 240px 240px;
+      opacity:.45;
+      filter: blur(.3px);
+      pointer-events:none;
+      animation: drift 14s ease-in-out infinite;
+    }
+    @keyframes drift{ 0%,100%{ transform: translate3d(0,0,0);} 50%{ transform: translate3d(18px,-10px,0);} }
+
+    .wrap{
+      position:relative;
+      height:100%;
+      display:grid;
+      grid-template-columns: 1fr minmax(290px, 340px);
+      gap:16px;
+      padding:16px;
+      box-sizing:border-box;
+    }
+
+    .left{
+      position:relative;
+      border-radius: var(--radius);
+      background: rgba(6, 20, 14, .28);
+      box-shadow: var(--shadow);
+      border:1px solid rgba(190, 255, 216, .14);
+      overflow:hidden;
+    }
+
+    canvas{display:block; width:100%; height:100%;}
+
+    .hud{
+      position:absolute;
+      left:14px; top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      pointer-events:none;
+    }
+    .pill{
+      pointer-events:none;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(190, 255, 216, .2);
+      backdrop-filter: blur(8px);
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.2px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+    }
+    .pill strong{color:var(--ink); font-weight:800;}
+
+    .right{
+      border-radius: var(--radius);
+      background: var(--card);
+      border:1px solid rgba(190, 255, 216, .14);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    header{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(190,255,216,.14);
+      background:
+        radial-gradient(900px 260px at 20% 0%, rgba(103,245,167,.18), transparent 60%),
+        radial-gradient(700px 240px at 80% 0%, rgba(255,211,110,.12), transparent 55%);
+    }
+
+    header h1{
+      font-size:16px;
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .sig{
+      width:30px; height:30px;
+      border-radius:10px;
+      display:grid; place-items:center;
+      background: rgba(103,245,167,.12);
+      border:1px solid rgba(103,245,167,.25);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+    }
+    header p{margin:6px 0 0; color:var(--muted); font-size:12.5px; line-height:1.35;}
+
+    .content{padding:14px; display:flex; flex-direction:column; gap:12px;}
+
+    .panel{
+      border-radius:16px;
+      border:1px solid rgba(190,255,216,.14);
+      background: rgba(0,0,0,.12);
+      padding:12px;
+    }
+    .panel .label{font-size:12px; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; gap:10px;}
+
+    .controls{display:flex; gap:10px;}
+    button{
+      appearance:none;
+      border:1px solid rgba(190,255,216,.24);
+      background: rgba(0,0,0,.12);
+      color:var(--ink);
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      cursor:pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+    }
+    button:hover{border-color: rgba(103,245,167,.45); background: rgba(103,245,167,.10);}
+    button:active{transform: translateY(1px) scale(.99);}
+    button.primary{
+      background: rgba(103,245,167,.12);
+      border-color: rgba(103,245,167,.35);
+    }
+
+    .kbd{font-family:var(--mono); font-size:11px; padding:2px 7px; border-radius:999px; border:1px solid rgba(190,255,216,.18); background: rgba(0,0,0,.18); color:var(--muted);}
+
+    .glyphGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    .tile{
+      border-radius:16px;
+      border:1px solid rgba(190,255,216,.14);
+      background: rgba(0,0,0,.10);
+      padding:10px;
+      cursor:pointer;
+      transition: transform .08s ease, border-color .2s ease, background .2s ease;
+      user-select:none;
+      min-height:56px;
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .tile:hover{border-color: rgba(103,245,167,.35); background: rgba(103,245,167,.08);}
+    .tile:active{transform: translateY(1px) scale(.99);}
+
+    .tile .sym{font-size:20px; font-weight:900; line-height:1;}
+    .tile .sub{font-size:11px; color:var(--muted); margin-top:4px;}
+    .tile.selected{border-color: rgba(255,211,110,.55); background: rgba(255,211,110,.08);}
+
+    .legendRow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .badge{
+      display:flex; gap:8px; align-items:center;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(190,255,216,.16);
+      background: rgba(0,0,0,.14);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .dot{width:10px; height:10px; border-radius:50%; background: var(--accent); box-shadow: 0 0 0 2px rgba(0,0,0,.22);}
+    .dot.a{background: var(--accent);}
+    .dot.b{background: var(--accent2);}
+
+    .toast{
+      position:absolute;
+      left:14px; bottom:14px;
+      max-width: 620px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(190,255,216,.16);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding:10px 12px;
+      color: var(--ink);
+      box-shadow: 0 18px 60px rgba(0,0,0,.32);
+      font-size:13px;
+      display:flex; gap:10px; align-items:flex-start;
+      pointer-events:none;
+      transform: translateY(8px);
+      opacity:0;
+      transition: opacity .25s ease, transform .25s ease;
+    }
+    .toast.show{opacity:1; transform: translateY(0);} 
+    .toast .mark{width:22px; height:22px; border-radius:8px; display:grid; place-items:center; background: rgba(103,245,167,.14); border:1px solid rgba(103,245,167,.28);}
+    .toast .t{color:var(--muted); margin-top:2px; font-size:12px; line-height:1.35;}
+
+    .mobileHint{display:none;}
+    @media (max-width: 900px){
+      .wrap{grid-template-columns:1fr;}
+      .right{height:auto; max-height: 52vh;}
+      body{overflow:auto;}
+      canvas{height:64vh;}
+      .mobileHint{display:block;}
+    }
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="left">
+      <canvas id="c"></canvas>
+      <div class="hud">
+        <div class="pill">Day <strong id="day">1</strong></div>
+        <div class="pill">Spots: <strong id="spots">0</strong>/3</div>
+        <div class="pill">Goal glyphs: <strong id="goal">• • •</strong></div>
+      </div>
+      <div class="toast" id="toast">
+        <div class="mark">✦</div>
+        <div>
+          <div id="toastTitle" style="font-weight:900;">Message</div>
+          <div class="t" id="toastText"> </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="right">
+      <header>
+        <h1>
+          <span class="sig">❖</span>
+          Garden Glyphs
+        </h1>
+        <p>
+          Tap a glyph, then click the garden to plant it on a numbered stone.
+          Each day, the <b>three glowing stones</b> must match the day’s goal glyphs.
+        </p>
+        <p class="mobileHint"><span class="kbd">Tip</span> On mobile, use the glyph tiles first.</p>
+      </header>
+
+      <div class="content">
+        <div class="panel">
+          <div class="label">
+            <span>Choose a glyph</span>
+            <span class="kbd" id="hintKeys">1–3 • R • N</span>
+          </div>
+          <div class="glyphGrid" id="glyphGrid" aria-label="glyph choices"></div>
+        </div>
+
+        <div class="panel">
+          <div class="label">
+            <span>Actions</span>
+            <span class="kbd">Click stones</span>
+          </div>
+          <div class="controls">
+            <button class="primary" id="btnNew">New Day</button>
+            <button id="btnReset">Reset Garden</button>
+          </div>
+          <div style="margin-top:10px; color:var(--muted); font-size:12.5px; line-height:1.4;">
+            If you’re close, the garden will “reply” with a soft shimmer.
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="label">
+            <span>How it’s unique</span>
+            <span class="kbd">procedural</span>
+          </div>
+          <div style="color:var(--muted); font-size:12.5px; line-height:1.45;">
+            Stones have a tiny rune-angle. Your glyph rotates toward the stone’s wind.
+            On a correct match, vines lock in and the pattern becomes more symmetrical.
+          </div>
+        </div>
+
+        <div class="legendRow">
+          <div class="badge"><span class="dot a"></span> Correct</div>
+          <div class="badge"><span class="dot b"></span> Almost</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  const dayEl = document.getElementById('day');
+  const spotsEl = document.getElementById('spots');
+  const goalEl = document.getElementById('goal');
+  const gridEl = document.getElementById('glyphGrid');
+  const toast = document.getElementById('toast');
+  const toastTitle = document.getElementById('toastTitle');
+  const toastText = document.getElementById('toastText');
+
+  const btnNew = document.getElementById('btnNew');
+  const btnReset = document.getElementById('btnReset');
+
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+  // Three glyphs: Leaf (A), Seed (B), Bud (C)
+  const glyphs = [
+    { id:'A', name:'Leaf', sym:'❀', color:'#67f5a7', sub:'Leaf' },
+    { id:'B', name:'Seed', sym:'✷', color:'#ffd36e', sub:'Seed' },
+    { id:'C', name:'Bud',  sym:'⟡', color:'#86d7ff', sub:'Bud' },
+  ];
+
+  let W=0,H=0;
+
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    W = Math.floor(rect.width);
+    H = Math.floor(rect.height);
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resize);
+
+  const rng = mulberry32((Math.random()*1e9) |0);
+
+  function mulberry32(a){
+    return function(){
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function clamp(v,a,b){return Math.max(a, Math.min(b, v));}
+
+  // Garden stones
+  // We'll place 7 stones in a loose hex ring + center.
+  let stones = [];
+  let day = 1;
+  let selectedGlyphId = 'A';
+  let goal = ['A','B','C'];
+
+  function makeGarden(seed){
+    // reseed so each day feels distinct but deterministic within the day
+    const localRng = mulberry32(seed|0);
+    stones = [];
+
+    const cx = W*0.52;
+    const cy = H*0.54;
+    const baseR = Math.min(W,H) * 0.22;
+    const ringR = baseR * (0.92 + localRng()*0.12);
+    const nRing = 6;
+
+    // center stone index 0
+    const centerRune = localRng()*Math.PI*2;
+    stones.push(makeStone(0, cx, cy, 48, localRng, centerRune));
+
+    for(let i=0;i<nRing;i++){
+      const ang = (i/nRing)*Math.PI*2 + localRng()*0.12;
+      const x = cx + Math.cos(ang)*ringR;
+      const y = cy + Math.sin(ang)*ringR*0.86;
+      stones.push(makeStone(i+1, x, y, 42 + localRng()*8, localRng, ang + (localRng()-0.5)*1.4));
+    }
+
+    // pick 3 target stones among indices 1..6 (avoid center as much as possible)
+    let indices = [1,2,3,4,5,6];
+    // shuffle
+    for(let i=indices.length-1;i>0;i--){
+      const j = Math.floor(localRng()*(i+1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    const target = indices.slice(0,3);
+    // ensure targets are roughly spaced
+    return { target };
+  }
+
+  function makeStone(i,x,y,r, localRng, rune){
+    const wind = (localRng()*2-1);
+    const stone = {
+      i, x, y, r,
+      wind,
+      runeAngle: rune,
+      planted: null, // glyph id
+      correct: false,
+      shimmer: 0,
+      lock: 0,
+      // small texture
+      specks: Array.from({length: 24}, ()=>({
+        a: localRng()*Math.PI*2,
+        d: Math.sqrt(localRng())*r*0.85,
+        s: 0.4+localRng()*1.3,
+        p: localRng(),
+      }))
+    };
+    return stone;
+  }
+
+  let targetStones = [1,3,5];
+
+  function chooseGoal(localRng){
+    // unique-ish day: choose 3 glyphs without requiring all distinct.
+    // But keep it interesting: avoid identical triples for later days.
+    const picks = [0,1,2];
+    // shuffle mapping
+    for(let i=picks.length-1;i>0;i--){
+      const j = Math.floor(localRng()*(i+1));
+      [picks[i], picks[j]]=[picks[j], picks[i]];
+    }
+    const a = picks[0];
+    const b = picks[1];
+    let c = picks[2];
+    // occasionally repeat one
+    if(day>2 && localRng()<0.35){
+      const rep = [a,b,c][Math.floor(localRng()*3)];
+      c = rep;
+    }
+    // goal aligns with targetStones order: [stone0,stone1,stone2]
+    return [glyphs[a].id, glyphs[b].id, glyphs[c].id];
+  }
+
+  function daySeed(){
+    // deterministic but varied by day and viewport size
+    const s = (day*9301) ^ (Math.floor(W*31)+Math.floor(H*17));
+    return (s & 0xffffffff);
+  }
+
+  function startDay(newDay=true){
+    const seed = daySeed();
+    const localRng = mulberry32(seed);
+
+    const g = makeGarden(seed ^ 0xabc123);
+    targetStones = g.target;
+    goal = chooseGoal(localRng);
+
+    // clear garden
+    for(const st of stones){
+      st.planted = null;
+      st.correct = false;
+      st.shimmer = 0;
+      st.lock = 0;
+    }
+
+    // update UI
+    if(newDay) {
+      spotsEl.textContent = '0/3';
+      goalEl.textContent = goal.map(s=>glyphSym(s)).join(' ');
+    }
+    dayEl.textContent = String(day);
+
+    setToast('New day in the garden', `Three stones are glowing. Plant ${glyphName(goal[0])}, ${glyphName(goal[1])}, ${glyphName(goal[2])} on them.` , 2600);
+  }
+
+  function glyphSym(id){
+    return glyphs.find(g=>g.id===id)?.sym || '•';
+  }
+  function glyphName(id){
+    return glyphs.find(g=>g.id===id)?.name || id;
+  }
+
+  function setToast(title,text,dur=2200){
+    toastTitle.textContent = title;
+    toastText.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(setToast._t);
+    setToast._t = setTimeout(()=>toast.classList.remove('show'), dur);
+  }
+
+  function buildGlyphGrid(){
+    gridEl.innerHTML = '';
+    for(const g of glyphs){
+      const t = document.createElement('div');
+      t.className = 'tile' + (g.id===selectedGlyphId?' selected':'');
+      t.tabIndex = 0;
+      t.setAttribute('role','button');
+      t.setAttribute('aria-label','Select glyph '+g.name);
+      t.innerHTML = `<div class="sym" style="color:${g.color}">${g.sym}</div><div class="sub">${g.sub}</div>`;
+      t.addEventListener('click', ()=>selectGlyph(g.id));
+      t.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectGlyph(g.id);} 
+      });
+      gridEl.appendChild(t);
+    }
+  }
+
+  function selectGlyph(id){
+    selectedGlyphId = id;
+    [...gridEl.children].forEach((el)=>{
+      const isSel = glyphs.find(g=>g.id===selectedGlyphId).id===glyphs.find(g=>g.sym===el.querySelector('.sym')?.textContent)?.id;
+    });
+    // easier: rebuild classes
+    [...gridEl.children].forEach((el,idx)=>{
+      // idx aligns with glyphs array
+      const g = glyphs[idx];
+      el.classList.toggle('selected', g.id===selectedGlyphId);
+    });
+    setToast('Glyph selected', `${glyphName(id)} planted when you click a stone.` , 1200);
+  }
+
+  // click handling
+  canvas.addEventListener('pointerdown', (e)=>{
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const hit = hitTestStone(x,y);
+    if(!hit) return;
+
+    // can't change locked correct stones much (slight still possible if wrong selection)
+    plantOnStone(hit, selectedGlyphId);
+  });
+
+  function hitTestStone(x,y){
+    let best=null;
+    for(const st of stones){
+      const dx = x-st.x, dy=y-st.y;
+      const d = Math.hypot(dx,dy);
+      if(d < st.r*0.95){
+        if(!best || d<best.d) best={st, d};
+      }
+    }
+    return best?.st || null;
+  }
+
+  function plantOnStone(st, glyphId){
+    // apply
+    st.planted = glyphId;
+
+    // update correctness compared to goal for target stones by order
+    const pos = targetStones.indexOf(st.i);
+    let wasCorrect = st.correct;
+
+    st.correct = false;
+    if(pos>=0 && glyphId === goal[pos]){
+      st.correct = true;
+      st.lock = Math.min(1, st.lock + 0.55);
+      st.shimmer = 1;
+    } else {
+      // almost logic: wrong but same parity distance to goal
+      st.lock = Math.max(0, st.lock - 0.2);
+      st.shimmer = 0.45;
+    }
+
+    // feedback + compute progress
+    const correctCount = targetStones.reduce((acc, idxStone, k)=>{
+      const s = stones.find(z=>z.i===idxStone);
+      return acc + ((s?.planted===goal[k])?1:0);
+    },0);
+
+    spotsEl.textContent = `${correctCount}/3`;
+
+    if(st.correct && !wasCorrect){
+      setToast('A perfect imprint!', `${glyphName(glyphId)} matches stone ${pos+1}.` , 1600);
+    } else if(!st.correct && pos>=0){
+      const gWant = goal[pos];
+      const near = glyphId!==gWant;
+      setToast('The vine hesitates…', `That stone wants ${glyphName(gWant)}. Try again.` , 1600);
+    } else {
+      setToast('Planted', `You set ${glyphName(glyphId)} on a non-target stone. The garden reacts softly.` , 1400);
+    }
+
+    if(correctCount===3){
+      // win
+      const sseed = daySeed();
+      const localRng = mulberry32(sseed^0x55aa11);
+      const flowers = 6 + Math.floor(localRng()*6);
+      setBurst(st.x, st.y, flowers, glyphId);
+      setToast('You completed the glyph row!', 'The garden locks into symmetry. Next day is ready.', 2600);
+      day += 1;
+      setTimeout(()=>startDay(true), 1350);
+    }
+  }
+
+  let burstParticles = [];
+  function setBurst(x,y,count,glyphId){
+    const g = glyphs.find(z=>z.id===glyphId);
+    for(let i=0;i<count;i++){
+      burstParticles.push({
+        x,y,
+        vx:(Math.random()*2-1)*1.6,
+        vy:(Math.random()*2-1)*1.6 - 0.8,
+        life: 1,
+        size: 2+Math.random()*3,
+        rot: Math.random()*Math.PI*2,
+        vr: (Math.random()*2-1)*0.3,
+        color: g?.color || '#67f5a7',
+      });
+    }
+  }
+
+  // keyboard
+  window.addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    if(k==='1') selectGlyph('A');
+    if(k==='2') selectGlyph('B');
+    if(k==='3') selectGlyph('C');
+    if(k==='r') { day=1; startDay(true); }
+    if(k==='n') { day += 1; startDay(true); }
+  });
+
+  btnNew.addEventListener('click', ()=>{ day += 1; startDay(true); });
+  btnReset.addEventListener('click', ()=>{ startDay(false); });
+
+  // drawing helpers
+  function drawBackground(){
+    // ground mound
+    const g = ctx.createRadialGradient(W*0.55, H*0.75, 40, W*0.55, H*0.75, Math.min(W,H)*0.55);
+    g.addColorStop(0,'rgba(20,110,70,.35)');
+    g.addColorStop(0.5,'rgba(12,60,40,.25)');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(W*0.52, H*0.68, W*0.46, H*0.28, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // sunbeams
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    for(let i=0;i<10;i++){
+      const a = -0.9 + i*0.18;
+      const x0 = W*(0.08 + i*0.09);
+      const y0 = H*0.08;
+      ctx.strokeStyle = 'rgba(170,255,220,.10)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0,y0);
+      ctx.lineTo(x0 + Math.cos(a)*W*0.7, y0 + Math.sin(a)*H*0.85);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawGlyphMark(x,y, id, angle, radius, alpha=1){
+    const g = glyphs.find(z=>z.id===id);
+    const color = g?.color || '#67f5a7';
+
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(angle);
+    ctx.globalAlpha = alpha;
+
+    // glowing halo
+    ctx.fillStyle = hexToRgba(color, 0.12*alpha);
+    ctx.beginPath();
+    ctx.arc(0,0,radius*0.55,0,Math.PI*2);
+    ctx.fill();
+
+    // glyph strokes
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = hexToRgba(color, 0.85*alpha);
+    ctx.fillStyle = hexToRgba(color, 0.92*alpha);
+
+    // simple rune style
+    const s = radius*0.55;
+    if(id==='A'){
+      // leaf: 3 petals
+      for(let i=0;i<3;i++){
+        const a = i*2*Math.PI/3;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a)*s*0.35, Math.sin(a)*s*0.35, s*0.65, s*0.25, a, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // vein
+      ctx.strokeStyle = hexToRgba('#baffdd', 0.7*alpha);
+      ctx.beginPath();
+      ctx.moveTo(-s*0.2, -s*0.05);
+      ctx.quadraticCurveTo(0, 0, s*0.25, s*0.2);
+      ctx.stroke();
+    } else if(id==='B'){
+      // seed: rotated hex
+      ctx.beginPath();
+      for(let i=0;i<6;i++){
+        const a = i*2*Math.PI/6;
+        const px = Math.cos(a)*s*0.7;
+        const py = Math.sin(a)*s*0.7;
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = hexToRgba('#fff3c6', 0.28*alpha);
+      ctx.fill();
+      // central dot
+      ctx.fillStyle = hexToRgba(color, 0.9*alpha);
+      ctx.beginPath();
+      ctx.arc(0,0,s*0.18,0,Math.PI*2);
+      ctx.fill();
+    } else {
+      // bud: 4-point star
+      for(let i=0;i<4;i++){
+        const a = i*2*Math.PI/4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a)*s*0.2, Math.sin(a)*s*0.2);
+        ctx.lineTo(Math.cos(a)*s*0.95, Math.sin(a)*s*0.95);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*s*0.95, Math.sin(a)*s*0.95, s*0.16, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // swirl
+      ctx.strokeStyle = hexToRgba('#cfefff', 0.6*alpha);
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(0,0,s*0.55, -Math.PI*0.9, Math.PI*0.4);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function hexToRgba(hex, a){
+    const h = hex.replace('#','');
+    const bigint = parseInt(h.length===3? h.split('').map(c=>c+c).join('') : h, 16);
+    const r = (bigint>>16)&255;
+    const g = (bigint>>8)&255;
+    const b = bigint&255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function drawStone(st, time){
+    const isTarget = targetStones.includes(st.i);
+    const targetPos = targetStones.indexOf(st.i);
+    const wantGlyph = targetPos>=0 ? goal[targetPos] : null;
+
+    // stone shadow
+    ctx.save();
+    ctx.translate(st.x, st.y);
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, st.r*0.68, st.r*0.72, st.r*0.26, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // stone body
+    ctx.save();
+    ctx.translate(st.x, st.y);
+
+    const wob = Math.sin(time*0.001 + st.i)*0.5;
+    const r = st.r * (1 + wob*0.002);
+
+    const grad = ctx.createRadialGradient(-r*0.3, -r*0.35, r*0.2, 0,0, r*1.05);
+    grad.addColorStop(0, 'rgba(210, 255, 235, .12)');
+    grad.addColorStop(0.4, 'rgba(120, 220, 175, .07)');
+    grad.addColorStop(1, 'rgba(0,0,0,.18)');
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = 'rgba(190,255,216,.20)';
+    ctx.lineWidth = 1.2;
+
+    ctx.beginPath();
+    ctx.arc(0,0,r*0.92,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    // specks
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    for(const sp of st.specks){
+      const px = Math.cos(sp.a)*sp.d;
+      const py = Math.sin(sp.a)*sp.d*0.9;
+      ctx.fillStyle = `rgba(255,255,255,${0.08 + sp.p*0.12})`;
+      ctx.beginPath();
+      ctx.arc(px,py, sp.s, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // rune ring
+    const shimmer = st.shimmer || 0;
+    const lock = st.lock || 0;
+
+    if(isTarget){
+      const pulse = 0.55 + 0.45*Math.sin(time*0.003 + st.i*1.7);
+      const haloAlpha = (0.18 + 0.18*pulse) * (1-lock*0.6);
+      ctx.strokeStyle = `rgba(103,245,167,${haloAlpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0,0,r*0.65,0,Math.PI*2);
+      ctx.stroke();
+
+      // thin arc
+      ctx.strokeStyle = `rgba(255,211,110,${0.08 + 0.12*pulse*(wantGlyph?1:0)})`;
+      ctx.lineWidth = 2;
+      const start = st.runeAngle + time*0.001*st.wind;
+      ctx.beginPath();
+      ctx.arc(0,0,r*0.66, start, start + Math.PI*0.75);
+      ctx.stroke();
+    }
+
+    // planted glyph
+    if(st.planted){
+      const a = st.runeAngle + time*0.0012*st.wind + (st.lock*0.35);
+      const alpha = 0.75 + 0.25*lock;
+      const radius = r*0.62;
+      drawGlyphMark(0,0, st.planted, a, radius, alpha);
+
+      // correctness glow
+      if(st.correct){
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        const col = glyphs.find(g=>g.id===st.planted).color;
+        ctx.strokeStyle = hexToRgba(col, 0.35);
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(0,0,r*0.78,0,Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else if(isTarget){
+      // hint ghost (not the answer; just a faint echo)
+      const ghostAlpha = 0.12 + 0.06*Math.sin(time*0.004+st.i);
+      drawGlyphMark(0,0, 'A', st.runeAngle + time*0.001*st.wind, r*0.55, ghostAlpha);
+    }
+
+    // lock vines
+    if(lock>0.01){
+      ctx.save();
+      const vineAlpha = 0.08 + 0.22*lock;
+      ctx.strokeStyle = `rgba(103,245,167,${vineAlpha})`;
+      ctx.lineWidth = 2;
+
+      const turns = 4 + Math.floor(lock*3);
+      for(let k=0;k<turns;k++){
+        const a0 = st.runeAngle + k*0.55;
+        const x1 = Math.cos(a0)*r*0.55;
+        const y1 = Math.sin(a0)*r*0.55*0.85;
+        const x2 = Math.cos(a0+0.8)*r*0.15;
+        const y2 = Math.sin(a0+0.8)*r*0.12*0.85;
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.quadraticCurveTo(Math.cos(a0+0.35)*r*0.3, Math.sin(a0+0.35)*r*0.25*0.85, x2,y2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  function drawVines(time){
+    // connect non-center stones with subtle procedural lines
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    for(let i=1;i<stones.length;i++){
+      for(let j=i+1;j<stones.length;j++){
+        const a = stones[i], b = stones[j];
+        if(!targetStones.includes(a.i) && !targetStones.includes(b.i)) continue;
+        const dx = b.x-a.x, dy=b.y-a.y;
+        const d = Math.hypot(dx,dy);
+        if(d > Math.min(W,H)*0.45) continue;
+        const mx = (a.x+b.x)/2 + Math.sin(time*0.001 + a.i)*6;
+        const my = (a.y+b.y)/2 + Math.cos(time*0.0012 + b.i)*5;
+        const col = (a.correct && b.correct) ? 'rgba(255,211,110,.22)' : 'rgba(103,245,167,.12)';
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(a.x,a.y);
+        ctx.quadraticCurveTo(mx,my,b.x,b.y);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawParticles(time){
+    for(const p of burstParticles){
+      if(p.life<=0) continue;
+      p.life -= 0.016;
+      p.vy += 0.03;
+      p.x += p.vx*6;
+      p.y += p.vy*6;
+      p.rot += p.vr;
+      const a = clamp(p.life,0,1);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = hexToRgba(p.color, 0.9*a);
+      ctx.beginPath();
+      ctx.roundRect(-p.size, -p.size, p.size*2, p.size*2, 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    burstParticles = burstParticles.filter(p=>p.life>0);
+  }
+
+  function update(time){
+    // decay shimmer & lock slightly
+    for(const st of stones){
+      st.shimmer *= 0.96;
+      if(!st.correct) st.lock *= 0.985;
+      else st.lock = Math.min(1, st.lock + 0.003);
+      // subtle wind-driven placement
+      st.runeAngle += 0.00015 * st.wind;
+    }
+  }
+
+  function draw(time){
+    ctx.clearRect(0,0,W,H);
+    drawBackground();
+
+    // garden base grid / path
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = 'rgba(185,255,216,.35)';
+    const step = Math.max(22, Math.min(34, Math.floor(Math.min(W,H)/18)));
+    for(let x=-step; x<W+step; x+=step){
+      ctx.beginPath();
+      ctx.moveTo(x, H*0.62);
+      ctx.lineTo(x + step*0.4, H);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    drawVines(time);
+
+    // stones
+    for(const st of stones){ drawStone(st, time); }
+
+    // particles
+    drawParticles(time);
+  }
+
+  function loop(time){
+    update(time);
+    draw(time);
+    requestAnimationFrame(loop);
+  }
+
+  // Init
+  function init(){
+    resize();
+    buildGlyphGrid();
+    selectGlyph('A');
+    day = 1;
+    startDay(true);
+    requestAnimationFrame(loop);
+  }
+
+  // ensure roundRect exists in older canvas contexts
+  if(!CanvasRenderingContext2D.prototype.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+      r = Math.min(r, w/2, h/2);
+      this.beginPath();
+      this.moveTo(x+r, y);
+      this.arcTo(x+w, y, x+w, y+h, r);
+      this.arcTo(x+w, y+h, x, y+h, r);
+      this.arcTo(x, y+h, x, y, r);
+      this.arcTo(x, y, x+w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEO-CINEMA // 2026 Sci-Fi Movie Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            black: '#0a0a0f',
+                            dark: '#12121e',
+                            gray: '#1e1e2f',
+                            accent: '#6366f1', // Indigo
+                            neonBlue: '#06b6d4', // Cyan
+                            neonPurple: '#a855f7', // Purple
+                            neonPink: '#ec4899', // Pink
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        space: ['Space Grotesk', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #0a0a0f;
+            color: #e2e8f0;
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            border-color: #06b6d4;
+        }
+        .glow-purple:hover {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+            border-color: #a855f7;
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
+        }
+        .glow-text-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden selection:bg-cyan-500 selection:text-black">
+
+    <!-- Glowing Background Orbs -->
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-900/20 rounded-full filter blur-[100px] -z-10 pointer-events-none"></div>
+    <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-900/10 rounded-full filter blur-[120px] -z-10 pointer-events-none"></div>
+    <div class="absolute bottom-1/4 left-10 w-80 h-80 bg-cyan-900/20 rounded-full filter blur-[100px] -z-10 pointer-events-none"></div>
+
+    <!-- Header / Navigation -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-cyber-black/80 border-b border-gray-800/80 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyber-neonBlue to-cyber-neonPurple flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                    <i class="fa-solid fa-rocket-launch text-black text-xl font-bold"><span class="font-orbitron">🚀</span></i>
+                </div>
+                <span class="font-orbitron text-xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">NEO-CINEMA</span>
+            </div>
+            <nav class="hidden md:flex space-x-8 font-orbitron text-sm tracking-wider">
+                <a href="#featured" class="text-gray-400 hover:text-cyan-400 transition duration-300">FEATURED</a>
+                <a href="#lineup" class="text-gray-400 hover:text-cyan-400 transition duration-300">2026 LINEUP</a>
+                <a href="#trends" class="text-gray-400 hover:text-cyan-400 transition duration-300">THEMES & TRENDS</a>
+            </nav>
+            <div class="flex items-center space-x-4">
+                <a href="#lineup" class="px-5 py-2 rounded-full border border-cyan-500/30 text-cyan-400 font-orbitron text-xs tracking-widest hover:bg-cyan-500/10 hover:border-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                    EXPLORE 2026
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero / Spotlight Section -->
+    <section id="featured" class="relative min-h-[90vh] flex items-center pt-12 pb-24 px-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <!-- Left Content Area -->
+            <div class="lg:col-span-7 space-y-6 z-10">
+                <div class="inline-flex items-center space-x-2 bg-indigo-950/50 border border-indigo-500/30 px-3 py-1.5 rounded-full text-indigo-300 text-xs font-orbitron tracking-widest">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                    <span>SPOTLIGHT RELEASE</span>
+                </div>
+                <h1 class="font-orbitron text-5xl md:text-7xl font-black tracking-tight leading-none text-white">
+                    PROJECT <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-500 glow-text">HAIL MARY</span>
+                </h1>
+                <p class="text-cyan-400 font-orbitron text-lg tracking-widest uppercase">Release Date: March 20, 2026</p>
+                <p class="text-gray-400 text-lg leading-relaxed max-w-2xl">
+                    From Andy Weir, the brilliant mind behind <em>The Martian</em>, comes an epic sci-fi adaptation directed by the visionary duo Phil Lord and Christopher Miller. Starring Ryan Gosling and Sandra Hüller, this hard-science space thriller follows a lone astronaut tasked with saving Earth from an extinction-level solar catastrophe.
+                </p>
+                
+                <!-- Quick Movie Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-y border-gray-800/80">
+                    <div>
+                        <span class="block text-gray-500 text-xs font-orbitron tracking-wider">DIRECTOR</span>
+                        <span class="text-white font-medium text-sm">Lord & Miller</span>
+                    </div>
+                    <div>
+                        <span class="block text-gray-500 text-xs font-orbitron tracking-wider">STARRING</span>
+                        <span class="text-white font-medium text-sm">Ryan Gosling</span>
+                    </div>
+                    <div>
+                        <span class="block text-gray-500 text-xs font-orbitron tracking-wider">SCREENPLAY</span>
+                        <span class="text-white font-medium text-sm">Drew Goddard</span>
+                    </div>
+                    <div>
+                        <span class="block text-gray-500 text-xs font-orbitron tracking-wider">DISTRIBUTOR</span>
+                        <span class="text-white font-medium text-sm">Amazon MGM</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-4 pt-4">
+                    <a href="#lineup" class="px-8 py-4 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-black font-orbitron font-bold rounded-lg tracking-wider transition-all duration-300 shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:shadow-[0_0_35px_rgba(6,182,212,0.6)] transform hover:-translate-y-0.5">
+                        EXPLORE FULL LIST
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Visual Graphic (Simulated Hologram / Poster Frame) -->
+            <div class="lg:col-span-5 flex justify-center z-10">
+                <div class="relative w-full max-w-md aspect-[3/4] rounded-2xl border border-cyan-500/30 bg-cyber-dark p-4 shadow-[0_0_40px_rgba(6,182,212,0.15)] group hover:border-cyan-400 transition-all duration-500">
+                    <!-- Tech overlay borders -->
+                    <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-400 rounded-tl-2xl"></div>
+                    <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-400 rounded-tr-2xl"></div>
+                    <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-cyan-400 rounded-bl-2xl"></div>
+                    <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-400 rounded-br-2xl"></div>
+                    
+                    <!-- Simulated Space / Astrophoto Backdrop -->
+                    <div class="w-full h-full rounded-xl bg-gradient-to-b from-black via-slate-900 to-indigo-950 overflow-hidden relative flex flex-col justify-between p-6">
+                        <!-- Grid pattern overlay -->
+                        <div class="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:2rem_2rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30"></div>
+                        
+                        <!-- Glow star -->
+                        <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full bg-cyan-400/10 filter blur-3xl animate-pulse"></div>
+                        <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-yellow-100 filter blur-sm"></div>
+
+                        <!-- Top Tag -->
+                        <div class="flex justify-between items-center text-[10px] font-orbitron tracking-widest text-cyan-400/70 z-10">
+                            <span>SYS_LOC: SOL_SYSTEM</span>
+                            <span>STATUS: ACTIVE</span>
+                        </div>
+
+                        <!-- Mid Graphic / Text -->
+                        <div class="text-center z-10 py-12">
+                            <i class="fa-solid fa-user-astronaut text-6xl text-cyan-400/80 mb-4 animate-bounce"></i>
+                            <h3 class="font-orbitron font-bold tracking-widest text-white text-lg">EIDOLON PROJECT</h3>
+                            <p class="text-xs text-gray-400 mt-2 font-mono">SAVE THE SUN, SAVE THE EARTH</p>
+                        </div>
+
+                        <!-- Bottom Tag -->
+                        <div class="border-t border-cyan-500/20 pt-4 z-10">
+                            <span class="block text-[9px] font-mono text-gray-500">MISSION COMPONENT:</span>
+                            <span class="block text-sm font-orbitron text-white tracking-wider">HAIL MARY // R. GOSLING</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Main 2026 Lineup Section -->
+    <section id="lineup" class="py-24 px-6 border-t border-gray-900 bg-cyber-dark/40 relative">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <h2 class="font-orbitron text-4xl md:text-5xl font-black text-white tracking-tight">
+                    THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400">2026 SCI-FI</span> CALENDAR
+                </h2>
+                <div class="h-1 w-24 bg-gradient-to-r from-cyan-500 to-purple-500 mx-auto rounded-full"></div>
+                <p class="text-gray-400">
+                    Prepare for a historic year of cinematic exploration. From galaxy-spanning space operas and cybernetic returns to gritty post-apocalyptic re-imaginings, these are the heavy hitters of 2026.
+                </p>
+            </div>
+
+            <!-- Grid of Movies -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <!-- Movie 1: The Mandalorian & Grogu -->
+                <div class="bg-cyber-gray/50 border border-gray-800 rounded-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 glow-hover">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-orbitron text-cyan-400 tracking-wider bg-cyan-950/40 border border-cyan-800/50 px-2.5 py-1 rounded">MAY 22, 2026</span>
+                            <span class="text-[11px] font-mono text-gray-500">STAR WARS</span>
+                        </div>
+                        <h3 class="font-orbitron text-2xl font-bold text-white mb-2">The Mandalorian & Grogu</h3>
+                        <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                            Directed by Jon Favreau, this highly anticipated theatrical film brings the beloved bounty hunter Din Djarin and his force-sensitive ward Grogu to the big screen, leading Lucasfilm's next era of Star Wars adventures.
+                        </p>
+                    </div>
+                    <div class="border-t border-gray-800 pt-4 mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 font-mono">
+                            <span>DIR: Jon Favreau</span>
+                            <span>CAST: Pedro Pascal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 2: TRON: Ares -->
+                <div class="bg-cyber-gray/50 border border-gray-800 rounded-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 glow-purple">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-orbitron text-purple-400 tracking-wider bg-purple-950/40 border border-purple-800/50 px-2.5 py-1 rounded">OCT 10, 2026</span>
+                            <span class="text-[11px] font-mono text-gray-500">CYBERPUNK</span>
+                        </div>
+                        <h3 class="font-orbitron text-2xl font-bold text-white mb-2">TRON: Ares</h3>
+                        <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                            A highly sophisticated AI program named Ares is sent from the digital grid into the real world on a dangerous mission, marking humanity's first encounter with artificial beings of pure code.
+                        </p>
+                    </div>
+                    <div class="border-t border-gray-800 pt-4 mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 font-mono">
+                            <span>DIR: Joachim Rønning</span>
+                            <span>CAST: Jared Leto, Greta Lee</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 3: Predator: Badlands -->
+                <div class="bg-cyber-gray/50 border border-gray-800 rounded-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 glow-hover">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-orbitron text-cyan-400 tracking-wider bg-cyan-950/40 border border-cyan-800/50 px-2.5 py-1 rounded">NOV 7, 2026</span>
+                            <span class="text-[11px] font-mono text-gray-500">SCI-FI ACTION</span>
+                        </div>
+                        <h3 class="font-orbitron text-2xl font-bold text-white mb-2">Predator: Badlands</h3>
+                        <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                            Dan Trachtenberg returns to direct this standalone sci-fi action thriller set in a hostile future. Starring Elle Fanning, the film explores the deadly encounter of two sisters in a harsh, wasteland landscape.
+                        </p>
+                    </div>
+                    <div class="border-t border-gray-800 pt-4 mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 font-mono">
+                            <span>DIR: Dan Trachtenberg</span>
+                            <span>CAST: Elle Fanning</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 4: The Bride! -->
+                <div class="bg-cyber-gray/50 border border-gray-800 rounded-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 glow-purple">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-orbitron text-purple-400 tracking-wider bg-purple-950/40 border border-purple-800/50 px-2.5 py-1 rounded">SEP 26, 2026</span>
+                            <span class="text-[11px] font-mono text-gray-500">GOTHIC SCI-FI</span>
+                        </div>
+                        <h3 class="font-orbitron text-2xl font-bold text-white mb-2">The Bride!</h3>
+                        <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                            Maggie Gyllenhaal directs a stellar cast including Christian Bale and Jessie Buckley in this stylized, 1930s gothic-inspired sci-fi drama. A lonely Frankenstein's monster seeks the aid of a doctor to create a companion.
+                        </p>
+                    </div>
+                    <div class="border-t border-gray-800 pt-4 mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 font-mono">
+                            <span>DIR: Maggie Gyllenhaal</span>
+                            <span>CAST: Christian Bale, Jessie Buckley</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 5: Weapons -->
+                <div class="bg-cyber-gray/50 border border-gray-800 rounded-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 glow-hover">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-orbitron text-cyan-400 tracking-wider bg-cyan-950/40 border border-cyan-800/50 px-2.5 py-1 rounded">JAN 16, 2026</span>
+                            <span class="text-[11px] font-mono text-gray-500">HORROR SCI-FI</span>
+                        </div>
+                        <h3 class="font-orbitron text-2xl font-bold text-white mb-2">Weapons</h3>
+                        <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                            From Zach Cregger, director of <em>Barbarian</em>, comes an epic, multi-story horror-thriller with sci-fi elements detailing the disappearance of high school students in a small town.
+                        </p>
+                    </div>
+                    <div class="border-t border-gray-800 pt-4 mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 font-mono">
+                            <span>DIR: Zach Cregger</span>
+                            <span>CAST: Josh Brolin, Julia Garner</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 6: Avatar: Fire and Ash -->
+                <div class="bg-cyber-gray/50 border border-gray-800 rounded-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 glow-purple">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-orbitron text-purple-400 tracking-wider bg-purple-950/40 border border-purple-800/50 px-2.5 py-1 rounded">DEC 18, 2026</span>
+                            <span class="text-[11px] font-mono text-gray-500">SPACE OPERA</span>
+                        </div>
+                        <h3 class="font-orbitron text-2xl font-bold text-white mb-2">Avatar: Fire and Ash</h3>
+                        <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                            James Cameron takes us back to Pandora to explore the violent, ash-dwelling Na'vi tribe known as the "Ash People," exposing the darker, more destructive side of the beautiful alien world.
+                        </p>
+                    </div>
+                    <div class="border-t border-gray-800 pt-4 mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 font-mono">
+                            <span>DIR: James Cameron</span>
+                            <span>CAST: Sam Worthington, Zoe Saldaña</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Trends & Speculation Section -->
+    <section id="trends" class="py-24 px-6 border-t border-gray-900 bg-cyber-black relative">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                
+                <!-- Left Column text -->
+                <div class="space-y-6">
+                    <h2 class="font-orbitron text-4xl font-black text-white leading-tight">
+                        CINEMATIC TRENDS <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">SHAPING 2026</span>
+                    </h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        The 2026 sci-fi landscape represents a fascinating shift in speculative fiction. No longer content with simple space battles, filmmakers are grappling with the immediate, existential questions of the mid-2020s.
+                    </p>
+
+                    <!-- Trend list accordion/items -->
+                    <div class="space-y-4">
+                        <div class="flex gap-4 p-4 rounded-lg bg-cyber-dark/60 border border-gray-800/50">
+                            <div class="text-cyan-400 text-2xl"><i class="fa-solid fa-brain"></i></div>
+                            <div>
+                                <h4 class="font-orbitron font-bold text-white text-sm">AI Anxiety & Transgression</h4>
+                                <p class="text-xs text-gray-400 mt-1">Films like <em>TRON: Ares</em> directly confront the blurring boundaries between human consciousness and pure, self-replicating artificial intelligence.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 p-4 rounded-lg bg-cyber-dark/60 border border-gray-800/50">
+                            <div class="text-purple-400 text-2xl"><i class="fa-solid fa-atom"></i></div>
+                            <div>
+                                <h4 class="font-orbitron font-bold text-white text-sm">Hard Science & Solitary Survival</h4>
+                                <p class="text-xs text-gray-400 mt-1">Led by <em>Project Hail Mary</em>, there is a massive resurgence of grounded, scientifically accurate space-exploration dramas emphasizing human ingenuity.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 p-4 rounded-lg bg-cyber-dark/60 border border-gray-800/50">
+                            <div class="text-pink-400 text-2xl"><i class="fa-solid fa-skull-crossbones"></i></div>
+                            <div>
+                                <h4 class="font-orbitron font-bold text-white text-sm">Gothic & Dark Speculative Fiction</h4>
+                                <p class="text-xs text-gray-400 mt-1">With <em>The Bride!</em> and <em>Weapons</em>, filmmakers are fusing classic gothic horror tropes with technological and cosmic terror to create unique genre hybrids.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column interactive stat cards -->
+                <div class="space-y-6 bg-gradient-to-br from-cyber-dark to-cyber-black p-8 rounded-2xl border border-gray-800 relative">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full filter blur-2xl"></div>
+                    <h3 class="font-orbitron font-bold text-white text-lg tracking-wider">BY THE NUMBERS</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-cyber-gray/40 rounded-lg border border-gray-800/80">
+                            <span class="block text-3xl font-orbitron font-black text-cyan-400">3</span>
+                            <span class="text-xs text-gray-400 uppercase tracking-widest font-mono">Major Book/IP Adaptations</span>
+                        </div>
+                        <div class="p-4 bg-cyber-gray/40 rounded-lg border border-gray-800/80">
+                            <span class="block text-3xl font-orbitron font-black text-purple-400">2</span>
+                            <span class="text-xs text-gray-400 uppercase tracking-widest font-mono">Original Screenplays</span>
+                        </div>
+                        <div class="p-4 bg-cyber-gray/40 rounded-lg border border-gray-800/80">
+                            <span class="block text-3xl font-orbitron font-black text-pink-400">$1.5B+</span>
+                            <span class="text-xs text-gray-400 uppercase tracking-widest font-mono">Est. Combined Budget</span>
+                        </div>
+                        <div class="p-4 bg-cyber-gray/40 rounded-lg border border-gray-800/80">
+                            <span class="block text-3xl font-orbitron font-black text-white">100%</span>
+                            <span class="text-xs text-gray-400 uppercase tracking-widest font-mono">Anticipation Level</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-indigo-950/20 rounded-lg border border-indigo-500/20 text-center">
+                        <p class="text-xs text-indigo-300 font-mono">
+                            "The future is already here — it's just not evenly distributed." <br>— William Gibson
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-900 bg-cyber-black py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber-neonBlue to-cyber-neonPurple flex items-center justify-center">
+                    <span class="font-orbitron font-bold text-black text-sm">🚀</span>
+                </div>
+                <span class="font-orbitron text-md font-bold tracking-widest text-white">NEO-CINEMA // 2026</span>
+            </div>
+            <p class="text-xs text-gray-500 font-mono text-center md:text-right">
+                Designed for Sci-Fi enthusiasts. Data sourced from announced production schedules as of 2024/2025.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

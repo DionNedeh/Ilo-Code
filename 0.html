@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Evolution: The Life Cycle of Stars</title>
+    <style>
+        :root {
+            --bg-dark: #05050d;
+            --bg-card: #0d0d21;
+            --text-light: #f1f1f7;
+            --text-muted: #a0a0c0;
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --accent-nebula: #a855f7;
+            --accent-fire: #f97316;
+            --accent-blue: #0ea5e9;
+            --accent-gold: #eab308;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Space background with stars */
+        .space-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #11112a 0%, #05050d 100%);
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Header / Nav */
+        header {
+            background: rgba(5, 5, 13, 0.85);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo::before {
+            content: '✦';
+            font-size: 1.8rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+            -webkit-text-fill-color: initial;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s, text-shadow 0.3s;
+            font-size: 0.95rem;
+        }
+
+        nav a:hover {
+            color: var(--text-light);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #ffffff, #c084fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6);
+        }
+
+        /* Cosmic background glowing orb in hero */
+        .nebula-orb {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(99, 102, 241, 0.05) 50%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            filter: blur(40px);
+            animation: pulse 8s infinite alternate ease-in-out;
+            z-index: 1;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+            100% { transform: scale(1.2) translate(10px, -20px); opacity: 0.9; }
+        }
+
+        /* Main Layout Sections */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-title p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Interactive Mass Simulator */
+        .simulator-container {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .simulator-container {
+                grid-template-columns: 1fr;
+                padding: 1.5rem;
+            }
+        }
+
+        .sim-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sim-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .sim-desc {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .slider-group {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .slider-label span:last-child {
+            color: var(--secondary);
+            font-size: 1.2rem;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .sim-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(13, 13, 33, 0.8) 0%, rgba(5, 5, 13, 0.9) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            min-height: 350px;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .star-preview-wrapper {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .star-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--accent-gold);
+            box-shadow: 0 0 40px var(--accent-gold);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .star-preview::after {
+            content: '';
+            position: absolute;
+            top: -10%; left: -10%; width: 120%; height: 120%;
+            border-radius: 50%;
+            background: inherit;
+            filter: blur(15px);
+            opacity: 0.6;
+            z-index: -1;
+        }
+
+        .star-info {
+            text-align: center;
+            z-index: 2;
+            margin-top: 1.5rem;
+        }
+
+        .star-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .star-details {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 320px;
+        }
+
+        /* Life Cycle Grid */
+        .lifecycle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .stage-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.1);
+        }
+
+        .stage-badge {
+            align-self: flex-start;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+        }
+
+        .stage-card:nth-child(1) .stage-badge { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .stage-card:nth-child(2) .stage-badge { background: rgba(249, 115, 22, 0.2); color: #ffedd5; }
+        .stage-card:nth-child(3) .stage-badge { background: rgba(14, 165, 233, 0.2); color: #bae6fd; }
+        .stage-card:nth-child(4) .stage-badge { background: rgba(236, 72, 153, 0.2); color: #fbcfe8; }
+        .stage-card:nth-child(5) .stage-badge { background: rgba(234, 179, 8, 0.2); color: #fef08a; }
+        .stage-card:nth-child(6) .stage-badge { background: rgba(99, 102, 241, 0.2); color: #c7d2fe; }
+
+        .stage-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .stage-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .stage-graphic {
+            height: 100px;
+            width: 100%;
+            margin-top: auto;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Custom mini graphics inside cards */
+        .graphic-nebula {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(236, 72, 153, 0.1) 60%, transparent 100%);
+            filter: blur(8px);
+        }
+        .graphic-protostar {
+            width: 30px; height: 30px;
+            background: #f97316;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #f97316, 0 0 40px #ef4444;
+            animation: pulse-mini 2s infinite alternate;
+        }
+        .graphic-main {
+            width: 40px; height: 40px;
+            background: #0ea5e9;
+            border-radius: 50%;
+            box-shadow: 0 0 25px #0ea5e9;
+        }
+        .graphic-giant {
+            width: 70px; height: 70px;
+            background: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+        }
+        .graphic-supernova {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, #fff 0%, #eab308 30%, #ec4899 60%, transparent 80%);
+            filter: blur(4px);
+            animation: explode-mini 3s infinite ease-out;
+        }
+        .graphic-remnant {
+            width: 15px; height: 15px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #fff, 0 0 30px var(--primary);
+        }
+
+        @keyframes pulse-mini {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        @keyframes explode-mini {
+            0% { transform: scale(0.2); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        /* Interactive Quiz Section */
+        .quiz-container {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .quiz-question {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-color: #10b981 !important;
+            color: #34d399 !important;
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-color: #ef4444 !important;
+            color: #fca5a5 !important;
+        }
+
+        .quiz-feedback {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            min-height: 27px;
+        }
+
+        .quiz-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quiz-progress {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 4rem 2rem 2rem 2rem;
+            background: #030308;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        .footer-copy {
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Stars Background -->
+    <div class="space-bg" id="space-bg"></div>
+
+    <!-- Header / Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">Stellaris</a>
+            <nav>
+                <ul>
+                    <li><a href="#simulator">Mass Simulator</a></li>
+                    <li><a href="#lifecycle">Life Cycle</a></li>
+                    <li><a href="#quiz">Test Knowledge</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="nebula-orb"></div>
+        <div class="hero-content">
+            <h1>The Journey of Cosmic Fire</h1>
+            <p>From silent clouds of hydrogen to the dazzling brilliance of supernovas, explore the fascinating life cycles of stars in our universe.</p>
+            <a href="#simulator" class="btn">Begin Exploration</a>
+        </div>
+    </section>
+
+    <!-- Interactive Mass Simulator -->
+    <section id="simulator">
+        <div class="section-title">
+            <h2>Stellar Mass Simulator</h2>
+            <p>A star's mass at birth completely dictates its entire life cycle, temperature, color, and ultimate fate. Adjust the slider to see how mass shapes a star.</p>
+        </div>
+
+        <div class="simulator-container">
+            <div class="sim-controls">
+                <h3 class="sim-title">Set Star Birth Mass</h3>
+                <p class="sim-desc">Drag the slider to adjust the initial mass of the star in units of Solar Masses (M☉), where 1 M☉ is the mass of our Sun.</p>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Initial Mass</span>
+                        <span id="mass-val">1.0 M☉</span>
+                    </div>
+                    <input type="range" id="mass-slider" min="0.1" max="50" step="0.1" value="1.0">
+                </div>
+            </div>
+
+            <div class="sim-visual">
+                <div class="star-preview-wrapper">
+                    <div class="star-preview" id="star-visual"></div>
+                </div>
+                <div class="star-info">
+                    <div class="star-name" id="star-name">Yellow Dwarf (G-Type)</div>
+                    <div class="star-details" id="star-details">A stable, medium-sized star like our Sun. It will burn hydrogen for about 10 billion years before expanding into a Red Giant and finally cooling into a beautiful White Dwarf.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Life Cycle Timeline/Grid -->
+    <section id="lifecycle">
+        <div class="section-title">
+            <h2>Stages of Stellar Evolution</h2>
+            <p>The stellar journey is a continuous battle between gravity pulling inward and nuclear fusion pushing outward.</p>
+        </div>
+
+        <div class="lifecycle-grid">
+            <!-- Stage 1 -->
+            <div class="stage-card">
+                <span class="stage-badge">Stage 1</span>
+                <h3 class="stage-title">Stellar Nebula</h3>
+                <p class="stage-desc">The nurseries of stars. Colossal clouds of cold hydrogen gas and cosmic dust drift in space. Triggered by a shockwave or gravitational disturbance, regions of the cloud begin to collapse under their own gravity.</p>
+                <div class="stage-graphic">
+                    <div class="graphic-nebula"></div>
+                </div>
+            </div>
+
+            <!-- Stage 2 -->
+            <div class="stage-card">
+                <span class="stage-badge">Stage 2</span>
+                <h3 class="stage-title">Protostar</h3>
+                <p class="stage-desc">As the collapsing pocket of gas grows denser, its core heats up rapidly. Friction and gravitational compression raise temperatures to millions of degrees, glowing dimly as it prepares to ignite fusion.</p>
+                <div class="stage-graphic">
+                    <div class="graphic-protostar"></div>
+                </div>
+            </div>
+
+            <!-- Stage 3 -->
+            <div class="stage-card">
+                <span class="stage-badge">Stage 3</span>
+                <h3 class="stage-title">Main Sequence</h3>
+                <p class="stage-desc">The core hits 15 million Kelvin, igniting hydrogen fusion. The star achieves hydrostatic equilibrium, where outward radiation pressure perfectly balances inward gravity. This is the longest and most stable phase.</p>
+                <div class="stage-graphic">
+                    <div class="graphic-main"></div>
+                </div>
+            </div>
+
+            <!-- Stage 4 -->
+            <div class="stage-card">
+                <span class="stage-badge">Stage 4</span>
+                <h3 class="stage-title">Red Giant Expansion</h3>
+                <p class="stage-desc">When hydrogen runs dry, the core contracts and heats up, while the outer layers expand dramatically and cool, turning red. Low-mass stars become Red Giants; high-mass stars swell into massive Red Supergiants.</p>
+                <div class="stage-graphic">
+                    <div class="graphic-giant"></div>
+                </div>
+            </div>
+
+            <!-- Stage 5 -->
+            <div class="stage-card">
+                <span class="stage-badge">Stage 5</span>
+                <h3 class="stage-title">Supernova / Nebula Death</h3>
+                <p class="stage-desc">Low-mass stars gently shed their outer layers, creating gorgeous Planetary Nebulae. Massive stars go out in a violent, universe-shaking Supernova explosion, synthesizing heavy elements and blasting them into space.</p>
+                <div class="stage-graphic">
+                    <div class="graphic-supernova"></div>
+                </div>
+            </div>
+
+            <!-- Stage 6 -->
+            <div class="stage-card">
+                <span class="stage-badge">Stage 6</span>
+                <h3 class="stage-title">The Cosmic Remnant</h3>
+                <p class="stage-desc">What remains at the center. Medium stars leave behind dense, glowing White Dwarfs. High-mass stars collapse into ultra-dense Neutron Stars or, if massive enough, infinite gravitational points: Black Holes.</p>
+                <div class="stage-graphic">
+                    <div class="graphic-remnant"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz Section -->
+    <section id="quiz">
+        <div class="section-title">
+            <h2>Test Your Cosmic Knowledge</h2>
+            <p>Think you've mastered stellar evolution? Take our quick quiz to find out!</p>
+        </div>
+
+        <div class="quiz-container">
+            <div class="quiz-question" id="quiz-question">Question loading...</div>
+            <div class="quiz-options" id="quiz-options">
+                <!-- Options will be injected here -->
+            </div>
+            <div class="quiz-feedback" id="quiz-feedback"></div>
+            <div class="quiz-controls">
+                <span class="quiz-progress" id="quiz-progress">Question 1 of 3</span>
+                <button class="btn" id="next-btn" style="display: none; padding: 0.5rem 1.5rem; font-size: 0.9rem;">Next Question</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="logo">Stellaris</div>
+            <p>An interactive educational portal dedicated to sharing the wonders of astrophysics.</p>
+            <ul class="footer-links">
+                <li><a href="#simulator">Simulator</a></li>
+                <li><a href="#lifecycle">Life Cycle</a></li>
+                <li><a href="#quiz">Quiz</a></li>
+            </ul>
+            <p class="footer-copy">&copy; 2025 Stellaris. Built with passion for the cosmos.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Generate Stars Background
+        const spaceBg = document.getElementById('space-bg');
+        const starCount = 100;
+
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            
+            // Random positioning
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            
+            // Random sizing (1px to 3px)
+            const size = Math.random() * 2 + 1;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            
+            // Random animation delay
+            star.style.animationDelay = `${Math.random() * 5}s`;
+            star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+            
+            spaceBg.appendChild(star);
+        }
+
+        // 2. Mass Simulator Logic
+        const massSlider = document.getElementById('mass-slider');
+        const massVal = document.getElementById('mass-val');
+        const starVisual = document.getElementById('star-visual');
+        const starName = document.getElementById('star-name');
+        const starDetails = document.getElementById('star-details');
+
+        const stellarClasses = [
+            {
+                maxMass: 0.5,
+                name: "Red Dwarf (M-Type)",
+                color: "#ff4d4d",
+                shadow: "0 0 30px #ff1a1a, 0 0 60px #e60000",
+                size: "40px",
+                desc: "An ultra-stable, cool, low-mass star. Red Dwarfs burn their fuel so slowly that they can live for trillions of years. They will never explode; instead, they slowly cool into Blue Dwarfs and then White Dwarfs."
+            },
+            {
+                maxMass: 1.5,
+                name: "Yellow Dwarf (G-Type)",
+                color: "#ffcc00",
+                shadow: "0 0 40px #ffb300, 0 0 80px #ff8000",
+                size: "70px",
+                desc: "A stable, medium-sized star like our Sun. It fuses hydrogen into helium for about 10 billion years. When its fuel is exhausted, it swells into a gorgeous Red Giant, sheds its outer shell as a planetary nebula, and leaves behind a glowing White Dwarf."
+            },
+            {
+                maxMass: 8.0,
+                name: "Blue Giant (B-Type)",
+                color: "#33ccff",
+                shadow: "0 0 50px #00a3e0, 0 0 100px #006699",
+                size: "110px",
+                desc: "A hot, luminous, massive star. Blue giants burn fuel at an incredible rate, living for only tens to hundreds of millions of years. They end their lives in spectacular core-collapse Supernova explosions, leaving behind incredibly dense Neutron Stars."
+            },
+            {
+                maxMass: 50.0,
+                name: "Blue Supergiant (O-Type)",
+                color: "#99ccff",
+                shadow: "0 0 60px #4da6ff, 0 0 120px #0066cc, 0 0 180px #0000ff",
+                size: "150px",
+                desc: "The monsters of the cosmos. Extremely rare, hot, and massive (up to millions of times brighter than our Sun). They burn through fuel in just a few million years. Their deaths trigger violent Hypernovas, collapsing directly into stellar-mass Black Holes."
+            }
+        ];
+
+        function updateSimulator() {
+            const mass = parseFloat(massSlider.value);
+            massVal.textContent = `${mass.toFixed(1)} M☉`;
+
+            // Find matching star class
+            let starClass = stellarClasses[stellarClasses.length - 1];
+            for (let i = 0; i < stellarClasses.length; i++) {
+                if (mass <= stellarClasses[i].maxMass) {
+                    starClass = stellarClasses[i];
+                    break;
+                }
+            }
+
+            // Apply visual styles
+            starVisual.style.backgroundColor = starClass.color;
+            starVisual.style.boxShadow = starClass.shadow;
+            starVisual.style.width = starClass.size;
+            starVisual.style.height = starClass.size;
+
+            // Apply text info
+            starName.textContent = starClass.name;
+            starDetails.textContent = starClass.desc;
+        }
+
+        massSlider.addEventListener('input', updateSimulator);
+        updateSimulator(); // Initialize with default
+
+        // 3. Quiz Logic
+        const quizData = [
+            {
+                question: "What primary force balances a star's gravity during its stable Main Sequence phase?",
+                options: [
+                    "Magnetic repulsion from the core",
+                    "Outward radiation pressure from nuclear fusion",
+                    "Centrifugal force from the star's rotation",
+                    "Electrostatic repulsion between gas atoms"
+                ],
+                correct: 1,
+                feedback: "Correct! Hydrostatic equilibrium is achieved when the inward pull of gravity is perfectly balanced by the outward pressure of nuclear fusion."
+            },
+            {
+                question: "What determines the ultimate life cycle, temperature, and final fate of a star?",
+                options: [
+                    "Its initial birth mass",
+                    "The number of planets orbiting it",
+                    "Its distance from the galactic center",
+                    "Its rotation speed"
+                ],
+                correct: 0,
+                feedback: "Correct! Mass is destiny for stars. Higher mass means higher pressures, faster fusion, shorter lifetimes, and more violent deaths."
+            },
+            {
+                question: "What incredibly dense remnant is left behind by a medium-sized star like our Sun?",
+                options: [
+                    "A Black Hole",
+                    "A Neutron Star",
+                    "A White Dwarf",
+                    "A Red Dwarf"
+                ],
+                correct: 2,
+                feedback: "Correct! Medium stars like our Sun gently shed their outer layers and leave behind a glowing carbon-oxygen core called a White Dwarf."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        const qText = document.getElementById('quiz-question');
+        const qOptions = document.getElementById('quiz-options');
+        const qFeedback = document.getElementById('quiz-feedback');
+        const qProgress = document.getElementById('quiz-progress');
+        const nextBtn = document.getElementById('next-btn');
+
+        function loadQuestion() {
+            answered = false;
+            nextBtn.style.display = 'none';
+            qFeedback.textContent = '';
+            
+            const currentData = quizData[currentQuestion];
+            qText.textContent = currentData.question;
+            qProgress.textContent = `Question ${currentQuestion + 1} of ${quizData.length}`;
+
+            qOptions.innerHTML = '';
+            currentData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('quiz-option');
+                button.textContent = option;
+                button.addEventListener('click', () => selectOption(index));
+                qOptions.appendChild(button);
+            });
+        }
+
+        function selectOption(selectedIndex) {
+            if (answered) return;
+            answered = true;
+
+            const currentData = quizData[currentQuestion];
+            const options = qOptions.children;
+
+            if (selectedIndex === currentData.correct) {
+                options[selectedIndex].classList.add('correct');
+                qFeedback.textContent = currentData.feedback;
+                qFeedback.style.color = '#34d399';
+                score++;
+            } else {
+                options[selectedIndex].classList.add('wrong');
+                options[currentData.correct].classList.add('correct');
+                qFeedback.textContent = "Incorrect. " + currentData.feedback;
+                qFeedback.style.color = '#fca5a5';
+            }
+
+            // Disable all options
+            for (let i = 0; i < options.length; i++) {
+                options[i].style.cursor = 'default';
+            }
+
+            nextBtn.style.display = 'block';
+            if (currentQuestion === quizData.length - 1) {
+                nextBtn.textContent = 'See Results';
+            } else {
+                nextBtn.textContent = 'Next Question';
+            }
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        function showResults() {
+            qText.textContent = "Quiz Complete!";
+            qOptions.innerHTML = '';
+            qFeedback.textContent = `You scored ${score} out of ${quizData.length}!`;
+            qFeedback.style.color = '#fff';
+            qProgress.textContent = '';
+            nextBtn.style.display = 'block';
+            nextBtn.textContent = 'Restart Quiz';
+            nextBtn.onclick = () => {
+                currentQuestion = 0;
+                score = 0;
+                nextBtn.onclick = null; // Reset custom click handler
+                loadQuestion();
+            };
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>

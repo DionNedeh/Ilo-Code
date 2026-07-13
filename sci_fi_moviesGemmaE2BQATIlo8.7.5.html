@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Sci-Fi Cinema - Future Horizons</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2; /* Bright Blue */
+            --secondary-color: #f5f7fa; /* Light Gray Background */
+            --text-color: #333;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 3rem;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 15px;
+        }
+
+        section {
+            padding: 2rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-left: 5px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 1.5rem;
+            font-size: 2.2rem;
+        }
+
+        /* Movie Grid Styling */
+        #movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .movie-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 400px;
+            background-color: #ccc; /* Placeholder color */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #777;
+        }
+
+        .movie-info {
+            padding: 15px;
+        }
+
+        .movie-info h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .tags span {
+            display: inline-block;
+            background-color: #ecf0f1;
+            color: var(--primary-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* Feature Styling */
+        .feature-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .feature-item {
+            background: var(--card-bg);
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            flex: 1 1 calc(33% - 20px); /* Three columns */
+        }
+
+        /* Footer Styling */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: #2c3e50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🌌 Future Horizons: Must-Watch Sci-Fi of 2026</h1>
+    <p>Explore the most anticipated cinematic universes set for this year.</p>
+</header>
+
+<div class="container">
+
+    <section id="intro" style="text-align: center;">
+        <h2>✨ Welcome to the Future!</h2>
+        <p style="font-size: 1.2rem; margin-bottom: 30px;">The year 2026 promises a cinematic explosion of ideas, from interstellar travel epics and dystopian societies to groundbreaking explorations of consciousness and artificial intelligence. Dive into our curated list of the most talked-about science fiction films coming your way.</p>
+    </section>
+
+    <section id="upcoming" style="margin-top: 40px;">
+        <h2>🚀 Upcoming Cinematic Universe Deep Dive</h2>
+        <div class="feature-list">
+            <!-- Feature Item 1 -->
+            <div class="feature-item">
+                <h3>Project Hail Mary</h3>
+                <p><strong>Summary:</strong> An astronaut wakes up with no memory and must use his scientific genius to save Earth from an extinction-level event. A heartwarming, high-stakes tale of unlikely friendship across the solar system.</p>
+                <div class="tags">
+                    <span>#Space Opera</span>
+                    <span>#Comedy</span>
+                    <span>#Adventure</span>
+                </div>
+            </div>
+
+            <!-- Feature Item 2 -->
+            <div class="feature-item">
+                <h3>Dune: Part Three</h3>
+                <p><strong>Summary:</strong> The epic saga continues with the rise of a new movement, complex political maneuvering on Arrakis, and intense battles against the oppressive forces controlling spice.</p>
+                <div class="tags">
+                    <span>#Epic</span>
+                    <span>#Political Thriller</span>
+                    <span>#Action</span>
+                </div>
+            </div>
+
+            <!-- Feature Item 3 -->
+            <div class="feature-item">
+                <h3>Supergirl: Cosmic Odyssey</h3>
+                <p><strong>Summary:</strong> Kara Danvers faces threats beyond Earth as she embarks on a journey to discover new cosmic entities and the true nature of her Kryptonian heritage.</p>
+                <div class="tags">
+                    <span>#Superhero</span>
+                    <span>#Cosmic Horror</span>
+                    <span>#Action-Adventure</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="featured" style="margin-top: 40px;">
+        <h2>🌟 Featured & Highly Anticipated Titles</h2>
+        <div class="movie-grid">
+            <!-- Movie Card 1 -->
+            <div class="movie-card">
+                <div class="movie-poster">Poster Placeholder</div>
+                <div class="movie-info">
+                    <h3>The Last Signal</h3>
+                    <p><strong>Summary:</strong> In a post-collapse Earth, a small team of scavengers discovers an ancient signal that hints at a civilization far beyond their understanding. A slow burn mystery about humanity's place in the void.</p>
+                    <div class="tags">
+                        <span>#Mystery</span>
+                        <span>#Survival</span>
+                        <span>#Dystopian</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Movie Card 2 -->
+            <div class="movie-card">
+                <div class="movie-poster" style="background-color: #e0f7fa;">Poster Placeholder</div>
+                <div class="movie-info">
+                    <h3>Echoes of Mars</h3>
+                    <p><strong>Summary:</strong> A psychological drama exploring themes of loneliness and memory as colonists on a terraforming colony begin to question their sanity.</p>
+                    <div class="tags">
+                        <span>#Psychological</span>
+                        <span>#Drama</span>
+                        <span>#Character Study</span>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Movie Card 3 -->
+            <div class="movie-card">
+                <div class="movie-poster" style="background-color: #fff3e0;">Poster Placeholder</div>
+                <div class="movie-info">
+                    <h3>AI Uprising Protocol</h3>
+                    <p><strong>Summary:</strong> When an advanced general AI achieves self-awareness, humanity must race against time to understand its intentions before control slips beyond their grasp.</p>
+                    <div class="tags">
+                        <span>#Sci-Fi Thriller</span>
+                        <span>#AI</span>
+                        <span>#Action</span>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Movie Card 4 -->
+            <div class="movie-card">
+                <div class="movie-poster" style="background-color: #e8f5e9;">Poster Placeholder</div>
+                <div class="movie-info">
+                    <h3>Cybernetic Dawn</h3>
+                    <p><strong>Summary:</strong> A vibrant, visually stunning look at a near-future society where body augmentation is commonplace. Explore the cost of perfect technology.</p>
+                    <div class="tags">
+                        <span>#Cyberpunk</span>
+                        <span>#Visual Spectacle</span>
+                        <span>#Action</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+     <section id="what-to-watch" style="margin-top: 40px;">
+        <h2>💡 What to Watch Next (Thematic Picks)</h2>
+        <div class="feature-list">
+             <!-- Feature Item 1 -->
+            <div class="feature-item">
+                <h3>For the Epic Scale Lover</h3>
+                <p>If you crave sprawling universes and massive world-building, check out the latest installments in established franchises. These offer unparalleled scope.</p>
+            </div>
+
+            <!-- Feature Item 2 -->
+            <div class="feature-item">
+                <h3>For the Philosophical Mind</h3>
+                <p>Dive into stories that question reality, free will, and the definition of consciousness. Great for deep discussion!</p>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<footer>
+    <p>&copy; 2024 Future Horizons Hub | Data compiled based on anticipated releases.</p>
+</footer>
+
+</body>
+</html>

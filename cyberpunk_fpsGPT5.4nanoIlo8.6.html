@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neon Drift FPS (Simple)</title>
+  <style>
+    :root{color-scheme:dark;}
+    body{
+      margin:0; background:#05060a; color:#d7e7ff;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow:hidden;
+    }
+    #wrap{position:fixed; inset:0; display:flex;}
+    #hud{
+      position:absolute; left:14px; top:14px; z-index:2;
+      padding:10px 12px; border:1px solid rgba(0,255,255,.25);
+      background:linear-gradient(180deg, rgba(0,255,255,.08), rgba(0,0,0,.35));
+      border-radius:12px; backdrop-filter: blur(6px);
+      box-shadow:0 0 22px rgba(0,255,255,.12);
+      user-select:none;
+    }
+    #hud .row{display:flex; gap:14px; flex-wrap:wrap; font-size:14px;}
+    #hud b{color:#7dfcff}
+    #help{
+      position:absolute; right:14px; top:14px; z-index:2;
+      width:min(360px, 40vw);
+      padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(255,0,255,.22);
+      background:linear-gradient(180deg, rgba(255,0,255,.08), rgba(0,0,0,.35));
+      box-shadow:0 0 22px rgba(255,0,255,.10);
+      user-select:none;
+      font-size:13px;
+      line-height:1.35;
+    }
+    #canvas{
+      width:100%; height:100%; display:block;
+      background:
+        radial-gradient(1200px 800px at 50% 50%, rgba(0,255,255,.09), transparent 60%),
+        radial-gradient(900px 600px at 70% 20%, rgba(255,0,255,.07), transparent 55%),
+        linear-gradient(180deg, #05060a 0%, #02030a 100%);
+    }
+    #crosshair{
+      position:absolute; left:50%; top:50%; z-index:3;
+      width:18px; height:18px; margin:-9px 0 0 -9px;
+      border-radius:50%;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(0,255,255,.85) 0 2px, transparent 3px 100%),
+        conic-gradient(from 0deg, rgba(0,255,255,.0), rgba(0,255,255,.85), rgba(255,0,255,.0));
+      box-shadow:0 0 18px rgba(0,255,255,.25);
+      mix-blend-mode:screen;
+      opacity:.95;
+    }
+    #toast{
+      position:absolute; left:50%; bottom:18px; transform:translateX(-50%);
+      z-index:3;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(125,252,255,.25);
+      background:rgba(0,0,0,.35);
+      box-shadow:0 0 24px rgba(0,255,255,.12);
+      color:#c9f7ff;
+      font-size:14px;
+      user-select:none;
+      display:none;
+      white-space:nowrap;
+    }
+    .kbd{display:inline-block; padding:1px 7px; border:1px solid rgba(255,255,255,.15);
+      border-bottom-color: rgba(255,255,255,.08);
+      border-radius:8px; background:rgba(0,0,0,.25); box-shadow: inset 0 -2px 0 rgba(255,255,255,.06);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    a{color:#7dfcff; text-decoration:none;}
+    a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="canvas"></canvas>
+    <div id="crosshair"></div>
+    <div id="hud">
+      <div class="row">HP: <b id="hp">100</b></div>
+      <div class="row">Score: <b id="score">0</b></div>
+      <div class="row">Ammo: <b id="ammo">12</b> / <span id="reserve">∞</span></div>
+      <div class="row">Status: <span id="status">Click to play</span></div>
+    </div>
+    <div id="help">
+      <div style="font-weight:800; color:#ff4dff; margin-bottom:6px;">Neon Drift FPS</div>
+      Move: <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><br/>
+      Look: <span class="kbd">Mouse</span><br/>
+      Shoot: <span class="kbd">Left Click</span> or <span class="kbd">Space</span><br/>
+      Reload (safety): <span class="kbd">R</span><br/>
+      Tip: Enemies are simple billboard "targets". This is a tiny ray-march-ish pseudo-3D demo.
+    </div>
+    <div id="toast"></div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  const ui = {
+    hp: document.getElementById('hp'),
+    score: document.getElementById('score'),
+    ammo: document.getElementById('ammo'),
+    reserve: document.getElementById('reserve'),
+    status: document.getElementById('status'),
+    toast: document.getElementById('toast'),
+  };
+
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  function resize(){
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = Math.floor(w * DPR);
+    canvas.height = Math.floor(h * DPR);
+    canvas.style.width = w+'px';
+    canvas.style.height = h+'px';
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Simple pseudo-3D: cast rays over a grid, render wall strips + enemies as sprites.
+  const MAP_W = 18, MAP_H = 18;
+  // 0 = empty, 1 = wall, 2 = glass (slightly different tint)
+  const map = [
+    "111111111111111111",
+    "100000000000000001",
+    "102000000000000001",
+    "100000000000000001",
+    "100000011100000001",
+    "100000010100000001",
+    "100000010100000001",
+    "100000011100000001",
+    "100000000000000001",
+    "100000000000000001",
+    "100001111111000001",
+    "100001000001000001",
+    "100001011101000001",
+    "100001000001000001",
+    "100000000000000001",
+    "100000000000000001",
+    "100000000000000001",
+    "111111111111111111",
+  ];
+
+  function cell(x,y){
+    x = Math.floor(x); y = Math.floor(y);
+    if(x<0||y<0||x>=MAP_W||y>=MAP_H) return 1;
+    const c = map[y][x];
+    return c === '2' ? 2 : (c === '1' ? 1 : 0);
+  }
+
+  // Player
+  const player = {
+    x: 3.5,
+    y: 3.5,
+    a: 0, // angle
+    hp: 100,
+    ammo: 12,
+    reserve: Infinity,
+    fireCooldown: 0,
+    reloadCooldown: 0,
+    alive: true,
+  };
+
+  const keys = new Set();
+  window.addEventListener('keydown', (e)=>{
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," '"].includes(e.key)){
+      // ignore
+    }
+    keys.add(e.key.toLowerCase());
+    if(e.key.toLowerCase() === 'r') doReload();
+  });
+  window.addEventListener('keyup', (e)=>{
+    keys.delete(e.key.toLowerCase());
+  });
+
+  // Mouse look
+  let pointerLocked = false;
+  canvas.addEventListener('click', ()=>{
+    if(!pointerLocked) canvas.requestPointerLock?.();
+  });
+
+  document.addEventListener('pointerlockchange', ()=>{
+    pointerLocked = document.pointerLockElement === canvas;
+    ui.status.textContent = pointerLocked ? 'Online' : 'Click to play';
+  });
+
+  window.addEventListener('mousemove', (e)=>{
+    if(!pointerLocked) return;
+    const sens = 0.0025;
+    player.a += e.movementX * sens;
+  });
+
+  // Shooting
+  let mouseDown = false;
+  window.addEventListener('mousedown', (e)=>{
+    if(e.button===0){ mouseDown = true; fire(); }
+  });
+  window.addEventListener('mouseup', (e)=>{
+    if(e.button===0) mouseDown = false;
+  });
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space') { if(!keys.has('space')) fire(); }
+  });
+
+  function doReload(){
+    if(!player.alive) return;
+    if(player.reloadCooldown>0) return;
+    // Simple instant reload to full magazine
+    player.reloadCooldown = 0.45;
+    showToast('Reloading…');
+  }
+
+  function showToast(msg){
+    ui.toast.textContent = msg;
+    ui.toast.style.display='block';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> ui.toast.style.display='none', 900);
+  }
+
+  function normalizeAngle(a){
+    const t = Math.PI*2;
+    a %= t;
+    if(a< -Math.PI) a += t;
+    if(a> Math.PI) a -= t;
+    return a;
+  }
+
+  function fire(){
+    if(!player.alive) return;
+    if(player.fireCooldown>0) return;
+    if(player.reloadCooldown>0) return;
+    if(player.ammo<=0){
+      showToast('Out of ammo — press R');
+      return;
+    }
+    player.fireCooldown = 0.18;
+    player.ammo--;
+
+    // Hit-scan: find closest enemy in a narrow cone
+    const spread = 0.015; // slight randomness
+    const ang = player.a + (Math.random()*2-1)*spread;
+
+    let best = null;
+    let bestD = Infinity;
+    for(const en of enemies){
+      if(!en.alive) continue;
+      const dx = en.x - player.x;
+      const dy = en.y - player.y;
+      const dist = Math.hypot(dx,dy);
+      const ea = Math.atan2(dy,dx);
+      let da = normalizeAngle(ea - ang);
+      const cone = 0.10;
+      // Also require line-of-sight through walls (ray check)
+      if(Math.abs(da) < cone){
+        // Ray check
+        if(!rayHitsWall(player.x, player.y, ea, dist)){
+          if(dist < bestD){ bestD = dist; best = en; }
+        }
+      }
+    }
+
+    if(best){
+      best.hit();
+      spawnMuzzleSpark();
+    } else {
+      spawnMuzzleSpark(true);
+    }
+
+    updateHUD();
+  }
+
+  function rayHitsWall(x0,y0,ang,maxDist){
+    // DDA stepping in small increments
+    const step = 0.02;
+    let x=x0, y=y0;
+    const dx = Math.cos(ang)*step;
+    const dy = Math.sin(ang)*step;
+    const lim = Math.min(maxDist, 30);
+    for(let t=0; t<lim/step; t++){
+      x += dx; y += dy;
+      if(cell(x,y)===1 || cell(x,y)===2){
+        // Allow glass to still count as wall blocking for this demo
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Enemies
+  const enemies = [];
+  function randRange(a,b){ return a + Math.random()*(b-a); }
+  const ENEMY_COUNT = 8;
+  function isEmptyNear(x,y){
+    if(cell(x,y)!==0) return false;
+    for(const en of enemies){
+      if(en.alive && Math.hypot(en.x-x,en.y-y) < 1.2) return false;
+    }
+    return true;
+  }
+  while(enemies.length < ENEMY_COUNT){
+    const x = randRange(1.5, MAP_W-2.5);
+    const y = randRange(1.5, MAP_H-2.5);
+    if(cell(x,y)!==0) continue;
+    const tooClose = Math.hypot(x-player.x,y-player.y) < 4.2;
+    if(tooClose) continue;
+    if(!isEmptyNear(x,y)) continue;
+    enemies.push({
+      x, y,
+      hp: 3,
+      alive: true,
+      speed: randRange(0.9,1.25),
+      jitter: Math.random()*10,
+      hit(){
+        this.hp--;
+        spawnHit(this);
+        if(this.hp<=0){
+          this.alive=false;
+          score += 100;
+          updateHUD();
+          spawnPop(this);
+        } else {
+          score += 15;
+          updateHUD();
+        }
+      }
+    });
+  }
+
+  let score = 0;
+  function updateHUD(){
+    ui.hp.textContent = Math.max(0, Math.round(player.hp));
+    ui.score.textContent = score;
+    ui.ammo.textContent = Math.max(0, player.ammo);
+    ui.status.textContent = player.alive ? (pointerLocked ? 'Online' : 'Click to play') : 'Down — press F5 to refresh';
+  }
+
+  // Particles
+  const particles = [];
+  function spawnMuzzleSpark(miss=false){
+    particles.push({
+      kind:'muzzle',
+      t:0,
+      life:0.22,
+      x: player.x + Math.cos(player.a)*0.35,
+      y: player.y + Math.sin(player.a)*0.35,
+      vx: (Math.random()*2-1)*1.2,
+      vy: (Math.random()*2-1)*1.2,
+      miss
+    });
+  }
+  function spawnHit(en){
+    particles.push({
+      kind:'hit', t:0, life:0.35,
+      x: en.x, y: en.y,
+      vx: randRange(-0.4,0.4), vy: randRange(-0.4,0.4)
+    });
+  }
+  function spawnPop(en){
+    for(let i=0;i<14;i++){
+      particles.push({
+        kind:'pop', t:0, life:0.55,
+        x: en.x, y: en.y,
+        vx: randRange(-3.2,3.2), vy: randRange(-3.2,3.2)
+      });
+    }
+  }
+
+  function updateParticles(dt){
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.t += dt;
+      p.x += p.vx*dt;
+      p.y += p.vy*dt;
+      // damping
+      p.vx *= Math.pow(0.0001, dt);
+      p.vy *= Math.pow(0.0001, dt);
+      if(p.t>=p.life) particles.splice(i,1);
+    }
+  }
+
+  // Rendering helpers
+  const fov = Math.PI/3.2; // ~55deg
+  function castRay(rayAngle, maxLen=20){
+    // DDA grid stepping
+    let x = player.x;
+    let y = player.y;
+    const dirX = Math.cos(rayAngle);
+    const dirY = Math.sin(rayAngle);
+
+    let mapX = Math.floor(x);
+    let mapY = Math.floor(y);
+
+    const deltaDistX = Math.abs(1/(dirX||1e-9));
+    const deltaDistY = Math.abs(1/(dirY||1e-9));
+
+    let stepX, stepY;
+    let sideDistX, sideDistY;
+
+    if(dirX<0){ stepX=-1; sideDistX = (x-mapX)*deltaDistX; }
+    else { stepX=1; sideDistX = (mapX+1.0-x)*deltaDistX; }
+    if(dirY<0){ stepY=-1; sideDistY = (y-mapY)*deltaDistY; }
+    else { stepY=1; sideDistY = (mapY+1.0-y)*deltaDistY; }
+
+    let hit=false, side=0, hitType=1;
+    let travel=0;
+    while(!hit && travel<maxLen){
+      if(sideDistX < sideDistY){
+        sideDistX += deltaDistX;
+        mapX += stepX;
+        side=0;
+        travel = Math.abs((mapX - x) / (dirX||1e-9));
+      } else {
+        sideDistY += deltaDistY;
+        mapY += stepY;
+        side=1;
+        travel = Math.abs((mapY - y) / (dirY||1e-9));
+      }
+      hitType = cell(mapX + (side===0 && stepX>0 ? 0 : 0), mapY + (side===1 && stepY>0 ? 0 : 0));
+      if(hitType!==0){
+        hit=true;
+      }
+    }
+    // travel is approximate distance
+    const dist = Math.max(0.001, travel);
+    return { dist, side, hitType };
+  }
+
+  function draw(){
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    // Floor/ceiling gradient
+    const gradTop = ctx.createLinearGradient(0,0,0,h);
+    gradTop.addColorStop(0, 'rgba(255,0,255,.10)');
+    gradTop.addColorStop(0.25, 'rgba(0,255,255,.06)');
+    gradTop.addColorStop(0.6, 'rgba(0,0,0,0)');
+    gradTop.addColorStop(1, 'rgba(0,0,0,.35)');
+    ctx.fillStyle = '#04050a';
+    ctx.fillRect(0,0,w,h);
+
+    ctx.fillStyle = 'rgba(0,255,255,.04)';
+    ctx.fillRect(0,0,w,Math.floor(h*0.52));
+    ctx.fillStyle = 'rgba(255,0,255,.035)';
+    ctx.fillRect(0,Math.floor(h*0.52),w,Math.floor(h*0.48));
+
+    // Rays
+    const strips = Math.floor(Math.max(240, w / 5));
+    const colW = w / strips;
+
+    const centerY = h*0.52;
+    const maxRenderDist = 18;
+
+    for(let i=0;i<strips;i++){
+      const x = (i/strips - 0.5) * 2; // -1..1
+      const rayAngle = player.a + x * (fov/2);
+      const ray = castRay(rayAngle, maxRenderDist);
+
+      // Fish-eye correction
+      const aDiff = normalizeAngle(rayAngle - player.a);
+      const dist = ray.dist * Math.cos(aDiff);
+
+      const wallHeight = (h * 0.95) / dist;
+      const y0 = centerY - wallHeight/2;
+      const y1 = centerY + wallHeight/2;
+
+      const shade = Math.max(0, 1 - dist / maxRenderDist);
+      let base = {r:0,g:200,b:255};
+      if(ray.hitType===2){ base = {r:255,g:60,b:255}; }
+      const sideDark = ray.side===1 ? 0.88 : 1.0;
+      const r = Math.floor(base.r * (0.35 + 0.65*shade) * sideDark);
+      const g = Math.floor(base.g * (0.35 + 0.65*shade) * sideDark);
+      const b = Math.floor(base.b * (0.35 + 0.65*shade) * sideDark);
+
+      ctx.fillStyle = `rgba(${r},${g},${b},0.95)`;
+      ctx.fillRect(i*colW, y0, colW+1, y1 - y0);
+
+      // neon edge line
+      ctx.fillStyle = `rgba(125,252,255,${0.12*shade})`;
+      ctx.fillRect(i*colW, y0+1, colW+1, 2);
+
+      // subtle fog
+      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, dist/maxRenderDist)*0.35})`;
+      ctx.fillRect(i*colW, y0, colW+1, y1-y0);
+    }
+
+    // Enemies sprites (billboards)
+    const sprites = [];
+    for(const en of enemies){
+      if(!en.alive) continue;
+      const dx = en.x - player.x;
+      const dy = en.y - player.y;
+      const dist = Math.hypot(dx,dy);
+      const angle = Math.atan2(dy,dx);
+      const rel = normalizeAngle(angle - player.a);
+      if(Math.abs(rel) < fov/2 + 0.2){
+        sprites.push({en, dist, rel});
+      }
+    }
+    sprites.sort((a,b)=>b.dist-a.dist);
+
+    for(const s of sprites){
+      const en = s.en;
+      const dist = s.dist;
+      const rel = s.rel;
+
+      const proj = (h*0.9) / dist;
+      const cx = w/2 + (rel/(fov/2))*(w*0.5);
+      const sy = (h*0.52 - proj/2);
+      const sw = proj*0.26;
+      const sh = proj*0.62;
+
+      const aliveT = (Math.sin(en.jitter + performance.now()*0.003)*0.5 + 0.5);
+      const glow = 0.35 + 0.65*(en.hp/3);
+
+      // Soft shadow
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      ctx.beginPath();
+      ctx.ellipse(cx, sy + sh*0.95, sw*0.9, sh*0.12, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      // Body
+      ctx.fillStyle = `rgba(255,80,255,${0.15 + 0.55*glow})`;
+      roundRect(ctx, cx - sw/2, sy, sw, sh, Math.max(4, sw*0.22));
+      ctx.fill();
+
+      // Inner visor
+      ctx.fillStyle = `rgba(0,255,255,${0.18 + 0.60*aliveT})`;
+      roundRect(ctx, cx - sw/3, sy + sh*0.18, sw*2/3, sh*0.35, Math.max(4, sw*0.15));
+      ctx.fill();
+
+      // HP bar
+      const barW = sw*0.95;
+      const barH = Math.max(4, sh*0.05);
+      const bx = cx - barW/2;
+      const by = sy - barH*1.05;
+      ctx.fillStyle='rgba(0,0,0,.45)';
+      roundRect(ctx,bx,by,barW,barH,barH/2); ctx.fill();
+      ctx.fillStyle=`rgba(125,252,255,${0.65})`;
+      const hpPct = Math.max(0, en.hp)/3;
+      roundRect(ctx,bx,by,barW*hpPct,barH,barH/2); ctx.fill();
+    }
+
+    // Particles in screen space (simple approximation)
+    for(const p of particles){
+      const dx = p.x - player.x;
+      const dy = p.y - player.y;
+      const dist = Math.hypot(dx,dy);
+      const angle = Math.atan2(dy,dx);
+      const rel = normalizeAngle(angle - player.a);
+      if(Math.abs(rel) > fov/2 + 0.3) continue;
+      const t = p.t / p.life;
+      const proj = (h*0.85) / Math.max(0.2, dist);
+      const cx = w/2 + (rel/(fov/2))*(w*0.5);
+      const sy = (h*0.52 - proj*0.35);
+
+      let color = p.kind==='muzzle' ? 'rgba(0,255,255,' : p.kind==='hit' ? 'rgba(255,0,255,' : 'rgba(255,255,0,';
+      const a = 1 - t;
+      ctx.fillStyle = color + (0.85*a) + ')';
+      ctx.beginPath();
+      const r = (p.kind==='pop' ? 3 : 2) * (1-t);
+      ctx.arc(cx, sy, r, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Cross-fade vignette
+    const vignette = ctx.createRadialGradient(w/2,h/2, Math.min(w,h)*0.15, w/2,h/2, Math.max(w,h)*0.7);
+    vignette.addColorStop(0,'rgba(0,0,0,0)');
+    vignette.addColorStop(1,'rgba(0,0,0,.45)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  function roundRect(c,x,y,w,h,r){
+    r = Math.min(r, w/2, h/2);
+    c.beginPath();
+    c.moveTo(x+r, y);
+    c.arcTo(x+w, y, x+w, y+h, r);
+    c.arcTo(x+w, y+h, x, y+h, r);
+    c.arcTo(x, y+h, x, y, r);
+    c.arcTo(x, y, x+w, y, r);
+    c.closePath();
+  }
+
+  // Movement & enemy AI
+  function tryMove(nx, ny){
+    const radius = 0.18;
+    // Collide against walls at corners
+    const points = [
+      [nx-radius, ny-radius],
+      [nx+radius, ny-radius],
+      [nx-radius, ny+radius],
+      [nx+radius, ny+radius],
+    ];
+    for(const [px,py] of points){
+      if(cell(px,py)===1 || cell(px,py)===2) return false;
+    }
+    player.x = nx; player.y = ny;
+    return true;
+  }
+
+  let last = performance.now();
+  function tick(now){
+    const dt = Math.min(0.033, (now-last)/1000);
+    last = now;
+
+    if(player.alive){
+      // Cooldowns
+      if(player.fireCooldown>0) player.fireCooldown -= dt;
+      if(player.reloadCooldown>0){
+        player.reloadCooldown -= dt;
+        if(player.reloadCooldown<=0){
+          player.ammo = 12;
+          showToast('Reloaded');
+          updateHUD();
+        }
+      }
+
+      // Continuous fire while mouse held
+      if(mouseDown) fire();
+
+      // Move
+      const spd = 3.0;
+      const forward = (keys.has('w') ? 1 : 0) + (keys.has('arrowup') ? 1 : 0) - (keys.has('s') ? 1 : 0) - (keys.has('arrowdown') ? 1 : 0);
+      const strafe = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0);
+
+      const canMove = (pointerLocked || document.body===document.activeElement);
+      if(canMove){
+        const moveStep = spd * dt;
+        const ax = Math.cos(player.a), ay = Math.sin(player.a);
+        const bx = -ay, by = ax;
+        let nx = player.x + (ax*forward + bx*strafe)*moveStep;
+        let ny = player.y + (ay*forward + by*strafe)*moveStep;
+        tryMove(nx, ny);
+
+        // strafe against walls: axis separate fallback
+        // (lightweight; tryMove handles collision)
+      }
+
+      // Enemy AI
+      for(const en of enemies){
+        if(!en.alive) continue;
+        en.jitter += dt;
+
+        const dx = player.x - en.x;
+        const dy = player.y - en.y;
+        const dist = Math.hypot(dx,dy);
+
+        // Simple attack if close and roughly facing
+        if(dist < 1.1){
+          // Damage over time, reduced if player is moving
+          const dmg = (dt * 14) * (dist < 0.6 ? 1.35 : 1.0);
+          player.hp -= dmg;
+          if(player.hp<=0){
+            player.hp=0;
+            player.alive=false;
+            ui.status.textContent='Down — press R to restart (or refresh)';
+            showToast('You got wrecked');
+          } else {
+            if(Math.random()<0.08) showToast('Impact!');
+          }
+        } else {
+          // Move towards player if line-ish
+          const dirx = dx / (dist||1);
+          const diry = dy / (dist||1);
+          // Avoid walls lightly
+          const step = en.speed * dt;
+          const nx = en.x + dirx*step;
+          const ny = en.y + diry*step;
+          if(cell(nx,ny)===0) { en.x = nx; en.y = ny; }
+          // Stutter strafe for "cyber" motion
+          en.x += (-diry) * Math.sin(en.jitter*3)*dt*0.15;
+          en.y += ( dirx) * Math.sin(en.jitter*3)*dt*0.15;
+
+          // Keep inside bounds
+          if(cell(en.x,en.y)!==0){
+            // bounce
+            en.x -= (-diry) * dt*0.3;
+            en.y -= ( dirx) * dt*0.3;
+          }
+        }
+      }
+
+      updateHUD();
+    }
+
+    updateParticles(dt);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  updateHUD();
+  requestAnimationFrame(tick);
+
+})();
+</script>
+</body>
+</html>

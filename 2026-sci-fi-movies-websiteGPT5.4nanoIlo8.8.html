@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2026 Sci‑Fi Movies — Basic Fan Site</title>
+  <style>
+    :root{
+      --bg:#070A12;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.10);
+      --text:#EAF0FF;
+      --muted:rgba(234,240,255,.7);
+      --accent:#7C5CFF;
+      --accent2:#19D3FF;
+      --border:rgba(255,255,255,.14);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% -10%, rgba(124,92,255,.35), transparent 60%),
+        radial-gradient(900px 550px at 85% 0%, rgba(25,211,255,.25), transparent 55%),
+        radial-gradient(900px 650px at 50% 110%, rgba(124,92,255,.15), transparent 60%),
+        var(--bg);
+      min-height:100vh;
+    }
+
+    header{
+      padding:38px 18px 18px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    .hero{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(26px, 4vw, 44px);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:10px 0 0;
+      color:var(--muted);
+      max-width:62ch;
+      line-height:1.45;
+    }
+    .chiprow{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px}
+    .chip{
+      padding:8px 12px;
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border-radius:999px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .wrap{max-width:1100px; margin:0 auto; padding:0 18px 50px}
+
+    .toolbar{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      backdrop-filter: blur(6px);
+    }
+
+    .lefttools{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+
+    label{font-size:13px; color:var(--muted)}
+    input[type="search"], select{
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:10px;
+      outline:none;
+      min-width:240px;
+    }
+    select{min-width:200px}
+
+    button{
+      border:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(180deg, rgba(124,92,255,.28), rgba(124,92,255,.10));
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button:hover{filter:brightness(1.08)}
+
+    .grid{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:12px;
+    }
+
+    .card{
+      grid-column: span 4;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      position:relative;
+      min-height:155px;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-60px -60px auto -60px;
+      height:140px;
+      background: radial-gradient(circle at 30% 40%, rgba(124,92,255,.40), transparent 60%);
+      pointer-events:none;
+    }
+    .card .top{
+      padding:14px 14px 0;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      position:relative;
+    }
+
+    .title{
+      margin:0;
+      font-size:16px;
+      line-height:1.25;
+    }
+    .meta{color:var(--muted); font-size:13px; margin-top:6px}
+
+    .tag{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.16);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .card .body{
+      padding:10px 14px 14px;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+    }
+    .desc{color:var(--muted); font-size:13px; line-height:1.4; margin:0}
+
+    .card .actions{display:flex; gap:10px; margin-top:auto; flex-wrap:wrap}
+    .smallbtn{
+      padding:9px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+    }
+    .smallbtn:hover{filter:brightness(1.08)}
+
+    .empty{
+      margin-top:16px;
+      background:var(--panel);
+      border:1px dashed rgba(255,255,255,.25);
+      border-radius:16px;
+      padding:18px;
+      color:var(--muted);
+    }
+
+    footer{
+      color:rgba(234,240,255,.65);
+      font-size:12px;
+      padding:18px;
+      text-align:center;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .modal.open{display:flex}
+    .modal .dialog{
+      width:min(720px, 100%);
+      background:rgba(15,18,32,.92);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      overflow:hidden;
+      backdrop-filter: blur(8px);
+    }
+    .modal .header{
+      padding:14px 14px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    .modal h2{margin:0; font-size:18px}
+    .modal .close{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    .modal .content{padding:14px}
+    .kv{display:grid; grid-template-columns: 120px 1fr; gap:8px 12px; margin:6px 0 14px}
+    .kv div:nth-child(odd){color:var(--muted)}
+    .modal .content p{margin:0; color:var(--muted); line-height:1.5}
+
+    @media (max-width: 900px){
+      .card{grid-column: span 6}
+    }
+    @media (max-width: 620px){
+      .card{grid-column: span 12}
+      input[type="search"], select{min-width: 100%}
+      .toolbar{gap:10px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div>
+        <h1>2026 Sci‑Fi Movies</h1>
+        <p class="subtitle">A simple, filterable fan-style list. Search by title, sort by release date, and click a card for a quick “about” blurb.</p>
+        <div class="chiprow">
+          <div class="chip">Tip: Try searching “Project” or “Dune”</div>
+          <div class="chip">Local-only demo website (no login)</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="toolbar" role="region" aria-label="Movie controls">
+      <div class="lefttools">
+        <div>
+          <label for="q">Search</label><br/>
+          <input id="q" type="search" placeholder="Type a movie name…" autocomplete="off" />
+        </div>
+        <div>
+          <label for="genre">Sort</label><br/>
+          <select id="sort">
+            <option value="dateAsc">Release date (earliest first)</option>
+            <option value="dateDesc">Release date (latest first)</option>
+            <option value="titleAsc">Title (A → Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <button id="shuffleBtn" type="button" title="Randomize order">Surprise me ✨</button>
+      </div>
+    </div>
+
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="empty" class="empty" style="display:none">No matches. Try a different search.</div>
+  </div>
+
+  <footer>
+    Built as a basic single-file HTML site. Release info/blurb inspiration sourced from ScreenRant article text where available.
+  </footer>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="dialog">
+      <div class="header">
+        <div>
+          <h2 id="modalTitle">Movie title</h2>
+          <div id="modalTag" class="meta" style="margin-top:6px"></div>
+        </div>
+        <button class="close" id="closeModal" type="button">Close ✕</button>
+      </div>
+      <div class="content">
+        <div class="kv">
+          <div>Release</div><div id="modalRelease"></div>
+          <div>Category</div><div id="modalCategory"></div>
+          <div>Notes</div><div id="modalNotes"></div>
+        </div>
+        <p id="modalDesc"></p>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Data: a small curated sample of 2026 sci‑fi titles.
+  // Descriptions are short summaries for a demo site (not official synopses).
+  const movies = [
+    {
+      id: "we-bury-the-dead",
+      title: "We Bury the Dead",
+      release: "2026-01-02",
+      category: "Sci‑Fi / Zombie",
+      notes: "Daisy Ridley stars in a zombie-apocalypse setup.",
+      desc: "A military experiment spirals into chaos, forcing characters to survive and uncover what went wrong."
+    },
+    {
+      id: "28-years-later-bone-temple",
+      title: "28 Years Later: The Bone Temple",
+      release: "2026-01-16",
+      category: "Sci‑Fi / Horror",
+      notes: "A continuation with broader focus on new storylines.",
+      desc: "Years after the outbreak, new factions and eerie developments reshape what “survival” means."
+    },
+    {
+      id: "mercy-pratt",
+      title: "Mercy",
+      release: "2026-01-23",
+      category: "Near‑Future Sci‑Fi",
+      notes: "AI judge courtroom thriller vibe.",
+      desc: "In 2029, a justice system powered by AI turns a personal tragedy into a fight for innocence."
+    },
+    {
+      id: "good-luck-have-fun-dont-die",
+      title: "Good Luck, Have Fun, Don't Die",
+      release: "2026-02-13",
+      category: "Time / AI Action‑Comedy",
+      notes: "Gore Verbinski returns; time travel meets rogue AI.",
+      desc: "A time traveler tries to prevent a catastrophic AI threat—at the worst possible time (and place)."
+    },
+    {
+      id: "the-bride-frankenstein",
+      title: "The Bride!",
+      release: "2026-03-06",
+      category: "Sci‑Fi / Monster",
+      notes: "Mary Shelley-inspired retelling.",
+      desc: "A Frankenstein-world story with classic gothic elements and a fresh cinematic approach."
+    },
+    {
+      id: "hoppers",
+      title: "Hoppers",
+      release: "2026-03-06",
+      category: "Family Sci‑Fi",
+      notes: "Teen uses tech to transform into a robotic beaver.",
+      desc: "High-energy adventure where tech meets ecology and a construction threat."
+    },
+    {
+      id: "project-hail-mary",
+      title: "Project Hail Mary",
+      release: "2026-03-20",
+      category: "Space Sci‑Fi",
+      notes: "Ryan Gosling leads a mission to save Earth.",
+      desc: "A lost-memory astronaut’s struggle becomes a planet-scale problem in deep space."
+    },
+    {
+      id: "mortal-kombat-ii",
+      title: "Mortal Kombat II",
+      release: "2026-05-08",
+      category: "Action / Sci‑Fi-ish",
+      notes: "Sequel continuation; franchise-lore energy.",
+      desc: "Another Shao Kahn invasion threatens Earthrealm—expect action, characters, and escalating stakes."
+    },
+    {
+      id: "mandalorian-and-grogu",
+      title: "The Mandalorian And Grogu",
+      release: "2026-05-22",
+      category: "Star Wars",
+      notes: "Big-screen continuation of the Disney+ phenomenon.",
+      desc: "Din Djarin and Grogu return for a new galactic adventure."
+    },
+    {
+      id: "masters-of-the-universe",
+      title: "Masters Of The Universe",
+      release: "2026-06-05",
+      category: "Sci‑Fi / Fantasy",
+      notes: "He‑Man returns with a modern reboot look.",
+      desc: "A new chapter for Eternia’s heroes and the battles that shape their world."
+    },
+    {
+      id: "dune-part-three",
+      title: "Dune: Part Three",
+      release: "2026-10-01",
+      category: "Epic Sci‑Fi",
+      notes: "Placeholder month/day for demo purposes.",
+      desc: "Sand, politics, and prophecy continue as the saga presses forward."
+    },
+    {
+      id: "signal-one",
+      title: "Signal One",
+      release: "2026-11-01",
+      category: "Alien / Thriller",
+      notes: "Placeholder month/day for demo purposes.",
+      desc: "A mysterious signal forces ordinary people into an extraordinary contact scenario."
+    }
+  ];
+
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  const q = document.getElementById('q');
+  const sort = document.getElementById('sort');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+
+  const modal = document.getElementById('modal');
+  const closeModal = document.getElementById('closeModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalTag = document.getElementById('modalTag');
+  const modalRelease = document.getElementById('modalRelease');
+  const modalCategory = document.getElementById('modalCategory');
+  const modalNotes = document.getElementById('modalNotes');
+  const modalDesc = document.getElementById('modalDesc');
+
+  let currentOrder = [...movies];
+
+  function formatDate(iso){
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  function applySort(list){
+    const val = sort.value;
+    const arr = [...list];
+    if (val === 'dateAsc') arr.sort((a,b)=> new Date(a.release)-new Date(b.release));
+    else if (val === 'dateDesc') arr.sort((a,b)=> new Date(b.release)-new Date(a.release));
+    else if (val === 'titleAsc') arr.sort((a,b)=> a.title.localeCompare(b.title));
+    return arr;
+  }
+
+  function render(){
+    const query = (q.value || '').trim().toLowerCase();
+    const filtered = currentOrder.filter(m=>
+      !query || (m.title + ' ' + m.category + ' ' + m.notes).toLowerCase().includes(query)
+    );
+    const ordered = applySort(filtered);
+
+    grid.innerHTML = '';
+
+    if (!ordered.length){
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    for (const m of ordered){
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="top">
+          <div>
+            <h3 class="title">${escapeHtml(m.title)}</h3>
+            <div class="meta">${formatDate(m.release)}</div>
+          </div>
+          <div class="tag">${escapeHtml(m.category)}</div>
+        </div>
+        <div class="body">
+          <p class="desc">${escapeHtml(m.desc)}</p>
+          <div class="actions">
+            <button class="smallbtn" type="button" data-action="details">Details</button>
+          </div>
+        </div>
+      `;
+      card.querySelector('[data-action="details"]').addEventListener('click', ()=> openModal(m));
+      grid.appendChild(card);
+    }
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+
+  function openModal(m){
+    modalTitle.textContent = m.title;
+    modalTag.textContent = m.category;
+    modalRelease.textContent = formatDate(m.release);
+    modalCategory.textContent = m.category;
+    modalNotes.textContent = m.notes || '—';
+    modalDesc.textContent = m.desc || '';
+    modal.classList.add('open');
+  }
+  function close(){ modal.classList.remove('open'); }
+  closeModal.addEventListener('click', close);
+  modal.addEventListener('click', (e)=>{ if (e.target === modal) close(); });
+  window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') close(); });
+
+  q.addEventListener('input', render);
+  sort.addEventListener('change', render);
+
+  shuffleBtn.addEventListener('click', ()=>{
+    // shuffle base order but keep the current sort selection logic
+    const a = [...movies];
+    for (let i=a.length-1; i>0; i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    currentOrder = a;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

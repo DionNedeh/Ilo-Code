@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Globe in Space</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        p {
+            margin: 0;
+            font-size: 14px;
+            color: #888;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            z-index: 10;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="ui-overlay">
+        <h1>3D Globe</h1>
+        <p>Interactive Space Simulation</p>
+    </div>
+    <div id="instructions">Drag to rotate • Scroll to zoom</div>
+    <div id="canvas-container"></div>
+
+    <script>
+        // --- Texture Generator ---
+        // Generates a stylized Earth texture procedurally to avoid CORS or missing image issues
+        function createGlobeTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            // Fill with deep ocean blue
+            ctx.fillStyle = '#0d1b2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid lines (latitude/longitude)
+            ctx.strokeStyle = 'rgba(0, 180, 216, 0.15)';
+            ctx.lineWidth = 1;
+            
+            // Longitude lines
+            const lonLines = 24;
+            for (let i = 0; i < lonLines; i++) {
+                const x = (i / lonLines) * canvas.width;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            // Latitude lines
+            const latLines = 12;
+            for (let i = 0; i < latLines; i++) {
+                const y = (i / latLines) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw stylized continents
+            ctx.fillStyle = '#1b4332'; // Base land color (dark forest green)
+            ctx.strokeStyle = '#40916c'; // Coastline highlight
+            ctx.lineWidth = 4;
+
+            // Simple coordinate mapping helper to draw shapes
+            function drawLandmass(points, close = true) {
+                ctx.beginPath();
+                points.forEach((pt, idx) => {
+                    // Map spherical coordinates (lon -180 to 180, lat -90 to 90) to canvas x,y
+                    const x = ((pt[0] + 180) / 360) * canvas.width;
+                    const y = ((90 - pt[1]) / 180) * canvas.height;
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                if (close) {
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                } else {
+                    ctx.stroke();
+                }
+            }
+
+            // Approximate coordinates for stylized continents
+            // North America
+            drawLandmass([
+                [-168, 65], [-120, 70], [-80, 70], [-60, 60], [-50, 50],
+                [-60, 45], [-80, 25], [-100, 20], [-110, 10], [-90, 15],
+                [-80, 9], [-80, 20], [-82, 30], [-75, 35], [-70, 45],
+                [-100, 50], [-125, 48], [-125, 35], [-115, 30], [-110, 23],
+                [-120, 35], [-125, 40], [-140, 60], [-160, 60]
+            ]);
+
+            // South America
+            drawLandmass([
+                [-80, 9], [-72, 11], [-50, -5], [-35, -5], [-40, -20],
+                [-60, -40], [-70, -55], [-75, -55], [-72, -40], [-80, -20],
+                [-81, -5]
+            ]);
+
+            // Eurasia & Africa
+            drawLandmass([
+                [-15, 35], [15, 40], [30, 40], [40, 60], [60, 70], 
+                [100, 75], [140, 70], [170, 65], [160, 40], [140, 35],
+                [120, 20], [105, 10], [110, -5], [100, 5], [90, 15],
+                [75, 10], [60, 25], [45, 15], [35, 30], [20, 15],
+                [10, 5], [15, -15], [30, -30], [20, -35], [10, -15],
+                [-5, 5], [-15, 15]
+            ]);
+
+            // Australia
+            drawLandmass([
+                [113, -22], [115, -34], [130, -35], [140, -37], [150, -34],
+                [145, -15], [135, -12], [120, -15]
+            ]);
+
+            // Greenland
+            drawLandmass([
+                [-60, 80], [-30, 80], [-40, 60], [-55, 65]
+            ]);
+
+            // Antarctica
+            drawLandmass([
+                [-180, -75], [180, -75], [180, -90], [-180, -90]
+            ]);
+
+            // Create canvas texture
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.anisotropy = 16;
+            return texture;
+        }
+
+        // --- Scene Setup ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+
+        // Camera
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 15;
+
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        container.appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 6;
+        controls.maxDistance = 30;
+
+        // --- Lighting ---
+        // Ambient light for dark side of the earth
+        const ambientLight = new THREE.AmbientLight(0x111122);
+        scene.add(ambientLight);
+
+        // Directional Sun light
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        sunLight.position.set(10, 3, 10);
+        scene.add(sunLight);
+
+        // Subtle blue rim light from opposite side
+        const rimLight = new THREE.DirectionalLight(0x0077ff, 0.6);
+        rimLight.position.set(-10, -3, -10);
+        scene.add(rimLight);
+
+        // --- Stars (Background) ---
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsCount = 2000;
+        const starPositions = new Float32Array(starsCount * 3);
+        const starColors = new Float32Array(starsCount * 3);
+
+        for (let i = 0; i < starsCount * 3; i += 3) {
+            // Distribute stars on a large sphere shell
+            const u = Math.random();
+            const v = Math.random();
+            const theta = u * 2.0 * Math.PI;
+            const phi = Math.acos(2.0 * v - 1.0);
+            const r = 150 + Math.random() * 100; // Radius between 150 and 250
+
+            starPositions[i] = r * Math.sin(phi) * Math.cos(theta);
+            starPositions[i + 1] = r * Math.sin(phi) * Math.sin(theta);
+            starPositions[i + 2] = r * Math.cos(phi);
+
+            // Add star color variations (white, slight blue, slight yellow)
+            const rColor = 0.8 + Math.random() * 0.2;
+            const gColor = 0.8 + Math.random() * 0.2;
+            const bColor = 0.9 + Math.random() * 0.1;
+            
+            starColors[i] = rColor;
+            starColors[i + 1] = gColor;
+            starColors[i + 2] = bColor;
+        }
+
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starsGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        // Creating a circular star texture programmatically
+        const starCanvas = document.createElement('canvas');
+        starCanvas.width = 16;
+        starCanvas.height = 16;
+        const starCtx = starCanvas.getContext('2d');
+        const grad = starCtx.createRadialGradient(8, 8, 0, 8, 8, 8);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        starCtx.fillStyle = grad;
+        starCtx.fillRect(0, 0, 16, 16);
+        const starTexture = new THREE.CanvasTexture(starCanvas);
+
+        const starsMaterial = new THREE.PointsMaterial({
+            size: 1.5,
+            map: starTexture,
+            transparent: true,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const starField = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starField);
+
+        // --- Globe (Earth Mesh) ---
+        const globeGeometry = new THREE.SphereGeometry(4, 64, 64);
+        
+        // Material with procedural texture and specular highlights
+        const globeMaterial = new THREE.MeshPhongMaterial({
+            map: createGlobeTexture(),
+            shininess: 15,
+            specular: new THREE.Color(0x333333),
+            bumpScale: 0.05
+        });
+
+        const globe = new THREE.Mesh(globeGeometry, globeMaterial);
+        scene.add(globe);
+
+        // --- Atmospheric Glow Effect ---
+        // Create an outer glowing shell
+        const glowGeometry = new THREE.SphereGeometry(4.15, 32, 32);
+        
+        // Custom vertex/fragment shader for a realistic atmospheric glow
+        const glowMaterial = new THREE.ShaderMaterial({
+            vertexShader: `
+                varying vec3 vNormal;
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vNormal;
+                void main() {
+                    float intensity = pow(0.6 - dot(vNormal, vec3(0, 0, 1.0)), 2.0);
+                    gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity;
+                }
+            `,
+            blending: THREE.AdditiveBlending,
+            side: THREE.BackSide,
+            transparent: true
+        });
+
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        scene.add(glow);
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // Auto-rotate globe slowly
+            globe.rotation.y = elapsedTime * 0.05;
+
+            // Rotate stars extremely slowly for dynamic space feel
+            starField.rotation.y = elapsedTime * 0.002;
+            starField.rotation.x = elapsedTime * 0.001;
+
+            // Update controls
+            controls.update();
+
+            // Render
+            renderer.render(scene, camera);
+        }
+
+        // --- Handle Resize ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>

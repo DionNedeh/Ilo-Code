@@ -1,0 +1,1367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Procedural Cyberpunk City</title>
+  <style>
+    :root{
+      --bg0:#05020a;
+      --bg1:#08031a;
+      --grid:#1b0b36;
+      --glowA: #00f5ff;
+      --glowB: #ff2bd6;
+      --glowC: #a6ff00;
+      --text:#cfe7ff;
+    }
+    html,body{height:100%;margin:0;background:#000;overflow:hidden;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;}
+    canvas{display:block;width:100vw;height:100vh;}
+
+    /* HUD */
+    .hud{
+      position:fixed;left:16px;top:16px;z-index:10;
+      color:rgba(210,235,255,.95);
+      background:linear-gradient(180deg, rgba(10,6,25,.70), rgba(5,2,14,.35));
+      border:1px solid rgba(120,170,255,.18);
+      box-shadow:0 0 40px rgba(0,245,255,.08);
+      border-radius:14px;
+      padding:12px 14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      max-width: 360px;
+      user-select:none;
+    }
+    .title{
+      display:flex;gap:10px;align-items:center;margin-bottom:6px;
+      font-weight:800;letter-spacing:.4px;
+    }
+    .chip{
+      width:10px;height:10px;border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff, var(--glowA) 35%, rgba(0,245,255,.2) 70%);
+      box-shadow:0 0 18px rgba(0,245,255,.7),0 0 42px rgba(0,245,255,.25);
+      flex:0 0 auto;
+    }
+    .hud .small{font-size:12px;opacity:.86;line-height:1.35;}
+    .hud .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:12px; padding:1px 6px; border-radius:8px; border:1px solid rgba(160,220,255,.16); background:rgba(10,6,25,.45);}
+
+    .toggles{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+    button{
+      appearance:none;border:1px solid rgba(150,210,255,.18);
+      background:linear-gradient(180deg, rgba(20,10,45,.35), rgba(10,6,25,.25));
+      color:rgba(215,238,255,.95);
+      padding:8px 10px;border-radius:12px;
+      font-weight:700; letter-spacing:.2px;
+      cursor:pointer;
+      box-shadow:0 0 20px rgba(0,245,255,.06);
+      transition: transform .08s ease, border-color .15s ease, box-shadow .2s ease;
+    }
+    button:hover{border-color:rgba(0,245,255,.35); box-shadow:0 0 28px rgba(0,245,255,.14);} 
+    button:active{transform: translateY(1px);} 
+
+    .hint{position:fixed;right:16px;bottom:16px;z-index:10;color:rgba(210,235,255,.85);font-size:12px;user-select:none;max-width:420px;text-align:right;}
+    .hint .bar{height:2px;background:linear-gradient(90deg, rgba(0,245,255,.0), rgba(0,245,255,.6), rgba(255,43,214,.6), rgba(166,255,0,.0));margin:6px 0 10px;border-radius:999px;opacity:.8;}
+
+    /* Subtle vignette */
+    .vignette{
+      position:fixed;inset:0;pointer-events:none;z-index:9;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,.15) 52%, rgba(0,0,0,.55) 100%);
+      mix-blend-mode: multiply;
+    }
+
+    /* Scanlines */
+    .scan{
+      position:fixed;inset:0;pointer-events:none;z-index:8;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,.03),
+          rgba(255,255,255,.03) 1px,
+          rgba(0,0,0,0) 2px,
+          rgba(0,0,0,0) 4px
+        );
+      opacity:.14;
+      mix-blend-mode: overlay;
+      transform: translateZ(0);
+      animation: drift 9s linear infinite;
+    }
+    @keyframes drift{
+      0%{transform: translateY(0px);}100%{transform: translateY(30px);} 
+    }
+
+    /* Mobile controls hint */
+    @media (max-width: 720px){
+      .hud{left:12px;top:12px;max-width: 330px;}
+      .hint{left:12px;right:auto;text-align:left;}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="hud" id="hud">
+    <div class="title"><span class="chip"></span><span>CYBERPUNK CITY // Procedural</span></div>
+    <div class="small">
+      <div><span class="kbd">WASD</span> move • <span class="kbd">Mouse</span> look • <span class="kbd">Space</span> boost • <span class="kbd">R</span> regenerate</div>
+      <div style="margin-top:6px;opacity:.9">Seed: <span id="seed" style="font-family:ui-monospace,Menlo,Consolas,monospace"></span> • FPS adaptive quality</div>
+    </div>
+    <div class="toggles">
+      <button id="btnLights" title="Toggle neon intensity">Neon</button>
+      <button id="btnRain" title="Toggle rain">Rain</button>
+      <button id="btnBloom" title="Toggle bloom">Bloom</button>
+    </div>
+  </div>
+
+  <div class="hint">
+    <div class="bar"></div>
+    Tip: pause a moment on the street-level lanes—windows, signage, traffic lights and fog layers animate continuously.
+  </div>
+
+  <div class="scan"></div>
+  <div class="vignette"></div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  const seedEl = document.getElementById('seed');
+  const btnLights = document.getElementById('btnLights');
+  const btnRain = document.getElementById('btnRain');
+  const btnBloom = document.getElementById('btnBloom');
+
+  // ---------- Utilities ----------
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const smoothstep=(a,b,x)=>{
+    x=clamp((x-a)/(b-a),0,1); return x*x*(3-2*x);
+  };
+
+  // Fast-ish seeded RNG
+  function xmur3(str) {
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function() {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return (h ^= h >>> 16) >>> 0;
+    };
+  }
+  function mulberry32(a) {
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  let state = {
+    seed: null,
+    rand: Math.random,
+    t: 0,
+    // Quality adaptive
+    dpr: 1,
+    targetScale: 1,
+    // Camera
+    cam: { x: 0, y: 1.5, z: -18 },
+    yaw: 0,
+    pitch: 0,
+    // Movement
+    keys: Object.create(null),
+    boosting: false,
+    // Visual toggles
+    neon: true,
+    rain: true,
+    bloom: true,
+  };
+
+  // ---------- World Generation ----------
+  const WORLD = {
+    // grid of city blocks
+    w: 18, // blocks in x half span
+    h: 18, // blocks in z half span
+    block: 28,
+    street: 6.5,
+    sidewalk: 4,
+    heightCap: 42,
+    horizon: 90,
+  };
+
+  let world = {
+    skyline: [],
+    buildings: [],
+    signs: [],
+    lanes: [],
+    traffic: [],
+    fogSeeds: [],
+    rainDrops: [],
+    particles: [],
+  };
+
+  function pickColor(rnd, kind='neon'){
+    // cyber palette
+    const palettes = {
+      neon: [
+        [0,245,255], [255,43,214], [166,255,0], [120,110,255], [255,180,60], [120,255,170]
+      ],
+      cool: [ [120,170,255],[70,220,255],[140,120,255] ],
+      warm: [ [255,170,90],[255,43,214],[255,80,170] ],
+    };
+    const p = palettes[kind] || palettes.neon;
+    const c = p[Math.floor(rnd()*p.length)];
+    const r = c[0] + (rnd()-0.5)*20;
+    const g = c[1] + (rnd()-0.5)*20;
+    const b = c[2] + (rnd()-0.5)*20;
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+  }
+
+  function generateCity(){
+    const seedStr = (Date.now() ^ (Math.random()*1e9|0)).toString(16);
+    state.seed = seedStr;
+    seedEl.textContent = seedStr;
+
+    const seed = xmur3(seedStr)();
+    state.rand = mulberry32(seed);
+
+    const rnd = state.rand;
+    world.buildings.length = 0;
+    world.signs.length = 0;
+    world.skyline.length = 0;
+    world.lanes.length = 0;
+    world.traffic.length = 0;
+    world.fogSeeds.length = 0;
+    world.rainDrops.length = 0;
+    world.particles.length = 0;
+
+    // Lanes: define major boulevards
+    // Two main axes: x=0 and z=0 with wider streets
+    const lanes = [];
+    const span = WORLD.w*WORLD.block;
+    const streetW = WORLD.street;
+    lanes.push({dir:'z', x:0, w:streetW*1.25});
+    lanes.push({dir:'x', z:0, w:streetW*1.25});
+    lanes.push({dir:'z', x:WORLD.block*2, w:streetW*0.95});
+    lanes.push({dir:'x', z:-WORLD.block*2, w:streetW*0.95});
+    world.lanes = lanes;
+
+    // Buildings in blocks with procedural variations
+    // We'll avoid placing buildings directly on street bands.
+    const bxCount = WORLD.w*2+1;
+    const bzCount = WORLD.h*2+1;
+
+    for(let ix=-WORLD.w; ix<=WORLD.w; ix++){
+      for(let iz=-WORLD.h; iz<=WORLD.h; iz++){
+        // world coords center of block
+        const cx = ix*WORLD.block;
+        const cz = iz*WORLD.block;
+
+        // Street mask bands
+        const onStreetZ = Math.abs(cz) < WORLD.street*1.1 && Math.abs(cx) < WORLD.block*0.9;
+        const onStreetX = Math.abs(cx) < WORLD.street*1.1 && Math.abs(cz) < WORLD.block*0.9;
+        const majorOnZ = Math.abs(cz) < WORLD.street*0.85 && Math.abs(cx - WORLD.block*2) < WORLD.block*0.45;
+        const majorOnX = Math.abs(cx) < WORLD.street*0.85 && Math.abs(cz + WORLD.block*2) < WORLD.block*0.45;
+
+        if(onStreetZ || onStreetX || majorOnZ || majorOnX) continue;
+
+        // Decide building type density (more empty lots far away)
+        const dist = Math.hypot(cx, cz) / (WORLD.w*WORLD.block);
+        const emptiness = smoothstep(0.15, 1.0, dist)*0.35;
+        if(rnd() < emptiness) continue;
+
+        // Position jitter within block
+        const jx = (rnd()-0.5) * (WORLD.block - 10);
+        const jz = (rnd()-0.5) * (WORLD.block - 10);
+        const x = cx + jx;
+        const z = cz + jz;
+
+        // footprint
+        const sizeBase = WORLD.block - (12 + rnd()*10);
+        const w = clamp(sizeBase*(0.55 + rnd()*0.55), 8, 22);
+        const d = clamp(sizeBase*(0.55 + rnd()*0.55), 8, 22);
+
+        // height
+        const skylineBias = 1.0 - smoothstep(0.0, 1.0, dist);
+        const h = clamp((6 + Math.pow(rnd(), 0.35)* (WORLD.heightCap*0.95) * (0.55+skylineBias)), 6, WORLD.heightCap*1.15);
+        const depthCut = rnd();
+
+        // Material & neon
+        const base = [30 + rnd()*40, 10 + rnd()*30, 40 + rnd()*50];
+        const accentA = pickColor(rnd,'neon');
+        const accentB = pickColor(rnd,'neon');
+        const accentC = pickColor(rnd,'neon');
+
+        // Facade window grid size
+        const winCols = Math.floor(3 + rnd()*12);
+        const winRows = Math.floor(4 + rnd()*18);
+        const winGap = 0.12 + rnd()*0.12;
+
+        const style = {
+          base,
+          a: accentA,
+          b: accentB,
+          c: accentC,
+          metal: (rnd()<0.35),
+          glass: (rnd()<0.55),
+          rooftop: rnd()<0.55,
+          stripe: rnd()<0.8,
+          gothic: rnd()<0.22,
+          cut: depthCut,
+          h,
+          w,
+          d,
+          x,
+          z,
+          winCols,
+          winRows,
+          winGap,
+        };
+        world.buildings.push(style);
+
+        // Signs on some buildings
+        if(rnd()<0.22){
+          const front = rnd()<0.5 ? 1 : -1;
+          const y = 3 + rnd()*h*0.55;
+          const size = 3 + rnd()*6;
+          const col = (rnd()<0.5)?accentA:accentB;
+          world.signs.push({x: x + front*(d/2 + 1), z: z + 0, y, w: size*(0.9+rnd()*0.6), h: size*0.5*(0.7+rnd()*0.8), col, text: genSignText(rnd)});
+        }
+
+        // Rooftop skyline lights
+        if(rnd()<0.14){
+          const count = 2 + Math.floor(rnd()*6);
+          for(let k=0;k<count;k++){
+            world.skyline.push({
+              x: x + (rnd()-0.5)*(w*0.65),
+              z: z + (rnd()-0.5)*(d*0.65),
+              y: h + 1 + rnd()*7,
+              len: 10 + rnd()*35,
+              col: (rnd()<0.5)?accentA:accentC,
+              flicker: rnd()*1.2+0.4,
+            });
+          }
+        }
+
+        // Fog seeds
+        if(rnd()<0.015){
+          world.fogSeeds.push({x, z, r: 30 + rnd()*80, y: 6 + rnd()*28, s: rnd()*1.2+0.4});
+        }
+      }
+    }
+
+    // Traffic lights / drones along main axes
+    const makeTraffic = (dir) => {
+      const t = [];
+      const positions = [];
+      const line = dir==='x' ? {fixed:0, along:WORLD.block} : {fixed:0, along:WORLD.block};
+      const count = 10;
+      for(let i=0;i<count;i++){
+        const z = (rnd()*2-1)*WORLD.h*WORLD.block*0.95;
+        const x = (rnd()*2-1)*WORLD.w*WORLD.block*0.95;
+        if(dir==='x'){
+          // near x-axis street i.e. z close to 0
+          if(Math.abs(z) > WORLD.street*1.2) continue;
+          positions.push({x: x, z});
+        } else {
+          if(Math.abs(x) > WORLD.street*1.2) continue;
+          positions.push({x, z: z});
+        }
+      }
+      // also place at regular intervals near center
+      for(let i=-6;i<=6;i++){
+        if(dir==='x') positions.push({x: i*WORLD.block*0.95, z: 0});
+        else positions.push({x: 0, z: i*WORLD.block*0.95});
+      }
+
+      for(const p of positions){
+        if(t.length>60) break;
+        const y = 0.3 + rnd()*2;
+        const id = t.length;
+        const mode = rnd()<0.5 ? 'sign' : 'drone';
+        t.push({
+          id,
+          mode,
+          x: p.x + (rnd()-0.5)*WORLD.street*0.9,
+          z: p.z + (rnd()-0.5)*WORLD.street*0.9,
+          y,
+          colA: pickColor(rnd,'neon'),
+          colB: pickColor(rnd,'neon'),
+          speed: 0.3 + rnd()*1.1,
+          phase: rnd()*Math.PI*2,
+        });
+      }
+      return t;
+    };
+
+    world.traffic.push(...makeTraffic('x'));
+    world.traffic.push(...makeTraffic('z'));
+
+    // Rain drops (screen-space-ish seeded)
+    for(let i=0;i<950;i++){
+      world.rainDrops.push({
+        x: (rnd()*2-1)*WORLD.w*WORLD.block*1.05,
+        z: (rnd()*2-1)*WORLD.h*WORLD.block*1.05,
+        y: 8 + rnd()*60,
+        v: 20 + rnd()*80,
+        w: 0.6 + rnd()*1.2,
+        phase: rnd()*Math.PI*2,
+        col: rnd()<0.5 ? 'rgba(0,245,255,.55)' : 'rgba(255,43,214,.45)'
+      });
+    }
+
+    // Particles near camera
+    for(let i=0;i<250;i++){
+      world.particles.push({
+        x: (rnd()-0.5)*40,
+        y: 2 + rnd()*8,
+        z: (rnd()-0.5)*40,
+        vx: (rnd()-0.5)*0.7,
+        vz: (rnd()-0.5)*0.7,
+        life: rnd(),
+        col: rnd()<0.5 ? 'rgba(0,245,255,.6)' : 'rgba(255,43,214,.55)'
+      });
+    }
+
+    // Place camera near center with slight randomness
+    state.cam.x = (rnd()-0.5)*6;
+    state.cam.z = -18 + (rnd()-0.5)*6;
+    state.cam.y = 1.55;
+    state.yaw = (rnd()-0.5)*0.15;
+    state.pitch = -0.06;
+  }
+
+  function genSignText(rnd){
+    const a = ['NEON','KILO','VOID','BYTE','SYNTH','NOVA','ECHO','HYPER','DRIFT','ORBIT','VANTA','GLITCH','NEXUS','SOLAR','CYBER'];
+    const b = ['CITY','CORP','LABS','MART','NET','WORKS','FORGE','RUN','RUSH','SECTOR','FLEET','LINE','HUB','DOCK'];
+    const n = Math.floor(rnd()*900+100);
+    return `${a[Math.floor(rnd()*a.length)]} ${b[Math.floor(rnd()*b.length)]} ${n}`;
+  }
+
+  // Initial generation
+  generateCity();
+
+  // ---------- Input ----------
+  window.addEventListener('keydown', (e)=>{
+    state.keys[e.code]=true;
+    if(e.code==='Space') state.boosting=true;
+  });
+  window.addEventListener('keyup', (e)=>{
+    state.keys[e.code]=false;
+    if(e.code==='Space') state.boosting=false;
+  });
+
+  let pointerLocked = false;
+  canvas.addEventListener('click', ()=>{
+    canvas.requestPointerLock?.();
+  });
+  document.addEventListener('pointerlockchange', ()=>{
+    pointerLocked = document.pointerLockElement === canvas;
+  });
+
+  window.addEventListener('mousemove', (e)=>{
+    if(!pointerLocked) return;
+    state.yaw += e.movementX * 0.0022;
+    state.pitch += e.movementY * 0.0018;
+    state.pitch = clamp(state.pitch, -0.35, 0.25);
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.code==='KeyR') {
+      generateCity();
+    }
+  });
+
+  // Toggle controls
+  btnLights.addEventListener('click', ()=>{ state.neon=!state.neon; btnLights.style.borderColor = state.neon ? 'rgba(0,245,255,.45)' : 'rgba(150,210,255,.18)'; });
+  btnRain.addEventListener('click', ()=>{ state.rain=!state.rain; btnRain.style.borderColor = state.rain ? 'rgba(0,245,255,.45)' : 'rgba(150,210,255,.18)'; });
+  btnBloom.addEventListener('click', ()=>{ state.bloom=!state.bloom; btnBloom.style.borderColor = state.bloom ? 'rgba(255,43,214,.45)' : 'rgba(150,210,255,.18)'; });
+
+  // ---------- Rendering Pipeline (2D pseudo-3D) ----------
+  function resize(){
+    const dpr = Math.max(1, Math.min(2.25, window.devicePixelRatio||1));
+    state.dpr = dpr;
+    canvas.width = Math.floor(window.innerWidth * dpr * state.targetScale);
+    canvas.height = Math.floor(window.innerHeight * dpr * state.targetScale);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Bloom pass (cheap): render scene to offscreen, then add blurred highlights
+  const bloomBuf = document.createElement('canvas');
+  const bloomCtx = bloomBuf.getContext('2d');
+  bloomBuf.width = 1; bloomBuf.height = 1;
+
+  function ensureBloomSize(){
+    if(bloomBuf.width!==canvas.width || bloomBuf.height!==canvas.height){
+      bloomBuf.width = canvas.width; bloomBuf.height = canvas.height;
+    }
+  }
+
+  function project(px, py, pz, out){
+    // Camera transform: yaw around y, pitch around x.
+    // Convert world->camera coordinates
+    const cx = px - state.cam.x;
+    const cy = py - state.cam.y;
+    const cz = pz - state.cam.z;
+
+    // yaw
+    const sy = Math.sin(-state.yaw), cyaw = Math.cos(-state.yaw);
+    let x1 = cx*cyaw - cz*sy;
+    let z1 = cx*sy + cz*cyaw;
+
+    // pitch
+    const sp = Math.sin(-state.pitch), cp = Math.cos(-state.pitch);
+    let y2 = cy*cp - z1*sp;
+    let z2 = cy*sp + z1*cp;
+
+    // Avoid divide by zero
+    if(z2 <= 0.5) return null;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const fov = 540 * (w/Math.max(w,h));
+    const s = fov / z2;
+
+    out.x = w*0.5 + x1*s;
+    out.y = h*0.52 - y2*s;
+    out.s = s;
+    out.z = z2;
+    return out;
+  }
+
+  function drawRoundedRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawGlowLine(x1,y1,x2,y2,color,thick,alpha=1){
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = thick;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = thick*6;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBuilding(b){
+    // Pseudo-3D: draw rectangular prism front face with perspective.
+    // Determine corners in world at base plane y=0.
+    const y0 = 0;
+    const y1 = b.h;
+
+    // Choose orientation: faces aligned to world axes.
+    const xL = b.x - b.w/2;
+    const xR = b.x + b.w/2;
+    const zF = b.z - b.d/2;
+    const zB = b.z + b.d/2;
+
+    // We'll render back-to-front by choosing the near face based on camera.
+    // Compute center depth
+    const center = {x: b.x, y: y0, z: b.z};
+    const pc = project(center.x, b.h*0.45, center.z, {});
+    if(!pc) return;
+
+    // Determine visible faces by comparing projected depths of corners
+    const corners = [
+      {x:xL,z:zF},{x:xR,z:zF},{x:xR,z:zB},{x:xL,z:zB}
+    ];
+
+    // Project base corners at y0 and top corners at y1
+    const base = [];
+    const top = [];
+    for(const c of corners){
+      const pb = project(c.x,y0,c.z,{});
+      const pt = project(c.x,y1,c.z,{});
+      if(!pb || !pt) return;
+      base.push(pb);
+      top.push(pt);
+    }
+
+    // Depth sort for faces
+    // nearFace if camera is closer to either zF or zB
+    const nearZ = (b.z < state.cam.z) ? 'front' : 'back';
+    const glass = b.glass;
+
+    // Color setup
+    const baseCol = `rgb(${Math.round(b.base[0])},${Math.round(b.base[1])},${Math.round(b.base[2])})`;
+    const shadowCol = `rgba(0,0,0,.55)`;
+    const neonMix = state.neon ? 1 : 0;
+
+    // Determine draw order: back face first (side)
+    // We'll draw top then sides then front.
+
+    // Back face (quad): corners 3-0
+    const backIdx = (nearZ==='front') ? [2,3,0,1] : [0,1,2,3];
+
+    const idxFront = (nearZ==='front') ? [0,1] : [2,3];
+
+    // Helper to draw quad
+    const quad = (inds, fill, stroke, alpha=1, shadow=false)=>{
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      if(shadow){
+        ctx.shadowColor = fill;
+        ctx.shadowBlur = 18;
+      }
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      const p0 = base[inds[0]], p1 = base[inds[1]], p2 = base[inds[2]], p3 = base[inds[3]];
+      const t0 = top[inds[0]], t1 = top[inds[1]], t2 = top[inds[2]], t3 = top[inds[3]];
+      ctx.moveTo(t0.x,t0.y);
+      ctx.lineTo(t1.x,t1.y);
+      ctx.lineTo(t2.x,t2.y);
+      ctx.lineTo(t3.x,t3.y);
+      ctx.closePath();
+      // fill top face slightly
+      ctx.fill();
+      ctx.globalAlpha = alpha;
+      // wall face using top+base
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.moveTo(t0.x,t0.y);
+      ctx.lineTo(t1.x,t1.y);
+      ctx.lineTo(p1.x,p1.y);
+      ctx.lineTo(p0.x,p0.y);
+      ctx.closePath();
+      ctx.fill();
+      if(stroke){
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = alpha*0.9;
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+
+    // Side walls: approximate by drawing left/right faces
+    // Left face: corners 0 and 3
+    // Right face: corners 1 and 2
+    // Determine which is more visible based on yaw by using projected x order
+    // We'll render three quads: left, right, front/back as prism.
+
+    const leftVisible = base[0].x < base[1].x;
+
+    // Left face color
+    const faceA = `rgba(${b.base[0]-5},${b.base[1]-2},${b.base[2]},${0.92})`;
+    const faceB = `rgba(${b.base[0]},${b.base[1]},${b.base[2]-10},${0.92})`;
+    const edgeStroke = `rgba(160,220,255,.08)`;
+
+    const drawWall = (i0,i1,side)=>{
+      // quad i0->i1, corresponding top and base
+      const p0=base[i0], p1=base[i1];
+      const t0=top[i0], t1=top[i1];
+      const alpha = 1;
+
+      // wall fill with slight gradient
+      const grad = ctx.createLinearGradient(t0.x,t0.y,p0.x,p0.y);
+      grad.addColorStop(0, side==='L' ? `rgba(${b.base[0]+20},${b.base[1]+10},${b.base[2]+30},.35)` : `rgba(${b.base[0]+10},${b.base[1]+20},${b.base[2]+10},.35)`);
+      grad.addColorStop(1, `rgba(${b.base[0]},${b.base[1]},${b.base[2]},.95)`);
+
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(t0.x,t0.y);
+      ctx.lineTo(t1.x,t1.y);
+      ctx.lineTo(p1.x,p1.y);
+      ctx.lineTo(p0.x,p0.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // edges
+      ctx.strokeStyle = edgeStroke;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.95;
+      ctx.stroke();
+
+      // neon stripe
+      if(b.stripe && state.neon){
+        const flick = 0.6 + 0.4*Math.sin(state.t*1.7 + (b.x+b.z)*0.02);
+        const stripeCol = side==='L' ? b.a : b.b;
+        ctx.save();
+        ctx.globalAlpha = 0.18 + 0.22*flick;
+        ctx.shadowColor = stripeCol;
+        ctx.shadowBlur = 20;
+        ctx.strokeStyle = stripeCol;
+        ctx.lineWidth = Math.max(1, 1.2*(p0.s*0.15 + 0.2));
+        // draw stripe as a parallel line between t and p
+        const midx = (t0.x+t1.x)/2;
+        const midy = (t0.y+t1.y)/2;
+        ctx.beginPath();
+        ctx.moveTo(lerp(t0.x,t1.x,0.45), lerp(t0.y,t1.y,0.45));
+        ctx.lineTo(lerp(p0.x,p1.x,0.45), lerp(p0.y,p1.y,0.45));
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Windows: draw rectangles projected along wall
+      if(glass){
+        const cols = b.winCols;
+        const rows = b.winRows;
+        const dx = (p1.x-p0.x)/cols;
+        const dy = (p1.y-p0.y)/cols;
+        // Vertical interpolation for top->base
+        const vdx = (p0.x - t0.x);
+        const vdy = (p0.y - t0.y);
+
+        // For each column/row, place a small neon square
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for(let c=0;c<cols;c++){
+          const px0 = lerp(t0.x,p0.x,(c+0.2)/cols);
+          const py0 = lerp(t0.y,p0.y,(c+0.2)/cols);
+          const px1 = lerp(t0.x,p0.x,(c+0.7)/cols);
+          const py1 = lerp(t0.y,p0.y,(c+0.7)/cols);
+
+          // approximate window thickness and height scaling by perspective
+          const winW = Math.max(1.1, (Math.hypot(px1-px0,py1-py0))*0.24);
+
+          for(let r=0;r<rows;r++){
+            const tt = (r+0.15)/rows;
+            const xw = lerp(px0,px1,0.5) - winW*0.35;
+            const yw = lerp(t0.y,p0.y,0.08 + tt*0.92) - winW*0.35;
+
+            const on = ((c*13 + r*7 + (b.x*0.2|0) + (b.z*0.3|0))%3===0) ? 1 : 0;
+            if(on){
+              const flick = 0.55 + 0.45*Math.sin(state.t*2.2 + c*0.9 + r*0.7 + (b.h*0.03));
+              const col = (state.neon ? (r%2? b.a : b.b) : 'rgba(140,220,255,.12)');
+              ctx.fillStyle = col;
+              ctx.globalAlpha = 0.09 + 0.22*flick;
+              ctx.shadowColor = col;
+              ctx.shadowBlur = 14;
+              ctx.fillRect(xw,yw,winW,winW*0.9);
+            } else {
+              // dim windows occasionally
+              if((c+r)%7===0){
+                const col = 'rgba(110,170,255,.10)';
+                ctx.fillStyle = col;
+                ctx.globalAlpha = 0.06;
+                ctx.shadowBlur = 0;
+                ctx.fillRect(lerp(px0,px1,0.35)-winW*0.25, lerp(t0.y,p0.y,0.08 + tt*0.92)-winW*0.3, winW*0.7, winW*0.6);
+              }
+            }
+          }
+        }
+        ctx.restore();
+      }
+
+      ctx.restore();
+    };
+
+    // Draw back-to-front: choose which side first based on near
+    // Indices: corners: 0 (xL,zF),1(xR,zF),2(xR,zB),3(xL,zB)
+    if(nearZ==='front'){
+      // Draw right/back then left
+      drawWall(3,0,'L');
+      drawWall(1,2,'R');
+      // Front face
+      // front face indices 0,1
+      // We'll draw it as both walls already; add front glow panel
+      if(state.neon && b.rooftop){
+        const flick = 0.6+0.4*Math.sin(state.t*1.5 + (b.x-b.z)*0.01);
+        const col = (flick>0.5? b.c: b.a);
+        const p0=base[0], p1=base[1];
+        const t0=top[0], t1=top[1];
+        ctx.save();
+        ctx.globalCompositeOperation='screen';
+        ctx.globalAlpha = 0.08 + 0.16*flick;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 26;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(t0.x,t0.y);
+        ctx.lineTo(t1.x,t1.y);
+        ctx.lineTo(p1.x,p1.y);
+        ctx.lineTo(p0.x,p0.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    } else {
+      drawWall(0,3,'L');
+      drawWall(2,1,'R');
+      if(state.neon && b.rooftop){
+        const flick = 0.6+0.4*Math.sin(state.t*1.5 + (b.x+b.z)*0.01);
+        const col = (flick>0.5? b.b: b.c);
+        const p0=base[2], p1=base[3];
+        const t0=top[2], t1=top[3];
+        ctx.save();
+        ctx.globalCompositeOperation='screen';
+        ctx.globalAlpha = 0.08 + 0.16*flick;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 26;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(t0.x,t0.y);
+        ctx.lineTo(t1.x,t1.y);
+        ctx.lineTo(p1.x,p1.y);
+        ctx.lineTo(p0.x,p0.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Rooftop antennas
+    if(b.rooftop){
+      const rndLocal = (b.x*0.17 + b.z*0.21 + b.h*0.03) % 1;
+      const antCount = 1 + (rndLocal>0.55?1:0) + (rndLocal>0.8?1:0);
+      for(let i=0;i<antCount;i++){
+        const kx = (rndLocal-0.5)*b.w*0.25 + (i-0.5)*b.w*0.12;
+        const kz = (0.5 - rndLocal)*b.d*0.25 + (i-0.5)*b.d*0.12;
+        const yy = b.h + 1 + i*1.4;
+        const len = 7 + (rndLocal*8) + i*3;
+        const pA = project(b.x+kx, yy+len*0.5, b.z+kz, {});
+        const pB = project(b.x+kx, yy, b.z+kz, {});
+        if(!pA || !pB) continue;
+        const col = (i%2? b.a: b.c);
+        drawGlowLine(pB.x,pB.y,pA.x,pA.y,col, Math.max(1, 1.1*pB.s*0.02+1));
+      }
+    }
+  }
+
+  function drawSign(s){
+    // Sign as billboard-ish rectangle
+    const p0 = project(s.x, s.y, s.z, {});
+    if(!p0) return;
+    const size = s.w / (p0.z*0.02);
+    const w = size * (0.9 + 0.2*Math.sin(state.t*1.7 + (s.x+s.z)*0.01));
+    const h = size * 0.55;
+    ctx.save();
+    ctx.globalCompositeOperation='screen';
+    const flick = 0.65+0.35*Math.sin(state.t*2.0 + s.x*0.01);
+    const col = state.neon ? s.col : 'rgba(180,210,255,.18)';
+    ctx.globalAlpha = state.neon ? (0.18 + 0.26*flick) : 0.08;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 30;
+
+    // Background panel
+    ctx.fillStyle = state.neon ? 'rgba(10,0,20,.55)' : 'rgba(5,2,14,.35)';
+    drawRoundedRect(p0.x - w*0.5, p0.y - h*0.5, w, h, Math.max(6, h*0.22));
+    ctx.fill();
+
+    // Inner glow
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha *= 0.9;
+    ctx.stroke();
+
+    // Text
+    ctx.shadowBlur = 24;
+    ctx.fillStyle = col;
+    ctx.globalAlpha = state.neon ? (0.22 + 0.28*flick) : 0.10;
+    const fontSz = clamp(h*0.45, 10, 22);
+    ctx.font = `800 ${fontSz}px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(s.text, p0.x, p0.y);
+
+    ctx.restore();
+  }
+
+  function drawSkylineLights(){
+    for(const l of world.skyline){
+      const p = project(l.x, l.y, l.z, {});
+      const p2 = project(l.x, l.y - l.len, l.z, {});
+      if(!p||!p2) continue;
+      const flick = 0.6 + 0.4*Math.sin(state.t*1.4 + l.flicker);
+      ctx.save();
+      ctx.globalCompositeOperation='screen';
+      ctx.globalAlpha = state.neon ? 0.12 + 0.18*flick : 0.05;
+      ctx.shadowColor = l.col;
+      ctx.shadowBlur = 34;
+      ctx.strokeStyle = l.col;
+      ctx.lineWidth = Math.max(1, 1.6*p.s*0.01 + 1);
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y);
+      ctx.lineTo(p2.x,p2.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawRoadAndGrid(){
+    // Ground plane: draw perspective grid and lanes as quads.
+    const horizonY = canvas.height*0.52;
+
+    // Grid lines on z
+    ctx.save();
+    ctx.globalAlpha = 1;
+    // Background sky gradient
+    const g = ctx.createLinearGradient(0,0,0,canvas.height);
+    g.addColorStop(0,'#05020a');
+    g.addColorStop(0.45,'#07021a');
+    g.addColorStop(1,'#000');
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Horizon glow
+    const hg = ctx.createRadialGradient(canvas.width*0.5,horizonY,10,canvas.width*0.5,horizonY,canvas.height*0.55);
+    hg.addColorStop(0,'rgba(0,245,255,.10)');
+    hg.addColorStop(0.3,'rgba(255,43,214,.07)');
+    hg.addColorStop(0.7,'rgba(0,0,0,0)');
+    ctx.fillStyle=hg;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Perspective grid
+    const rnd = state.rand;
+    ctx.globalCompositeOperation='screen';
+    for(let i=0;i<78;i++){
+      const z = (i/78)*WORLD.h*WORLD.block*1.35 + 2;
+      const p = project(0,0,z+state.cam.z,{}); // wrong; let's do local by transforming points: use project with world coords
+    }
+    // Instead: sample world grid by taking lines in world coordinates.
+    const gridStep = 10;
+    const xSpan = WORLD.w*WORLD.block;
+    const zSpan = WORLD.h*WORLD.block;
+
+    ctx.lineWidth = 1;
+    for(let gx=-xSpan; gx<=xSpan; gx+=gridStep){
+      let prev=null;
+      for(let gz=0; gz<zSpan*1.3; gz+=gridStep){
+        const wx = gx;
+        const wz = gz - zSpan*0.2;
+        const p = project(wx,0,wz,{});
+        if(!p) continue;
+        if(prev){
+          const alpha = 0.06*(1 - p.z/(zSpan*1.4));
+          ctx.strokeStyle = `rgba(155,120,255,${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(prev.x,prev.y);
+          ctx.lineTo(p.x,p.y);
+          ctx.stroke();
+        }
+        prev=p;
+      }
+    }
+
+    for(let gz=-zSpan; gz<=zSpan; gz+=gridStep){
+      let prev=null;
+      for(let gx=-xSpan; gx<=xSpan; gx+=gridStep){
+        const p = project(gx,0,gz,{});
+        if(!p) continue;
+        if(prev){
+          const alpha = 0.045*(1 - p.z/(zSpan*1.4));
+          ctx.strokeStyle = `rgba(0,245,255,${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(prev.x,prev.y);
+          ctx.lineTo(p.x,p.y);
+          ctx.stroke();
+        }
+        prev=p;
+      }
+    }
+
+    // Road lanes
+    const drawLane = (dir, fixed, w0)=>{
+      // draw a strip on ground along axis.
+      ctx.save();
+      ctx.globalCompositeOperation='screen';
+      const zMax = WORLD.h*WORLD.block*1.2;
+      const zMin = -WORLD.h*WORLD.block*0.2;
+      const xMax = WORLD.w*WORLD.block*1.2;
+      const xMin = -WORLD.w*WORLD.block*0.2;
+
+      if(dir==='z'){
+        // strip around x=fixed
+        const xl = fixed - w0/2;
+        const xr = fixed + w0/2;
+        const y = 0.001;
+
+        const p1 = project(xl,y,zMin,{});
+        const p2 = project(xr,y,zMin,{});
+        const p3 = project(xr,y,zMax,{});
+        const p4 = project(xl,y,zMax,{});
+        if(!p1||!p2||!p3||!p4){ctx.restore();return;}
+
+        // gradient asphalt
+        const grad = ctx.createLinearGradient(p1.x,p1.y,p4.x,p4.y);
+        grad.addColorStop(0,'rgba(10,6,25,.35)');
+        grad.addColorStop(1,'rgba(0,0,0,.82)');
+        ctx.fillStyle=grad;
+        ctx.beginPath();
+        ctx.moveTo(p1.x,p1.y);
+        ctx.lineTo(p2.x,p2.y);
+        ctx.lineTo(p3.x,p3.y);
+        ctx.lineTo(p4.x,p4.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // lane center line dashes
+        for(let i=0;i<28;i++){
+          const t = i/28;
+          const zz0 = lerp(zMin,zMax,t);
+          const zz1 = lerp(zMin,zMax,t+1/28);
+          const pA = project(fixed,y,zz0,{});
+          const pB = project(fixed,y,zz1,{});
+          if(!pA||!pB) continue;
+          const col = state.neon ? (i%2? 'rgba(0,245,255,.45)' : 'rgba(255,43,214,.35)') : 'rgba(140,220,255,.18)';
+          ctx.globalAlpha = 0.45;
+          ctx.strokeStyle=col;
+          ctx.lineWidth = 2;
+          ctx.shadowColor=col;
+          ctx.shadowBlur=18;
+          ctx.beginPath();
+          ctx.moveTo(pA.x,pA.y);
+          ctx.lineTo(pB.x,pB.y);
+          ctx.stroke();
+        }
+      } else {
+        const zl = fixed - w0/2;
+        const zr = fixed + w0/2;
+        const y=0.001;
+        const p1 = project(xMin,y,zl,{});
+        const p2 = project(xMax,y,zl,{});
+        const p3 = project(xMax,y,zr,{});
+        const p4 = project(xMin,y,zr,{});
+        if(!p1||!p2||!p3||!p4){ctx.restore();return;}
+        const grad = ctx.createLinearGradient(p1.x,p1.y,p4.x,p4.y);
+        grad.addColorStop(0,'rgba(10,6,25,.35)');
+        grad.addColorStop(1,'rgba(0,0,0,.82)');
+        ctx.fillStyle=grad;
+        ctx.beginPath();
+        ctx.moveTo(p1.x,p1.y);
+        ctx.lineTo(p2.x,p2.y);
+        ctx.lineTo(p3.x,p3.y);
+        ctx.lineTo(p4.x,p4.y);
+        ctx.closePath();
+        ctx.fill();
+
+        for(let i=0;i<28;i++){
+          const t = i/28;
+          const xx0 = lerp(xMin,xMax,t);
+          const xx1 = lerp(xMin,xMax,t+1/28);
+          const pA = project(xx0,y,fixed,{});
+          const pB = project(xx1,y,fixed,{});
+          if(!pA||!pB) continue;
+          const col = state.neon ? (i%2? 'rgba(0,245,255,.45)' : 'rgba(255,43,214,.35)') : 'rgba(140,220,255,.18)';
+          ctx.globalAlpha = 0.45;
+          ctx.strokeStyle=col;
+          ctx.lineWidth = 2;
+          ctx.shadowColor=col;
+          ctx.shadowBlur=18;
+          ctx.beginPath();
+          ctx.moveTo(pA.x,pA.y);
+          ctx.lineTo(pB.x,pB.y);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    };
+
+    for(const l of world.lanes){
+      drawLane(l.dir, l.dir==='z'? l.x : l.z, l.w);
+    }
+
+    // Ambient fog
+    ctx.globalCompositeOperation='screen';
+    for(const fs of world.fogSeeds){
+      const p = project(fs.x, fs.y, fs.z, {});
+      if(!p) continue;
+      const r = fs.r / (p.z*0.08);
+      const alpha = 0.04*fs.s*(1 - p.z/(WORLD.h*WORLD.block*1.35));
+      if(r<1) continue;
+      const gg = ctx.createRadialGradient(p.x,p.y,1,p.x,p.y,r);
+      gg.addColorStop(0, state.neon ? `rgba(0,245,255,${alpha})` : `rgba(120,170,255,${alpha})`);
+      gg.addColorStop(0.35, state.neon ? `rgba(255,43,214,${alpha*0.65})` : `rgba(120,170,255,${alpha*0.65})`);
+      gg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=gg;
+      ctx.fillRect(p.x-r,p.y-r,2*r,2*r);
+    }
+
+    ctx.restore();
+  }
+
+  function drawRain(){
+    if(!state.rain) return;
+    ctx.save();
+    ctx.globalCompositeOperation='screen';
+    const camZ = state.cam.z;
+    const camX = state.cam.x;
+    const baseSpeed = 60;
+    for(const d of world.rainDrops){
+      // Move in world coordinates relative to time
+      d.y -= d.v * (0.016) * (0.8 + 0.4*Math.sin(state.t*0.8 + d.phase));
+      d.x += Math.sin(state.t*0.2 + d.phase)*0.08;
+      if(d.y < 0){
+        d.y = 40 + state.rand()*55;
+        d.x = (state.rand()*2-1)*WORLD.w*WORLD.block*1.05 + camX*0;
+        d.z = (state.rand()*2-1)*WORLD.h*WORLD.block*1.05 + camZ*0;
+      }
+
+      // Project rain streaks
+      const pA = project(d.x,d.y,d.z,{});
+      const pB = project(d.x,d.y-10,d.z,{});
+      if(!pA||!pB) continue;
+      const alpha = 0.08 + 0.18*(1 - pA.z/(WORLD.h*WORLD.block*1.4));
+      ctx.strokeStyle = d.col;
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = d.col;
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = d.w*(state.targetScale);
+      ctx.beginPath();
+      ctx.moveTo(pA.x,pA.y);
+      ctx.lineTo(pB.x,pB.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawParticles(){
+    // drifting particles (heat shimmer / neon dust)
+    ctx.save();
+    ctx.globalCompositeOperation='screen';
+    for(const p of world.particles){
+      p.x += p.vx*0.02 + Math.sin(state.t*0.4 + p.z)*0.01;
+      p.z += p.vz*0.02 + Math.cos(state.t*0.35 + p.x)*0.01;
+      p.life -= 0.002;
+      if(p.life<0){ p.life=1; p.x=(state.rand()-0.5)*40; p.z=(state.rand()-0.5)*40; p.y=2+state.rand()*8; }
+      const wx = state.cam.x + p.x;
+      const wy = state.cam.y + p.y;
+      const wz = state.cam.z + p.z;
+      const pr = project(wx,wy,wz,{});
+      if(!pr) continue;
+      const r = 1.6 + 4*(1-pr.z/(WORLD.h*WORLD.block*1.4));
+      const alpha = (0.06 + 0.16*(1-p.life)) * (state.neon?1:0.45);
+      ctx.fillStyle = p.col;
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = p.col;
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(pr.x,pr.y,r,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function render(){
+    // Adaptive quality: based on last frame time
+    const now = performance.now();
+    if(!render.last) render.last = now;
+    const dt = now - render.last;
+    render.last = now;
+
+    // crude FPS scale adjust
+    const fps = 1000/Math.max(1,dt);
+    const target = clamp(1.02 - (fps<45?0.18:0) - (fps<30?0.22:0), 0.65, 1.02);
+    // smooth
+    state.targetScale = lerp(state.targetScale, target, 0.02);
+    // resize only occasionally
+    if(render.frameCount%30===0){
+      const prevW = canvas.width;
+      const prevH = canvas.height;
+      resize();
+    }
+    render.frameCount = (render.frameCount||0)+1;
+
+    ensureBloomSize();
+
+    // Decide layers: ground -> buildings -> signs -> skyline lights -> particles -> rain
+    const drawToBloom = state.bloom;
+
+    if(drawToBloom){
+      bloomCtx.clearRect(0,0,bloomBuf.width,bloomBuf.height);
+      // Draw scene to offscreen
+      const prevCtx = ctx;
+      // Temporarily swap contexts by drawing functions using ctx var; simplest: just run a mini render with bloomCtx.
+      // We'll implement by drawing to main ctx first and then extracting highlights.
+      // For performance, we'll just render main scene then do glow overlay.
+    }
+
+    // Main scene
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawRoadAndGrid();
+
+    // Sort buildings by depth
+    const camX = state.cam.x, camZ = state.cam.z;
+    const visible = world.buildings
+      .map(b => {
+        const dx = b.x - camX;
+        const dz = b.z - camZ;
+        const d = dx*dx + dz*dz;
+        return {b, d};
+      })
+      .sort((a,c)=>c.d-a.d);
+
+    // Limit number of buildings by distance for performance
+    const limit = clamp(Math.floor(260 + (fps||60)*4), 160, 420);
+    for(let i=0;i<Math.min(limit,visible.length);i++){
+      drawBuilding(visible[i].b);
+    }
+
+    // Signs
+    // Sort signs by depth
+    const signVis = world.signs.map(s=>({s, d:(s.x-camX)**2 + (s.z-camZ)**2})).sort((a,b)=>b.d-a.d);
+    for(const item of signVis){
+      drawSign(item.s);
+    }
+
+    // Skyline lights
+    drawSkylineLights();
+
+    // Traffic lights / drones
+    // Draw as neon bulbs/bars at street level
+    for(const tr of world.traffic){
+      const yBase = 0.2;
+      const tPhase = tr.phase + state.t*tr.speed;
+      const bob = Math.sin(tPhase)*0.25;
+      const y = yBase + bob + (tr.mode==='drone'? 1.5 + Math.cos(tPhase*1.3)*0.35 : 0.3);
+      const p = project(tr.x, y, tr.z, {});
+      if(!p) continue;
+      const depth = p.z;
+      const size = 1.4 + 2.2*(1 - depth/(WORLD.h*WORLD.block*1.4));
+      if(size<0.3) continue;
+
+      ctx.save();
+      ctx.globalCompositeOperation='screen';
+      const col = state.neon ? (tr.mode==='drone' ? (Math.sin(tPhase*3.2)>0? tr.colA : tr.colB) : (Math.sin(tPhase*2)>0? tr.colA : tr.colB)) : 'rgba(160,220,255,.12)';
+      const flick = 0.6+0.4*Math.sin(tPhase*2.4);
+      ctx.globalAlpha = state.neon ? 0.12 + 0.22*flick : 0.06;
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 26;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,size*1.1,0,Math.PI*2);
+      ctx.fill();
+
+      // beam
+      if(tr.mode==='drone'){
+        const p2 = project(tr.x, y - 7, tr.z, {});
+        if(p2){
+          ctx.globalAlpha *= 0.55;
+          ctx.strokeStyle = col;
+          ctx.lineWidth = Math.max(1, size*0.35);
+          ctx.beginPath();
+          ctx.moveTo(p.x,p.y);
+          ctx.lineTo(p2.x,p2.y);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    // Dust/particles
+    drawParticles();
+
+    // Rain
+    drawRain();
+
+    // Post bloom overlay (cheap): add a fake bloom by re-drawing with additive gradients based on neon areas.
+    if(state.bloom){
+      // Create highlight overlay by sampling: just do a blurred version via globalAlpha with shadow.
+      // Instead of actual blur, we draw a few translucent passes.
+      ctx.save();
+      ctx.globalCompositeOperation='screen';
+      // Copy-like effect: use low alpha full-screen gradients.
+      const glow1 = ctx.createRadialGradient(canvas.width*0.55, canvas.height*0.45, 20, canvas.width*0.55, canvas.height*0.45, canvas.height*0.75);
+      glow1.addColorStop(0,'rgba(0,245,255,.08)');
+      glow1.addColorStop(0.45,'rgba(255,43,214,.05)');
+      glow1.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = glow1;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      const glow2 = ctx.createRadialGradient(canvas.width*0.45, canvas.height*0.55, 10, canvas.width*0.45, canvas.height*0.55, canvas.height*0.65);
+      glow2.addColorStop(0,'rgba(166,255,0,.05)');
+      glow2.addColorStop(0.4,'rgba(0,245,255,.03)');
+      glow2.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = glow2;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.restore();
+    }
+  }
+
+  // ---------- Update / Camera movement ----------
+  function update(){
+    state.t = performance.now()/1000;
+
+    const speedBase = 9.2;
+    const boost = state.boosting ? 1.6 : 1.0;
+    const speed = speedBase * boost;
+    const dt = update.last ? (performance.now()-update.last)/1000 : 0.016;
+    update.last = performance.now();
+
+    const forward = {
+      x: Math.sin(state.yaw),
+      z: Math.cos(state.yaw)
+    };
+    const right = {
+      x: forward.z,
+      z: -forward.x
+    };
+
+    let vx=0, vz=0;
+    const keys=state.keys;
+    if(keys['KeyW']||keys['ArrowUp']){ vx += forward.x; vz += forward.z; }
+    if(keys['KeyS']||keys['ArrowDown']){ vx -= forward.x; vz -= forward.z; }
+    if(keys['KeyD']||keys['ArrowRight']){ vx += right.x; vz += right.z; }
+    if(keys['KeyA']||keys['ArrowLeft']){ vx -= right.x; vz -= right.z; }
+
+    // Add subtle inertia
+    const mag = Math.hypot(vx,vz);
+    if(mag>0.001){ vx/=mag; vz/=mag; }
+
+    // Simple collision avoidance: keep camera away from building rectangles (approx)
+    const nextX = state.cam.x + vx*speed*dt;
+    const nextZ = state.cam.z + vz*speed*dt;
+
+    // Boundary
+    const bound = WORLD.w*WORLD.block - 12;
+
+    let x = clamp(nextX, -bound, bound);
+    let z = clamp(nextZ, -bound, bound);
+
+    // Collision check
+    // Only check a subset near camera for speed
+    const local = world.buildings;
+    for(let i=0;i<local.length;i++){
+      const b = local[i];
+      const dx = Math.abs(b.x - x);
+      const dz = Math.abs(b.z - z);
+      const pad = 1.5;
+      if(dx < b.w/2 + pad && dz < b.d/2 + pad){
+        // push out along axis of least penetration
+        const penX = (b.w/2 + pad) - dx;
+        const penZ = (b.d/2 + pad) - dz;
+        if(penX < penZ){
+          x += (x < b.x ? -penX : penX);
+        } else {
+          z += (z < b.z ? -penZ : penZ);
+        }
+      }
+    }
+
+    state.cam.x = x;
+    state.cam.z = z;
+    state.cam.y = 1.55 + (state.boosting ? Math.sin(state.t*9)*0.03 : 0);
+
+    // Add street bob
+    state.pitch = clamp(state.pitch + (state.boosting ? Math.sin(state.t*10)*0.002 : 0), -0.35, 0.25);
+
+    // Rain motion time already uses state.t in render.
+  }
+
+  // ---------- Main Loop ----------
+  function loop(){
+    update();
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+})();
+</script>
+</body>
+</html>

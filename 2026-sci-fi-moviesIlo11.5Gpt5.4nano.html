@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2026 Sci‑Fi Constellations — Interactive Movie Atlas</title>
+  <style>
+    :root{
+      --bg0:#05060b;
+      --bg1:#070a16;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.12);
+      --txt: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.7);
+      --muted2: rgba(255,255,255,.55);
+      --good:#7CFFB2;
+      --hot:#FF4FD8;
+      --sky:#57A8FF;
+      --vio:#8A5CFF;
+      --amber:#FFCC66;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(138,92,255,.25), transparent 55%),
+        radial-gradient(900px 500px at 80% 30%, rgba(87,168,255,.22), transparent 55%),
+        radial-gradient(800px 600px at 40% 90%, rgba(255,79,216,.12), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* Starfield canvas */
+    #stars{
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100vh;
+      z-index:-1;
+      opacity:.95;
+    }
+
+    /* Subtle scanlines */
+    .scanlines{
+      position:fixed; inset:0; pointer-events:none; z-index:-1;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,.03),
+        rgba(255,255,255,.03) 1px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0) 5px
+      );
+      mix-blend-mode: overlay;
+      opacity:.25;
+    }
+
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:28px 18px 80px;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+      padding:14px 6px 18px;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .kicker{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-family: var(--mono);
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-size:12px;
+      color:var(--muted2);
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,.2) 35%, rgba(255,255,255,0) 60%),
+                  linear-gradient(135deg, var(--sky), var(--vio));
+      box-shadow:0 0 18px rgba(138,92,255,.65), 0 0 40px rgba(87,168,255,.4);
+    }
+
+    h1{
+      margin:0;
+      font-size: clamp(28px, 4.2vw, 52px);
+      line-height:1.02;
+      letter-spacing:-.02em;
+    }
+
+    .sub{
+      margin:0;
+      color:var(--muted);
+      max-width:62ch;
+      font-size:15px;
+      line-height:1.45;
+    }
+
+    .topRight{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:10px;
+      min-width:280px;
+    }
+
+    .controls{
+      width:100%;
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.045));
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+
+    input[type="search"]{
+      flex:1;
+      min-width:190px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--txt);
+      border-radius: 14px;
+      padding:10px 12px;
+      outline:none;
+    }
+    input[type="search"]:focus{
+      border-color: rgba(87,168,255,.55);
+      box-shadow: 0 0 0 4px rgba(87,168,255,.12);
+    }
+
+    button{
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      color:var(--txt);
+      padding:10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      font-weight:600;
+    }
+    button:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.25)}
+    button:active{transform: translateY(0px)}
+
+    .toggle{
+      display:flex; align-items:center; gap:10px;
+      padding-top:10px;
+      margin-top:6px;
+      border-top:1px dashed rgba(255,255,255,.12);
+    }
+    .chip{
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--muted);
+      font-family: var(--mono);
+      font-size:12px;
+      user-select:none;
+    }
+    .switch{
+      width:46px; height:26px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.30);
+      position:relative;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      top:50%; left:4px;
+      transform: translateY(-50%);
+      width:20px; height:20px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,.2) 35%, rgba(255,255,255,0) 60%),
+                  linear-gradient(135deg, var(--sky), var(--vio));
+      box-shadow: 0 0 18px rgba(138,92,255,.55);
+      transition: left .18s ease;
+    }
+    .switch.on{border-color: rgba(124,255,178,.4)}
+    .switch.on::after{left:22px; box-shadow: 0 0 18px rgba(124,255,178,.55)}
+
+    /* Main layout */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+      margin-top:14px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr;}
+      .topRight{align-items:stretch;}
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow:hidden;
+    }
+
+    .viz{
+      position:relative;
+      height:560px;
+      padding:14px;
+    }
+
+    #scene{
+      width:100%; height:100%;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+
+    .hud{
+      position:absolute;
+      top:16px; left:16px;
+      right:16px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      pointer-events:none;
+    }
+    .pill{
+      pointer-events:none;
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      color:var(--muted);
+      font-family: var(--mono);
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      backdrop-filter: blur(8px);
+    }
+    .badge{
+      width:10px; height:10px; border-radius:50%;
+      background: linear-gradient(135deg, var(--sky), var(--vio));
+      box-shadow: 0 0 18px rgba(87,168,255,.45);
+    }
+
+    .list{
+      padding:14px;
+      height:560px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .listTop{
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      padding:2px 2px 10px;
+      border-bottom: 1px dashed rgba(255,255,255,.14);
+    }
+    .listTop h2{margin:0; font-size:14px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted2); font-family:var(--mono)}
+
+    .legend{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      color:var(--muted);
+      font-family: var(--mono);
+      font-size:12px;
+    }
+    .sw{width:10px; height:10px; border-radius:50%}
+
+    .cards{
+      overflow:auto;
+      padding-right:6px;
+      flex:1;
+    }
+
+    .movieCard{
+      display:grid;
+      grid-template-columns: 14px 1fr auto;
+      gap:12px;
+      align-items:center;
+      padding:12px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      margin:10px 0;
+      cursor:pointer;
+      transition: transform .13s ease, border-color .13s ease, background .13s ease;
+    }
+    .movieCard:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22)}
+    .movieCard.active{border-color: rgba(87,168,255,.55); background: rgba(87,168,255,.08)}
+
+    .mDot{width:12px; height:12px; border-radius:50%; box-shadow: 0 0 20px rgba(255,255,255,.12)}
+
+    .title{
+      font-weight:800;
+      letter-spacing:-.01em;
+      margin-bottom:3px;
+      font-size:14.5px;
+    }
+    .meta{
+      color:var(--muted);
+      font-size:12.5px;
+      font-family: var(--mono);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .tag{
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted);
+      padding:6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      font-family: var(--mono);
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .footerNote{
+      margin-top:12px;
+      padding:12px;
+      border-radius: 14px;
+      border:1px dashed rgba(255,255,255,.16);
+      color:var(--muted);
+      background: rgba(0,0,0,.16);
+      font-size:12.5px;
+      line-height:1.45;
+    }
+    .footerNote b{color:rgba(255,255,255,.88)}
+
+    /* Modal */
+    .modalBackdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.6);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .modalBackdrop.show{display:flex}
+    .modal{
+      width:min(920px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(20,24,50,.82), rgba(5,6,11,.85));
+      box-shadow: 0 30px 90px rgba(0,0,0,.65);
+      backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .modalHead{
+      display:flex; justify-content:space-between; align-items:flex-start;
+      gap:14px;
+      padding:16px 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .modalTitle{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .modalTitle h3{margin:0; font-size:22px; letter-spacing:-.02em}
+    .modalTitle p{margin:0; color:var(--muted); font-size:13px; font-family:var(--mono)}
+
+    .closeBtn{
+      border-radius: 14px;
+      padding:10px 12px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      color:var(--txt);
+    }
+
+    .modalBody{
+      padding:14px 16px 16px;
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:14px;
+    }
+    @media (max-width: 860px){
+      .modalBody{grid-template-columns:1fr}
+    }
+
+    .poster{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(700px 300px at 20% 10%, rgba(87,168,255,.35), transparent 55%),
+        radial-gradient(600px 260px at 80% 30%, rgba(255,79,216,.22), transparent 55%),
+        radial-gradient(500px 260px at 40% 90%, rgba(138,92,255,.18), transparent 62%),
+        rgba(0,0,0,.22);
+      height:260px;
+      position:relative;
+      overflow:hidden;
+    }
+    .poster::before{
+      content:"";
+      position:absolute; inset:-40px;
+      background: conic-gradient(from 210deg, rgba(87,168,255,.0), rgba(87,168,255,.55), rgba(138,92,255,.55), rgba(255,79,216,.5), rgba(87,168,255,.0));
+      opacity:.28;
+      filter: blur(18px);
+      transform: rotate(8deg);
+    }
+    .posterInner{
+      position:absolute; inset:0;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .posterTop{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    }
+    .sig{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(8px);
+    }
+    .posterMain{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
+    }
+    .posterMain .big{
+      font-size:46px; font-weight:900; letter-spacing:-.04em; line-height:1;
+      text-shadow: 0 10px 40px rgba(0,0,0,.65);
+    }
+    .posterMain .small{
+      color:rgba(255,255,255,.8);
+      font-family:var(--mono);
+      font-size:12.5px;
+      text-align:right;
+    }
+
+    .details{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding:14px;
+    }
+    .details h4{margin:0 0 8px; font-family:var(--mono); color:var(--muted2); font-size:12px; text-transform:uppercase; letter-spacing:.08em}
+    .details .p{margin:0; color:var(--muted); font-size:13px; line-height:1.55}
+
+    .kv{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .kv .k{
+      border-radius:14px;
+      padding:10px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+    }
+    .kv .k b{display:block; font-family:var(--mono); font-size:12px; color:var(--muted2); font-weight:700; margin-bottom:6px}
+    .kv .k span{display:block; font-size:14px; font-weight:800}
+
+    .actions{
+      margin-top:12px;
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .actions .linkBtn{
+      flex:1;
+      min-width:210px;
+      text-align:center;
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      *{scroll-behavior:auto !important}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="kicker"><span class="dot"></span>Interactive Movie Atlas • 2026</div>
+        <h1>2026 Sci‑Fi Constellations</h1>
+        <p class="sub">Search, click, and “warp” through a neon star-map of notable 2026 sci‑fi releases. Colors represent sub‑vibes (space, AI, dystopia, monster, time, etc.).</p>
+      </div>
+
+      <div class="topRight">
+        <div class="controls">
+          <div class="row">
+            <input id="q" type="search" placeholder="Search titles (e.g., Project, Mandalorian, Mercy)" autocomplete="off" />
+            <button id="resetBtn" title="Reset filters & center">Reset</button>
+          </div>
+          <div class="toggle">
+            <div class="chip"><span style="width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--good),var(--sky)); box-shadow:0 0 18px rgba(124,255,178,.45)"></span> Warp Trails</div>
+            <div id="trailSwitch" class="switch on" role="switch" aria-checked="true" tabindex="0" title="Toggle motion trails"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel viz" aria-label="Interactive constellation map">
+        <div class="hud">
+          <div class="pill"><span class="badge"></span><span id="hudCount">0 targets</span></div>
+          <div class="pill"><span class="badge" style="background:linear-gradient(135deg,var(--hot),var(--vio))"></span><span id="hudHint">Drag / scroll to explore</span></div>
+        </div>
+        <div id="scene" title="Click a node to open details"></div>
+      </section>
+
+      <aside class="panel list" aria-label="Movie list">
+        <div class="listTop">
+          <h2>Targets</h2>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="cards" id="cards"></div>
+        <div class="footerNote">
+          <b>Source basis:</b> release-name items were gathered from 2026 sci‑fi lists (e.g., ScreenRant’s “Every Sci‑Fi Movie Releasing In 2026” page). This site is a visual index and may not be exhaustive.
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="modalBackdrop" class="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalHead">
+        <div class="modalTitle">
+          <h3 id="modalTitle">Title</h3>
+          <p id="modalMeta">Meta</p>
+        </div>
+        <button class="closeBtn" id="closeModal" aria-label="Close">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="poster" id="poster">
+          <div class="posterInner">
+            <div class="posterTop">
+              <div class="sig" id="modalTagSig">SIGNAL</div>
+              <div class="sig" id="modalToneSig">TONE</div>
+            </div>
+            <div class="posterMain">
+              <div class="big" id="modalAbbrev">SF</div>
+              <div class="small" id="modalBlurb">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="details">
+          <h4>Transmission</h4>
+          <p class="p" id="modalDesc">—</p>
+          <div class="kv">
+            <div class="k"><b>Release window</b><span id="kvDate">—</span></div>
+            <div class="k"><b>Signal band</b><span id="kvBand">—</span></div>
+          </div>
+          <div class="actions">
+            <button class="linkBtn" id="modalFocusBtn">Center on node</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const MOVIES = [
+    { title: "We Bury The Dead", date: "Jan 2, 2026", vibe: "Dystopia", band: "Aether", color: "#FF4FD8", desc: "A near‑year opener where a military experiment unspools into a sci‑fi zombie spiral.", note: "Zombie sci‑fi" },
+    { title: "28 Years Later: The Bone Temple", date: "Jan 16, 2026", vibe: "Dystopia", band: "Aether", color: "#FFCC66", desc: "A continuation with cult tensions and survival pressure in a world after rupture.", note: "Post‑apocalypse" },
+    { title: "Mercy", date: "Jan 23, 2026", vibe: "AI", band: "Neural", color: "#57A8FF", desc: "An AI judge becomes the battleground for innocence in a near‑future courtroom of logic.", note: "AI justice" },
+    { title: "Good Luck, Have Fun, Don't Die", date: "Feb 13, 2026", vibe: "Time", band: "Chronos", color: "#8A5CFF", desc: "A time‑travel premise with rogue AI energy—action, comedy, and recursion.", note: "Time + AI" },
+    { title: "The Bride!", date: "Mar 6, 2026", vibe: "Monster", band: "Noir", color: "#FF6B6B", desc: "A Frankenstein‑adjacent retelling with gothic voltage and modern framing.", note: "Creature drama" },
+    { title: "Hoppers", date: "Mar 6, 2026", vibe: "Robotics", band: "Kinetics", color: "#7CFFB2", desc: "A tech‑driven transformation story—robotics meets habitat stakes.", note: "Kids‑friendly sci‑fi" },
+    { title: "Project Hail Mary", date: "Mar 20, 2026", vibe: "Space", band: "Astro", color: "#57A8FF", desc: "A deep‑space mission powered by memory gaps, engineering stakes, and first‑contact weirdness.", note: "Big space adventure" },
+    { title: "Mortal Kombat II", date: "May 8, 2026", vibe: "Franchise", band: "Kinetic", color: "#FFCC66", desc: "A sequel wave—earthrealm vs. invasion with franchise muscle.", note: "Action/sci‑fi edge" },
+    { title: "The Mandalorian And Grogu", date: "May 22, 2026", vibe: "Space", band: "Astro", color: "#8A5CFF", desc: "A galaxy‑classic story engine: a lone hunter, a small ally, and a new orbit.", note: "Star Wars cinematic" },
+    { title: "Masters Of The Universe", date: "Jun 5, 2026", vibe: "Fantasy‑SciFi", band: "Myth", color: "#FF4FD8", desc: "He‑Man returns with a fresh look—mythic tech and powerhouse charisma.", note: "Myth + tech" },
+  ];
+
+  // --- UI helpers
+  const $ = (s) => document.querySelector(s);
+  const q = $("#q");
+  const cards = $("#cards");
+  const legend = $("#legend");
+  const hudCount = $("#hudCount");
+  const trailSwitch = $("#trailSwitch");
+  const resetBtn = $("#resetBtn");
+
+  const modalBackdrop = $("#modalBackdrop");
+  const closeModal = $("#closeModal");
+  const modalTitle = $("#modalTitle");
+  const modalMeta = $("#modalMeta");
+  const modalDesc = $("#modalDesc");
+  const modalTagSig = $("#modalTagSig");
+  const modalToneSig = $("#modalToneSig");
+  const modalAbbrev = $("#modalAbbrev");
+  const modalBlurb = $("#modalBlurb");
+  const modalFocusBtn = $("#modalFocusBtn");
+
+  // --- Starfield background canvas
+  const bg = document.getElementById('stars');
+  const ctx = bg.getContext('2d');
+  let W=0,H=0, DPR=1;
+  function resize(){
+    DPR = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+    W = window.innerWidth; H = window.innerHeight;
+    bg.width = Math.floor(W*DPR);
+    bg.height = Math.floor(H*DPR);
+    bg.style.width = W+'px';
+    bg.style.height = H+'px';
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const stars = [];
+  function seed(){
+    stars.length = 0;
+    const n = Math.floor((W*H)/9000);
+    for(let i=0;i<n;i++){
+      const x = Math.random()*W;
+      const y = Math.random()*H;
+      const z = Math.random();
+      const r = (0.4 + 1.4*Math.pow(z,2.2));
+      const tw = Math.random()*Math.PI*2;
+      stars.push({x,y,z,r,tw,spd:(0.2+1.2*z)});
+    }
+  }
+  seed();
+  let t0 = performance.now();
+  function drawStars(now){
+    const t = (now - t0)/1000;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.clearRect(0,0,W,H);
+    // subtle nebula
+    ctx.globalCompositeOperation = 'lighter';
+    for(let i=0;i<3;i++){
+      const cx = W*(0.2 + i*0.32) + Math.sin(t*0.12+i)*W*0.03;
+      const cy = H*(0.2 + i*0.25) + Math.cos(t*0.1+i)*H*0.03;
+      const g = ctx.createRadialGradient(cx,cy,0,cx,cy,Math.min(W,H)*0.45);
+      g.addColorStop(0, i===0?'rgba(138,92,255,.12)':(i===1?'rgba(87,168,255,.12)':'rgba(255,79,216,.10)'));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    for(const s of stars){
+      const tw = Math.sin(t*s.spd + s.tw)*0.5 + 0.5;
+      const alpha = 0.15 + 0.75*Math.pow(s.z,1.6)*tw;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    requestAnimationFrame(drawStars);
+  }
+  requestAnimationFrame(drawStars);
+
+  // --- Constellation visualization (pure canvas) with camera
+  const sceneEl = document.getElementById('scene');
+  const canvas = document.createElement('canvas');
+  sceneEl.appendChild(canvas);
+  const g = canvas.getContext('2d');
+
+  const state = {
+    camX: 0, camY: 0,
+    zoom: 1,
+    dragging: false,
+    lastX: 0, lastY: 0,
+    trailOn: true,
+    targetId: null,
+    t: 0
+  };
+
+  function resizeScene(){
+    const r = sceneEl.getBoundingClientRect();
+    const w = Math.floor(r.width);
+    const h = Math.floor(r.height);
+    const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+    canvas.width = Math.floor(w*dpr);
+    canvas.height = Math.floor(h*dpr);
+    canvas.style.width = w+'px';
+    canvas.style.height = h+'px';
+    g.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resizeScene);
+  resizeScene();
+
+  // Arrange nodes in a pseudo-orbit ring
+  const palette = {
+    Space: '#57A8FF',
+    AI: '#57A8FF',
+    Dystopia:'#FFCC66',
+    Time:'#8A5CFF',
+    Monster:'#FF6B6B',
+    Robotics:'#7CFFB2',
+    Franchise:'#FFCC66',
+    'Fantasy‑SciFi':'#FF4FD8'
+  };
+
+  const nodes = MOVIES.map((m, i) => {
+    const angle = (i / MOVIES.length) * Math.PI*2;
+    const ring = 200 + (i%3)*70;
+    const wob = (i%2?1:-1)*30*Math.sin(angle*2.3);
+    return {
+      id: i,
+      title: m.title,
+      date: m.date,
+      vibe: m.vibe,
+      band: m.band,
+      color: m.color,
+      note: m.note,
+      desc: m.desc,
+      pos: {
+        x: Math.cos(angle)*ring + wob,
+        y: Math.sin(angle)*ring - wob*0.35,
+      },
+      vel: {x:0,y:0},
+      radius: 9 + (i%4)*1.6,
+      glow: 26 + (i%5)*7
+    };
+  });
+
+  const edges = [];
+  // Connect near neighbors for a constellation look
+  for(let i=0;i<nodes.length;i++){
+    for(let j=i+1;j<nodes.length;j++){
+      const dx = nodes[i].pos.x - nodes[j].pos.x;
+      const dy = nodes[i].pos.y - nodes[j].pos.y;
+      const d2 = dx*dx + dy*dy;
+      if(d2 < 170000 && ((i+j)%2===0)) edges.push([i,j]);
+    }
+  }
+
+  // trails buffer
+  let trailImg = null;
+  function clearFrame(){
+    g.clearRect(0,0,canvas.width,canvas.height);
+  }
+
+  function worldToScreen(x,y){
+    const r = sceneEl.getBoundingClientRect();
+    const cx = r.width/2;
+    const cy = r.height/2;
+    return {
+      x: (x - state.camX) * state.zoom + cx,
+      y: (y - state.camY) * state.zoom + cy
+    };
+  }
+
+  // render list
+  const active = { index: 0 };
+  function normalize(s){ return (s||"").toLowerCase().trim(); }
+  function renderLegend(){
+    const map = new Map();
+    for(const m of MOVIES){
+      if(!map.has(m.vibe)) map.set(m.vibe, m.color);
+    }
+    const items = [...map.entries()];
+    legend.innerHTML = items.slice(0,6).map(([k,v])=>{
+      return `<span class="legendItem" style="display:flex;align-items:center;gap:8px"><span class="sw" style="background:${v};box-shadow:0 0 22px ${v}55"></span><span>${k}</span></span>`;
+    }).join('');
+  }
+
+  function getFiltered(){
+    const term = normalize(q.value);
+    if(!term) return MOVIES.map((_,i)=>i);
+    const ids = [];
+    MOVIES.forEach((m,i)=>{
+      const blob = (m.title+" "+m.vibe+" "+m.band+" "+m.date+" "+m.note).toLowerCase();
+      if(blob.includes(term)) ids.push(i);
+    });
+    return ids;
+  }
+
+  function renderCards(){
+    const ids = getFiltered();
+    hudCount.textContent = `${ids.length} targets`;
+    const byId = new Map(MOVIES.map((m,i)=>[i,m]));
+    cards.innerHTML = ids.map(id => {
+      const m = byId.get(id);
+      const isActive = id===active.index;
+      return `
+        <div class="movieCard ${isActive?'active':''}" data-id="${id}" role="button" tabindex="0" aria-label="Open ${m.title}">
+          <div class="mDot" style="background: ${m.color};"></div>
+          <div>
+            <div class="title">${m.title}</div>
+            <div class="meta"><span>${m.date}</span><span>•</span><span>${m.vibe}</span></div>
+          </div>
+          <div class="tag">${m.band}</div>
+        </div>`;
+    }).join('');
+
+    // keep active within filter
+    if(!ids.includes(active.index)) active.index = ids[0] ?? 0;
+
+    // attach
+    [...cards.querySelectorAll('.movieCard')].forEach(el=>{
+      const id = Number(el.getAttribute('data-id'));
+      const open = () => focusNode(id, true);
+      el.addEventListener('click', open);
+      el.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') open(); });
+    });
+  }
+
+  function abbreviate(title){
+    const parts = title.replace(/!/g,'').split(/\s+/).filter(Boolean);
+    const first = parts[0] || 'SF';
+    const second = parts[1] || '';
+    const ab = (first[0] + (second?second[0]:'')).toUpperCase();
+    return ab;
+  }
+
+  function openModal(id){
+    const m = MOVIES[id];
+    modalTitle.textContent = m.title;
+    modalMeta.textContent = `${m.date} • ${m.vibe} • ${m.band}`;
+    modalDesc.textContent = m.desc;
+    modalTagSig.textContent = `SIGNAL / ${m.band}`;
+    modalToneSig.textContent = `TONE / ${m.vibe}`;
+    modalAbbrev.textContent = abbreviate(m.title);
+    modalBlurb.textContent = m.note;
+
+    // color accents
+    const poster = document.getElementById('poster');
+    poster.style.background = `
+      radial-gradient(700px 300px at 20% 10%, ${hexToRgba(m.color,.35)}, transparent 55%),
+      radial-gradient(600px 260px at 80% 30%, rgba(255,79,216,.22), transparent 55%),
+      radial-gradient(500px 260px at 40% 90%, ${hexToRgba(m.color,.18)}, transparent 62%),
+      rgba(0,0,0,.22)
+    `;
+
+    modalBackdrop.classList.add('show');
+  }
+
+  function closeModalUI(){
+    modalBackdrop.classList.remove('show');
+  }
+
+  closeModal.addEventListener('click', closeModalUI);
+  modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop) closeModalUI(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModalUI(); });
+
+  modalFocusBtn.addEventListener('click', ()=>{
+    const id = active.index;
+    closeModalUI();
+    focusNode(id, false);
+  });
+
+  function hexToRgba(hex,a){
+    const h = hex.replace('#','').trim();
+    const full = h.length===3 ? h.split('').map(c=>c+c).join('') : h;
+    const n = parseInt(full,16);
+    const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function focusNode(id, alsoOpenModal){
+    active.index = id;
+    // UI
+    renderCards();
+
+    const n = nodes[id];
+    state.targetId = id;
+    if(alsoOpenModal) openModal(id);
+
+    // animate camera center
+    state.camX = n.pos.x - (state.camX - state.camX); // noop but keeps deterministic
+  }
+
+  resetBtn.addEventListener('click', ()=>{
+    q.value='';
+    active.index = 0;
+    state.camX = 0; state.camY = 0; state.zoom = 1;
+    state.targetId = null;
+    renderCards();
+  });
+
+  q.addEventListener('input', ()=>{
+    active.index = 0;
+    renderCards();
+  });
+
+  trailSwitch.addEventListener('click', ()=>{
+    state.trailOn = !state.trailOn;
+    trailSwitch.classList.toggle('on', state.trailOn);
+    trailSwitch.setAttribute('aria-checked', state.trailOn?'true':'false');
+  });
+  trailSwitch.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter' || e.key===' ') { e.preventDefault(); trailSwitch.click(); }
+  });
+
+  // camera controls
+  sceneEl.addEventListener('pointerdown', (e)=>{
+    state.dragging = true;
+    state.lastX = e.clientX;
+    state.lastY = e.clientY;
+    sceneEl.setPointerCapture(e.pointerId);
+  });
+  sceneEl.addEventListener('pointermove', (e)=>{
+    if(!state.dragging) return;
+    const dx = e.clientX - state.lastX;
+    const dy = e.clientY - state.lastY;
+    state.lastX = e.clientX;
+    state.lastY = e.clientY;
+    state.camX -= dx / state.zoom;
+    state.camY -= dy / state.zoom;
+  });
+  sceneEl.addEventListener('pointerup', ()=>{ state.dragging=false; });
+  sceneEl.addEventListener('pointercancel', ()=>{ state.dragging=false; });
+
+  sceneEl.addEventListener('wheel', (e)=>{
+    e.preventDefault();
+    const delta = Math.sign(e.deltaY);
+    const factor = delta>0 ? 0.92 : 1.08;
+    const nextZoom = Math.max(0.55, Math.min(2.2, state.zoom*factor));
+    state.zoom = nextZoom;
+  }, {passive:false});
+
+  // click nodes
+  sceneEl.addEventListener('click', (e)=>{
+    const rect = sceneEl.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+
+    let best = null;
+    for(const n of nodes){
+      const p = worldToScreen(n.pos.x, n.pos.y);
+      const r = n.radius*state.zoom + 6;
+      const dx = sx - p.x;
+      const dy = sy - p.y;
+      const d2 = dx*dx + dy*dy;
+      if(d2 <= r*r){
+        if(!best || d2 < best.d2) best = {id:n.id, d2};
+      }
+    }
+    if(best){
+      focusNode(best.id, true);
+    }
+  });
+
+  // animation
+  const trail = [];
+  function tick(now){
+    state.t = now/1000;
+
+    const shouldTrail = state.trailOn;
+    if(shouldTrail){
+      // fade previous frames instead of full clear
+      g.save();
+      g.globalCompositeOperation = 'source-over';
+      g.fillStyle = 'rgba(0,0,0,0.14)';
+      const w = canvas.width/(Math.max(1,Math.min(2.5,window.devicePixelRatio||1)));
+      const h = canvas.height/(Math.max(1,Math.min(2.5,window.devicePixelRatio||1)));
+      // draw in CSS pixel space via transform already set; simpler: use clearRect in canvas pixel coords by resetting
+      g.restore();
+      // In practice: rely on clear when resizing; for simplicity clear w/ alpha using CSS-space
+      const r = sceneEl.getBoundingClientRect();
+      g.fillStyle = 'rgba(0,0,0,0.14)';
+      g.fillRect(0,0,r.width,r.height);
+    } else {
+      const r = sceneEl.getBoundingClientRect();
+      g.clearRect(0,0,r.width,r.height);
+      // base vignette
+      const grd = g.createRadialGradient(r.width/2, r.height/2, 40, r.width/2, r.height/2, Math.max(r.width,r.height));
+      grd.addColorStop(0,'rgba(87,168,255,.06)');
+      grd.addColorStop(1,'rgba(0,0,0,.0)');
+      g.fillStyle = grd;
+      g.fillRect(0,0,r.width,r.height);
+    }
+
+    const rect = sceneEl.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+
+    // grid
+    g.save();
+    g.globalAlpha = 0.35;
+    g.strokeStyle = 'rgba(255,255,255,.08)';
+    const grid = 64;
+    const step = grid*state.zoom;
+    for(let x = -((state.camX*state.zoom)%step); x<w+step; x+=step){
+      g.beginPath(); g.moveTo(x,0); g.lineTo(x,h); g.stroke();
+    }
+    for(let y = -((state.camY*state.zoom)%step); y<h+step; y+=step){
+      g.beginPath(); g.moveTo(0,y); g.lineTo(w,y); g.stroke();
+    }
+    g.restore();
+
+    // camera smoothing to target node
+    if(state.targetId!==null){
+      const n = nodes[state.targetId];
+      const desiredX = n.pos.x;
+      const desiredY = n.pos.y;
+      state.camX += (desiredX - state.camX) * 0.08;
+      state.camY += (desiredY - state.camY) * 0.08;
+      const closeEnough = Math.hypot(desiredX-state.camX, desiredY-state.camY) < 0.8;
+      if(closeEnough) state.targetId = null;
+    }
+
+    // filtered nodes
+    const ids = new Set(getFiltered());
+
+    // edges
+    g.save();
+    g.globalAlpha = 0.85;
+    for(const [a,b] of edges){
+      if(!ids.has(a) || !ids.has(b)) continue;
+      const A = nodes[a].pos, B = nodes[b].pos;
+      const p1 = worldToScreen(A.x, A.y);
+      const p2 = worldToScreen(B.x, B.y);
+      const d = Math.hypot(p1.x-p2.x, p1.y-p2.y);
+      const alpha = Math.max(0, 1 - d/520);
+      g.strokeStyle = `rgba(255,255,255,${0.05 + alpha*0.18})`;
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(p1.x,p1.y);
+      // slight curve
+      const mx = (p1.x+p2.x)/2 + Math.sin(state.t + a)*6;
+      const my = (p1.y+p2.y)/2 + Math.cos(state.t + b)*6;
+      g.quadraticCurveTo(mx,my,p2.x,p2.y);
+      g.stroke();
+    }
+    g.restore();
+
+    // nodes
+    for(const n of nodes){
+      const p = worldToScreen(n.pos.x, n.pos.y);
+      const isActive = n.id===active.index;
+      if(!ids.has(n.id)) continue;
+      const pulse = 0.5 + 0.5*Math.sin(state.t*2.2 + n.id);
+      const rr = n.radius*(isActive?1.6:1.0) + pulse*(isActive?3.2:1.3);
+
+      // glow
+      g.save();
+      g.globalAlpha = isActive ? 1 : 0.9;
+      const glow = n.glow*(isActive?1.35:1.0);
+      const grd = g.createRadialGradient(p.x,p.y,0,p.x,p.y,glow);
+      grd.addColorStop(0, hexToRgba(n.color, isActive?0.55:0.35));
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grd;
+      g.beginPath();
+      g.arc(p.x,p.y,glow,0,Math.PI*2);
+      g.fill();
+      g.restore();
+
+      // core
+      g.save();
+      const coreGrad = g.createRadialGradient(p.x-rr*0.3,p.y-rr*0.3,0,p.x,p.y,rr*1.4);
+      coreGrad.addColorStop(0, 'rgba(255,255,255,.95)');
+      coreGrad.addColorStop(0.25, hexToRgba(n.color,.95));
+      coreGrad.addColorStop(1, hexToRgba(n.color,.12));
+      g.fillStyle = coreGrad;
+      g.strokeStyle = isActive ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.25)';
+      g.lineWidth = isActive ? 2 : 1;
+      g.beginPath();
+      g.arc(p.x,p.y,rr,0,Math.PI*2);
+      g.fill();
+      g.stroke();
+
+      // active ring
+      if(isActive){
+        g.strokeStyle = hexToRgba(n.color, .75);
+        g.lineWidth = 1.5;
+        const ring = rr + 6 + pulse*4;
+        g.beginPath();
+        g.arc(p.x,p.y,ring,0,Math.PI*2);
+        g.stroke();
+      }
+
+      // label
+      const labelAlpha = isActive ? 0.98 : 0.0;
+      if(labelAlpha>0){
+        g.globalAlpha = labelAlpha;
+        g.font = '700 12px '+getComputedStyle(document.body).fontFamily;
+        g.fillStyle = 'rgba(255,255,255,.92)';
+        g.textAlign='center';
+        g.fillText(n.vibe, p.x, p.y-rr-12);
+      }
+
+      g.restore();
+    }
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  renderLegend();
+  renderCards();
+
+})();
+</script>
+</body>
+</html>

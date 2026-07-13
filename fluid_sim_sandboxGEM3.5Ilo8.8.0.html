@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluid Dynamics Sandbox</title>
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --panel-bg: rgba(21, 23, 30, 0.8);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --text-color: #c5c6c7;
+            --accent-color: #45f3ff;
+            --accent-hover: #1fbdcb;
+            --danger-color: #ff4757;
+            --danger-hover: #ff6b81;
+            --success-color: #2ed573;
+            --slider-track: #1f2833;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sidebar Panel */
+        #sidebar {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 320px;
+            max-height: calc(100vh - 30px);
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(-340px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Sidebar Toggle Button */
+        #toggle-sidebar-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 11;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            color: var(--accent-color);
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: none; /* Shown only when sidebar is collapsed */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        #toggle-sidebar-btn:hover {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .panel-content {
+            padding: 15px 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* Scrollbar styling */
+        .panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .panel-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .panel-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Tool Selector Buttons */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--panel-border);
+            color: var(--text-color);
+            padding: 10px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tool-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .tool-btn.active {
+            background: rgba(69, 243, 255, 0.15);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Controls */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label {
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+        }
+
+        .control-value {
+            color: var(--accent-color);
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--slider-track);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #fff;
+        }
+
+        select {
+            background: #1f2833;
+            border: 1px solid var(--panel-border);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+        }
+
+        /* Preset Buttons */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--panel-border);
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        /* Action Buttons */
+        .action-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: #0b0c10;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Stats HUD */
+        #hud {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(21, 23, 30, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--panel-border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #888;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .hud-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .hud-value {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Quick Help Overlay */
+        #help-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(11, 12, 16, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+            padding: 30px;
+            border-radius: 16px;
+            z-index: 100;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+            text-align: center;
+            transition: opacity 0.3s ease, pointer-events 0.3s ease;
+        }
+
+        #help-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #help-overlay h2 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        #help-overlay p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .help-list {
+            text-align: left;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .help-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+
+        .help-icon {
+            color: var(--accent-color);
+            font-weight: bold;
+            min-width: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            #sidebar {
+                width: calc(100vw - 30px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toggle button for sidebar when collapsed -->
+    <button id="toggle-sidebar-btn">☰ Open Controls</button>
+
+    <!-- Sidebar Panel -->
+    <div id="sidebar">
+        <div class="panel-header">
+            <h1>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-color);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Fluid Sim Sandbox
+            </h1>
+            <button class="close-btn" id="close-sidebar-btn" title="Collapse panel">✕</button>
+        </div>
+
+        <div class="panel-content">
+            <!-- Section: Tools -->
+            <div>
+                <div class="section-title">Interaction Tool</div>
+                <div class="tool-grid">
+                    <button class="tool-btn active" data-tool="spawn" title="Throw particles into the fluid">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"/></svg>
+                        Throw Particles
+                    </button>
+                    <button class="tool-btn" data-tool="vortex" title="Create a swirling whirlpool force">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        Whirlpool Force
+                    </button>
+                    <button class="tool-btn" data-tool="obstacle" title="Draw solid walls">
+                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg>
+                        Draw Walls
+                    </button>
+                    <button class="tool-btn" data-tool="erase" title="Erase walls">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        Erase Walls
+                    </button>
+                </div>
+                <div class="tool-grid" style="grid-template-columns: 1fr;">
+                    <button class="tool-btn" data-tool="emitter" title="Place continuous fountains">
+                        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 6px; display: inline-block; vertical-align: middle;"><path d="M2 12h2v2H2zm18 0h2v2h-2zM11 2h2v2h-2zm0 18h2v2h-2zM4.22 4.22l1.42 1.42-1.42 1.42L2.8 5.64zm14.14 14.14l1.42 1.42-1.42 1.42-1.42-1.42zM4.22 19.78l1.42-1.42 1.42 1.42-1.42 1.42zm14.14-14.14l1.42-1.42 1.42 1.42-1.42 1.42z"/></svg>
+                        <span style="display: inline-block; vertical-align: middle;">Place Continuous Emitter</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section: Physics -->
+            <div class="control-group">
+                <div class="section-title">Physics & Simulation</div>
+                
+                <div class="control-group">
+                    <label class="control-label">Fluid Viscosity / Friction <span class="control-value" id="val-viscosity">0.02</span></label>
+                    <input type="range" id="slider-viscosity" min="0" max="0.1" step="0.005" value="0.02">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Mouse Influence Force <span class="control-value" id="val-force">1.5</span></label>
+                    <input type="range" id="slider-force" min="0.2" max="5.0" step="0.1" value="1.5">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Gravity Y (Vertical) <span class="control-value" id="val-gravityY">0.0</span></label>
+                    <input type="range" id="slider-gravityY" min="-0.2" max="0.2" step="0.01" value="0.0">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Gravity X (Horizontal) <span class="control-value" id="val-gravityX">0.0</span></label>
+                    <input type="range" id="slider-gravityX" min="-0.2" max="0.2" step="0.01" value="0.0">
+                </div>
+            </div>
+
+            <!-- Section: Particles -->
+            <div class="control-group">
+                <div class="section-title">Particle Settings</div>
+
+                <div class="control-group">
+                    <label class="control-label">Color Mode</label>
+                    <select id="select-color-mode">
+                        <option value="velocity">Velocity Heatmap</option>
+                        <option value="rainbow">Rainbow Cycle</option>
+                        <option value="fire">Fire & Ash</option>
+                        <option value="water">Deep Ocean</option>
+                        <option value="neon">Cyberpunk Neon</option>
+                        <option value="solid">Custom Solid Color</option>
+                    </select>
+                </div>
+
+                <div id="custom-color-container" class="control-group" style="display: none;">
+                    <label class="control-label">Custom Color</label>
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="picker-color" value="#45f3ff">
+                        <span id="picker-color-hex" style="font-family: monospace; font-size: 0.85rem;">#45f3ff</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Particle Size <span class="control-value" id="val-size">2.0</span></label>
+                    <input type="range" id="slider-size" min="0.5" max="6.0" step="0.5" value="2.0">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Particle Inertia (Mass) <span class="control-value" id="val-inertia">0.1</span></label>
+                    <input type="range" id="slider-inertia" min="0.0" max="0.95" step="0.05" value="0.1" title="How slowly particles adapt to fluid velocity changes. 0 = instant, higher = heavy feel.">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Particle Lifetime <span class="control-value" id="val-life">300</span></label>
+                    <input type="range" id="slider-life" min="50" max="1000" step="50" value="300">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; margin-top: 4px; color: #888; cursor: pointer;">
+                        <input type="checkbox" id="chk-infinite-life"> Infinite Lifetime
+                    </label>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Trail Length / Fade <span class="control-value" id="val-trails">0.15</span></label>
+                    <input type="range" id="slider-trails" min="0.01" max="1.0" step="0.02" value="0.15" title="Lower values leave longer, smoother trails. 1.0 is no trails.">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Blend Mode</label>
+                    <select id="select-blend-mode">
+                        <option value="lighter">Glow (Additive)</option>
+                        <option value="source-over">Normal (Overlay)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Section: Presets -->
+            <div>
+                <div class="section-title">Presets</div>
+                <div class="preset-grid">
+                    <button class="preset-btn" id="preset-nebula">Zero-G Nebula</button>
+                    <button class="preset-btn" id="preset-waterfall">Waterfall</button>
+                    <button class="preset-btn" id="preset-fire">Fire & Smoke</button>
+                    <button class="preset-btn" id="preset-vortex">Whirlpool Chaos</button>
+                </div>
+            </div>
+
+            <!-- Section: Actions -->
+            <div class="action-grid">
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" id="btn-pause" style="flex: 1;">Pause</button>
+                    <button class="btn btn-secondary" id="btn-clear-particles" style="flex: 1;">Clear Particles</button>
+                </div>
+                <button class="btn btn-secondary" id="btn-clear-obstacles">Clear Painted Walls</button>
+                <button class="btn btn-danger" id="btn-reset">Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD Overlay for stats -->
+    <div id="hud">
+        <div class="hud-item">
+            <span>Particles:</span>
+            <span class="hud-value" id="hud-particles">0</span>
+        </div>
+        <div class="hud-item">
+            <span>FPS:</span>
+            <span class="hud-value" id="hud-fps">60</span>
+        </div>
+        <div class="hud-item">
+            <span>Emitters:</span>
+            <span class="hud-value" id="hud-emitters">0</span>
+        </div>
+    </div>
+
+    <!-- Help Overlay on first load -->
+    <div id="help-overlay">
+        <h2>🌊 Fluid Simulation Sandbox</h2>
+        <p>Welcome to an interactive fluid dynamics playground! Throw particles, craft barriers, and watch beautiful turbulence unfold.</p>
+        
+        <div class="help-list">
+            <div class="help-item">
+                <span class="help-icon">🖱️</span>
+                <span><strong>Click and Drag</strong> to throw bursts of colorful particles and inject fluid velocity.</span>
+            </div>
+            <div class="help-item">
+                <span class="help-icon">🧱</span>
+                <span>Select <strong>Draw Walls</strong> to paint obstacles that block the fluid and bounce particles.</span>
+            </div>
+            <div class="help-item">
+                <span class="help-icon">🌀</span>
+                <span>Use the <strong>Whirlpool</strong> tool to create powerful localized vortex forces in the fluid field.</span>
+            </div>
+            <div class="help-item">
+                <span class="help-icon">⚙️</span>
+                <span>Adjust gravity, viscosity, particle size, lifetime, and color modes on the fly!</span>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-close-help" style="width: 100%; padding: 12px; font-size: 1rem;">Let's Play!</button>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="fluid-canvas"></canvas>
+    </div>
+
+    <script>
+        // --- Fluid Dynamics Solver (Jos Stam / Stable Fluids inspired) ---
+        // Grid size: 64x64 is a sweet spot for performance and visual fidelity.
+        const NX = 64;
+        const NY = 64;
+        const SIZE = (NX + 2) * (NY + 2);
+
+        // Helper to index 1D array as 2D grid
+        function IX(i, j) {
+            return i + j * (NX + 2);
+        }
+
+        class FluidField {
+            constructor() {
+                // Velocity fields
+                this.u = new Float32Array(SIZE); // horizontal velocity
+                this.v = new Float32Array(SIZE); // vertical velocity
+                this.u_prev = new Float32Array(SIZE);
+                this.v_prev = new Float32Array(SIZE);
+
+                // Obstacle mask: 1 for solid wall, 0 for fluid
+                this.obstacles = new Uint8Array(SIZE);
+            }
+
+            // Clear velocities
+            clear() {
+                this.u.fill(0);
+                this.v.fill(0);
+                this.u_prev.fill(0);
+                this.v_prev.fill(0);
+            }
+
+            // Clear obstacles
+            clearObstacles() {
+                this.obstacles.fill(0);
+                // Set outer boundaries as obstacles
+                for (let i = 0; i <= NX + 1; i++) {
+                    this.obstacles[IX(i, 0)] = 1;
+                    this.obstacles[IX(i, NY + 1)] = 1;
+                }
+                for (let j = 0; j <= NY + 1; j++) {
+                    this.obstacles[IX(0, j)] = 1;
+                    this.obstacles[IX(NX + 1, j)] = 1;
+                }
+            }
+
+            // Enforce boundary conditions for velocities
+            setBoundary(b, x) {
+                // b=1: horizontal velocity, b=2: vertical velocity, b=0: scalar/pressure
+                for (let i = 1; i <= NX; i++) {
+                    // Top and bottom boundaries
+                    x[IX(i, 0)] = b === 2 ? -x[IX(i, 1)] : x[IX(i, 1)];
+                    x[IX(i, NY + 1)] = b === 2 ? -x[IX(i, NY)] : x[IX(i, NY)];
+                }
+                for (let j = 1; j <= NY; j++) {
+                    // Left and right boundaries
+                    x[IX(0, j)] = b === 1 ? -x[IX(1, j)] : x[IX(1, j)];
+                    x[IX(NX + 1, j)] = b === 1 ? -x[IX(NX, j)] : x[IX(NX, j)];
+                }
+
+                // Handle corners
+                x[IX(0, 0)] = 0.5 * (x[IX(1, 0)] + x[IX(0, 1)]);
+                x[IX(0, NY + 1)] = 0.5 * (x[IX(1, NY + 1)] + x[IX(0, NY)]);
+                x[IX(NX + 1, 0)] = 0.5 * (x[IX(NX, 0)] + x[IX(NX + 1, 1)]);
+                x[IX(NX + 1, NY + 1)] = 0.5 * (x[IX(NX, NY + 1)] + x[IX(NX + 1, NY)]);
+
+                // Handle internal solid obstacles
+                for (let j = 1; j <= NY; j++) {
+                    for (let i = 1; i <= NX; i++) {
+                        if (this.obstacles[IX(i, j)]) {
+                            // Simple bounce-back or zeroing out at obstacle cell boundaries
+                            if (b === 1) {
+                                // For horizontal velocity, reverse or negate if neighboring cell is fluid
+                                x[IX(i, j)] = -0.3 * (
+                                    (!this.obstacles[IX(i-1, j)] ? x[IX(i-1, j)] : 0) +
+                                    (!this.obstacles[IX(i+1, j)] ? x[IX(i+1, j)] : 0)
+                                );
+                            } else if (b === 2) {
+                                x[IX(i, j)] = -0.3 * (
+                                    (!this.obstacles[IX(i, j-1)] ? x[IX(i, j-1)] : 0) +
+                                    (!this.obstacles[IX(i, j+1)] ? x[IX(i, j+1)] : 0)
+                                );
+                            } else {
+                                // Scalar fields (like pressure) take average of fluid neighbors
+                                let sum = 0;
+                                let count = 0;
+                                if (!this.obstacles[IX(i-1, j)]) { sum += x[IX(i-1, j)]; count++; }
+                                if (!this.obstacles[IX(i+1, j)]) { sum += x[IX(i+1, j)]; count++; }
+                                if (!this.obstacles[IX(i, j-1)]) { sum += x[IX(i, j-1)]; count++; }
+                                if (!this.obstacles[IX(i, j+1)]) { sum += x[IX(i, j+1)]; count++; }
+                                x[IX(i, j)] = count > 0 ? sum / count : 0;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Jacobi relaxation for diffusion (can be skipped for velocity to keep simulation fast and highly dynamic!)
+            diffuse(b, x, x0, diff, dt) {
+                let a = dt * diff * NX * NY;
+                this.linSolve(b, x, x0, a, 1 + 4 * a);
+            }
+
+            linSolve(b, x, x0, a, c) {
+                // 20 iterations of Jacobi relaxation for convergence
+                for (let k = 0; k < 20; k++) {
+                    for (let j = 1; j <= NY; j++) {
+                        for (let i = 1; i <= NX; i++) {
+                            if (this.obstacles[IX(i, j)]) continue;
+                            x[IX(i, j)] = (x0[IX(i, j)] + a * (
+                                x[IX(i - 1, j)] + x[IX(i + 1, j)] +
+                                x[IX(i, j - 1)] + x[IX(i, j + 1)]
+                            )) / c;
+                        }
+                    }
+                    this.setBoundary(b, x);
+                }
+            }
+
+            // Incompressibility projection step: removes divergence from the velocity field
+            // to create realistic circular flows, swirls, and pressure-driven effects.
+            project(u, v, p, div) {
+                for (let j = 1; j <= NY; j++) {
+                    for (let i = 1; i <= NX; i++) {
+                        if (this.obstacles[IX(i, j)]) {
+                            div[IX(i, j)] = 0;
+                            p[IX(i, j)] = 0;
+                            continue;
+                        }
+                        div[IX(i, j)] = -0.5 * (
+                            u[IX(i + 1, j)] - u[IX(i - 1, j)] +
+                            v[IX(i, j + 1)] - v[IX(i, j - 1)]
+                        ) / Math.max(NX, NY);
+                        p[IX(i, j)] = 0;
+                    }
+                }
+                this.setBoundary(0, div);
+                this.setBoundary(0, p);
+
+                this.linSolve(0, p, div, 1, 4);
+
+                for (let j = 1; j <= NY; j++) {
+                    for (let i = 1; i <= NX; i++) {
+                        if (this.obstacles[IX(i, j)]) continue;
+                        u[IX(i, j)] -= 0.5 * Math.max(NX, NY) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
+                        v[IX(i, j)] -= 0.5 * Math.max(NX, NY) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
+                    }
+                }
+                this.setBoundary(1, u);
+                this.setBoundary(2, v);
+            }
+
+            // Advection: moves velocities along the flow field
+            advect(b, d, d0, u, v, dt) {
+                let dt0 = dt * Math.max(NX, NY);
+                for (let j = 1; j <= NY; j++) {
+                    for (let i = 1; i <= NX; i++) {
+                        if (this.obstacles[IX(i, j)]) continue;
+
+                        // Trace backwards in time
+                        let x = i - dt0 * u[IX(i, j)];
+                        let y = j - dt0 * v[IX(i, j)];
+
+                        // Clamp to simulation boundaries
+                        if (x < 0.5) x = 0.5;
+                        if (x > NX + 0.5) x = NX + 0.5;
+                        let i0 = Math.floor(x);
+                        let i1 = i0 + 1;
+
+                        if (y < 0.5) y = 0.5;
+                        if (y > NY + 0.5) y = NY + 0.5;
+                        let j0 = Math.floor(y);
+                        let j1 = j0 + 1;
+
+                        // Bilinear interpolation weights
+                        let s1 = x - i0;
+                        let s0 = 1 - s1;
+                        let t1 = y - j0;
+                        let t0 = 1 - t1;
+
+                        // Interpolate quantity
+                        d[IX(i, j)] =
+                            s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
+                            s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+                    }
+                }
+                this.setBoundary(b, d);
+            }
+
+            // Advance the simulation by one step
+            step(dt, viscosity, friction) {
+                // Swap velocity buffers
+                let temp;
+                temp = this.u; this.u = this.u_prev; this.u_prev = temp;
+                temp = this.v; this.v = this.v_prev; this.v_prev = temp;
+
+                // Advect velocities
+                this.advect(1, this.u, this.u_prev, this.u_prev, this.v_prev, dt);
+                this.advect(2, this.v, this.v_prev, this.u_prev, this.v_prev, dt);
+
+                // Project to make incompressible (creates vortices)
+                this.project(this.u, this.v, this.u_prev, this.v_prev);
+
+                // Apply simple friction/damping over time
+                if (friction > 0) {
+                    let damping = 1 - friction;
+                    for (let i = 0; i < SIZE; i++) {
+                        this.u[i] *= damping;
+                        this.v[i] *= damping;
+                    }
+                }
+            }
+
+            // Bilinear interpolation to sample velocity at any arbitrary continuous coordinate (0 to NX, 0 to NY)
+            sampleVelocity(x, y) {
+                // Clamp coordinates
+                if (x < 0.5) x = 0.5;
+                if (x > NX + 0.5) x = NX + 0.5;
+                if (y < 0.5) y = 0.5;
+                if (y > NY + 0.5) y = NY + 0.5;
+
+                let i0 = Math.floor(x);
+                let i1 = i0 + 1;
+                let j0 = Math.floor(y);
+                let j1 = j0 + 1;
+
+                let s1 = x - i0;
+                let s0 = 1 - s1;
+                let t1 = y - j0;
+                let t0 = 1 - t1;
+
+                // Interpolate horizontal velocity (u)
+                let u_val = s0 * (t0 * this.u[IX(i0, j0)] + t1 * this.u[IX(i0, j1)]) +
+                            s1 * (t0 * this.u[IX(i1, j0)] + t1 * this.u[IX(i1, j1)]);
+
+                // Interpolate vertical velocity (v)
+                let v_val = s0 * (t0 * this.v[IX(i0, j0)] + t1 * this.v[IX(i0, j1)]) +
+                            s1 * (t0 * this.v[IX(i1, j0)] + t1 * this.v[IX(i1, j1)]);
+
+                return { u: u_val, v: v_val };
+            }
+        }
+
+        // --- Sandbox Application Logic ---
+        const canvas = document.getElementById('fluid-canvas');
+        const ctx = canvas.getContext('2d');
+        const fluid = new FluidField();
+
+        // Particles collection
+        let particles = [];
+        let emitters = [];
+
+        // App state parameters
+        let isPaused = false;
+        let activeTool = 'spawn'; // 'spawn', 'vortex', 'obstacle', 'erase', 'emitter'
+        
+        // Physics settings
+        let viscosity = 0.02; // Damping/friction slider maps to this
+        let mouseForce = 1.5;
+        let gravityX = 0.0;
+        let gravityY = 0.0;
+
+        // Particle settings
+        let colorMode = 'velocity';
+        let customColor = '#45f3ff';
+        let particleSize = 2.0;
+        let particleInertia = 0.1; // 0 = follow fluid perfectly, 0.9 = heavy, momentum-driven
+        let maxLifetime = 300;
+        let infiniteLife = false;
+        let trailLength = 0.15; // canvas clear alpha
+        let blendMode = 'lighter';
+
+        // Mouse tracking state
+        let isMouseDown = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        let prevMouseX = 0;
+        let prevMouseY = 0;
+
+        // FPS tracking
+        let lastTime = performance.now();
+        let fps = 60;
+        let frameCount = 0;
+        let fpsTimer = 0;
+
+        // Initialize canvas sizing
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Clear entire canvas on resize to prevent rendering artifacts
+            ctx.fillStyle = '#0b0c10';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Initialize obstacles (boundaries)
+        fluid.clearObstacles();
+
+        // --- UI Element Selectors ---
+        const sidebar = document.getElementById('sidebar');
+        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const helpOverlay = document.getElementById('help-overlay');
+        const btnCloseHelp = document.getElementById('btn-close-help');
+
+        // Sliders & Controls
+        const sliderViscosity = document.getElementById('slider-viscosity');
+        const valViscosity = document.getElementById('val-viscosity');
+        const sliderForce = document.getElementById('slider-force');
+        const valForce = document.getElementById('val-force');
+        const sliderGravityY = document.getElementById('slider-gravityY');
+        const valGravityY = document.getElementById('val-gravityY');
+        const sliderGravityX = document.getElementById('slider-gravityX');
+        const valGravityX = document.getElementById('val-gravityX');
+
+        const selectColorMode = document.getElementById('select-color-mode');
+        const customColorContainer = document.getElementById('custom-color-container');
+        const pickerColor = document.getElementById('picker-color');
+        const pickerColorHex = document.getElementById('picker-color-hex');
+        const sliderSize = document.getElementById('slider-size');
+        const valSize = document.getElementById('val-size');
+        const sliderInertia = document.getElementById('slider-inertia');
+        const valInertia = document.getElementById('val-inertia');
+        const sliderLife = document.getElementById('slider-life');
+        const valLife = document.getElementById('val-life');
+        const chkInfiniteLife = document.getElementById('chk-infinite-life');
+        const sliderTrails = document.getElementById('slider-trails');
+        const valTrails = document.getElementById('val-trails');
+        const selectBlendMode = document.getElementById('select-blend-mode');
+
+        // HUD Elements
+        const hudParticles = document.getElementById('hud-particles');
+        const hudFps = document.getElementById('hud-fps');
+        const hudEmitters = document.getElementById('hud-emitters');
+
+        // Buttons
+        const btnPause = document.getElementById('btn-pause');
+        const btnClearParticles = document.getElementById('btn-clear-particles');
+        const btnClearObstacles = document.getElementById('btn-clear-obstacles');
+        const btnReset = document.getElementById('btn-reset');
+
+        // Presets
+        const presetNebula = document.getElementById('preset-nebula');
+        const presetWaterfall = document.getElementById('preset-waterfall');
+        const presetFire = document.getElementById('preset-fire');
+        const presetVortex = document.getElementById('preset-vortex');
+
+        // Tool buttons
+        const toolBtns = document.querySelectorAll('.tool-btn');
+
+        // --- Event Listeners for UI ---
+
+        // Sidebar Toggle
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('collapsed');
+            toggleSidebarBtn.style.display = 'block';
+        });
+
+        toggleSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('collapsed');
+            toggleSidebarBtn.style.display = 'none';
+        });
+
+        // Help Overlay
+        btnCloseHelp.addEventListener('click', () => {
+            helpOverlay.classList.add('hidden');
+        });
+
+        // Tool Selection
+        toolBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toolBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeTool = btn.getAttribute('data-tool');
+            });
+        });
+
+        // Physics Listeners
+        sliderViscosity.addEventListener('input', (e) => {
+            viscosity = parseFloat(e.target.value);
+            valViscosity.textContent = viscosity.toFixed(3);
+        });
+
+        sliderForce.addEventListener('input', (e) => {
+            mouseForce = parseFloat(e.target.value);
+            valForce.textContent = mouseForce.toFixed(1);
+        });
+
+        sliderGravityY.addEventListener('input', (e) => {
+            gravityY = parseFloat(e.target.value);
+            valGravityY.textContent = (gravityY > 0 ? '+' : '') + gravityY.toFixed(2);
+        });
+
+        sliderGravityX.addEventListener('input', (e) => {
+            gravityX = parseFloat(e.target.value);
+            valGravityX.textContent = (gravityX > 0 ? '+' : '') + gravityX.toFixed(2);
+        });
+
+        // Particle Settings Listeners
+        selectColorMode.addEventListener('change', (e) => {
+            colorMode = e.target.value;
+            if (colorMode === 'solid') {
+                customColorContainer.style.display = 'flex';
+            } else {
+                customColorContainer.style.display = 'none';
+            }
+        });
+
+        pickerColor.addEventListener('input', (e) => {
+            customColor = e.target.value;
+            pickerColorHex.textContent = customColor.toUpperCase();
+        });
+
+        sliderSize.addEventListener('input', (e) => {
+            particleSize = parseFloat(e.target.value);
+            valSize.textContent = particleSize.toFixed(1);
+        });
+
+        sliderInertia.addEventListener('input', (e) => {
+            particleInertia = parseFloat(e.target.value);
+            valInertia.textContent = particleInertia.toFixed(2);
+        });
+
+        sliderLife.addEventListener('input', (e) => {
+            maxLifetime = parseInt(e.target.value);
+            valLife.textContent = maxLifetime;
+        });
+
+        chkInfiniteLife.addEventListener('change', (e) => {
+            infiniteLife = e.target.checked;
+            sliderLife.disabled = infiniteLife;
+            valLife.style.opacity = infiniteLife ? '0.3' : '1';
+        });
+
+        sliderTrails.addEventListener('input', (e) => {
+            trailLength = parseFloat(e.target.value);
+            valTrails.textContent = trailLength.toFixed(2);
+        });
+
+        selectBlendMode.addEventListener('change', (e) => {
+            blendMode = e.target.value;
+        });
+
+        // Action Buttons
+        btnPause.addEventListener('click', () => {
+            isPaused = !isPaused;
+            btnPause.textContent = isPaused ? 'Resume' : 'Pause';
+            btnPause.classList.toggle('btn-primary', isPaused);
+        });
+
+        btnClearParticles.addEventListener('click', () => {
+            particles = [];
+        });
+
+        btnClearObstacles.addEventListener('click', () => {
+            fluid.clearObstacles();
+            emitters = []; // also clear emitters since they are structural
+            hudEmitters.textContent = '0';
+        });
+
+        btnReset.addEventListener('click', () => {
+            fluid.clear();
+            fluid.clearObstacles();
+            particles = [];
+            emitters = [];
+            hudEmitters.textContent = '0';
+            isPaused = false;
+            btnPause.textContent = 'Pause';
+            btnPause.classList.remove('btn-primary');
+            // reset UI settings
+            sliderViscosity.value = 0.02; viscosity = 0.02; valViscosity.textContent = '0.020';
+            sliderForce.value = 1.5; mouseForce = 1.5; valForce.textContent = '1.5';
+            sliderGravityY.value = 0.0; gravityY = 0.0; valGravityY.textContent = '0.00';
+            sliderGravityX.value = 0.0; gravityX = 0.0; valGravityX.textContent = '0.00';
+            sliderSize.value = 2.0; particleSize = 2.0; valSize.textContent = '2.0';
+            sliderInertia.value = 0.1; particleInertia = 0.1; valInertia.textContent = '0.10';
+            sliderLife.value = 300; maxLifetime = 300; valLife.textContent = '300';
+            chkInfiniteLife.checked = false; infiniteLife = false; sliderLife.disabled = false; valLife.style.opacity = '1';
+            sliderTrails.value = 0.15; trailLength = 0.15; valTrails.textContent = '0.15';
+            selectColorMode.value = 'velocity'; colorMode = 'velocity'; customColorContainer.style.display = 'none';
+            selectBlendMode.value = 'lighter'; blendMode = 'lighter';
+        });
+
+        // --- Preset Configurations ---
+        presetNebula.addEventListener('click', () => {
+            fluid.clear();
+            particles = [];
+            sliderViscosity.value = 0.005; viscosity = 0.005; valViscosity.textContent = '0.005';
+            sliderForce.value = 2.2; mouseForce = 2.2; valForce.textContent = '2.2';
+            sliderGravityY.value = 0.0; gravityY = 0.0; valGravityY.textContent = '0.00';
+            sliderGravityX.value = 0.0; gravityX = 0.0; valGravityX.textContent = '0.00';
+            sliderSize.value = 2.5; particleSize = 2.5; valSize.textContent = '2.5';
+            sliderInertia.value = 0.4; particleInertia = 0.4; valInertia.textContent = '0.40';
+            chkInfiniteLife.checked = true; infiniteLife = true; sliderLife.disabled = true; valLife.style.opacity = '0.3';
+            sliderTrails.value = 0.05; trailLength = 0.05; valTrails.textContent = '0.05';
+            selectColorMode.value = 'neon'; colorMode = 'neon'; customColorContainer.style.display = 'none';
+            selectBlendMode.value = 'lighter'; blendMode = 'lighter';
+        });
+
+        presetWaterfall.addEventListener('click', () => {
+            fluid.clear();
+            fluid.clearObstacles();
+            particles = [];
+            emitters = [];
+
+            // Set physics
+            sliderViscosity.value = 0.03; viscosity = 0.03; valViscosity.textContent = '0.030';
+            sliderForce.value = 1.8; mouseForce = 1.8; valForce.textContent = '1.8';
+            sliderGravityY.value = 0.08; gravityY = 0.08; valGravityY.textContent = '+0.08';
+            sliderGravityX.value = 0.0; gravityX = 0.0; valGravityX.textContent = '0.00';
+            
+            // Set particles
+            sliderSize.value = 3.0; particleSize = 3.0; valSize.textContent = '3.0';
+            sliderInertia.value = 0.15; particleInertia = 0.15; valInertia.textContent = '0.15';
+            sliderLife.value = 250; maxLifetime = 250; valLife.textContent = '250';
+            chkInfiniteLife.checked = false; infiniteLife = false; sliderLife.disabled = false; valLife.style.opacity = '1';
+            sliderTrails.value = 0.25; trailLength = 0.25; valTrails.textContent = '0.25';
+            selectColorMode.value = 'water'; colorMode = 'water'; customColorContainer.style.display = 'none';
+            selectBlendMode.value = 'source-over'; blendMode = 'source-over';
+
+            // Draw a rock obstacle in the middle bottom
+            let startX = Math.floor(NX * 0.35);
+            let endX = Math.floor(NX * 0.65);
+            let startY = Math.floor(NY * 0.65);
+            let endY = Math.floor(NY * 0.72);
+            for (let j = startY; j <= endY; j++) {
+                for (let i = startX; i <= endX; i++) {
+                    fluid.obstacles[IX(i, j)] = 1;
+                }
+            }
+
+            // Create continuous emitter at the top shooting downwards
+            emitters.push({
+                x: canvas.width * 0.5,
+                y: 40,
+                angle: Math.PI / 2, // downwards
+                spread: 0.3,
+                speed: 8.0,
+                rate: 3, // particles per frame
+                radius: 15
+            });
+            hudEmitters.textContent = emitters.length;
+        });
+
+        presetFire.addEventListener('click', () => {
+            fluid.clear();
+            particles = [];
+            sliderViscosity.value = 0.01; viscosity = 0.01; valViscosity.textContent = '0.010';
+            sliderForce.value = 2.0; mouseForce = 2.0; valForce.textContent = '2.0';
+            sliderGravityY.value = -0.06; gravityY = -0.06; valGravityY.textContent = '-0.06'; // Smoke rises!
+            sliderGravityX.value = 0.0; gravityX = 0.0; valGravityX.textContent = '0.00';
+            sliderSize.value = 3.5; particleSize = 3.5; valSize.textContent = '3.5';
+            sliderInertia.value = 0.05; particleInertia = 0.05; valInertia.textContent = '0.05';
+            sliderLife.value = 120; maxLifetime = 120; valLife.textContent = '120';
+            chkInfiniteLife.checked = false; infiniteLife = false; sliderLife.disabled = false; valLife.style.opacity = '1';
+            sliderTrails.value = 0.12; trailLength = 0.12; valTrails.textContent = '0.12';
+            selectColorMode.value = 'fire'; colorMode = 'fire'; customColorContainer.style.display = 'none';
+            selectBlendMode.value = 'lighter'; blendMode = 'lighter';
+        });
+
+        presetVortex.addEventListener('click', () => {
+            fluid.clear();
+            fluid.clearObstacles();
+            particles = [];
+            emitters = [];
+
+            sliderViscosity.value = 0.005; viscosity = 0.005; valViscosity.textContent = '0.005';
+            sliderForce.value = 3.0; mouseForce = 3.0; valForce.textContent = '3.0';
+            sliderGravityY.value = 0.0; gravityY = 0.0; valGravityY.textContent = '0.00';
+            sliderGravityX.value = 0.0; gravityX = 0.0; valGravityX.textContent = '0.00';
+            sliderSize.value = 1.5; particleSize = 1.5; valSize.textContent = '1.5';
+            sliderInertia.value = 0.05; particleInertia = 0.05; valInertia.textContent = '0.05';
+            chkInfiniteLife.checked = true; infiniteLife = true; sliderLife.disabled = true; valLife.style.opacity = '0.3';
+            sliderTrails.value = 0.03; trailLength = 0.03; valTrails.textContent = '0.03';
+            selectColorMode.value = 'velocity'; colorMode = 'velocity'; customColorContainer.style.display = 'none';
+            selectBlendMode.value = 'lighter'; blendMode = 'lighter';
+
+            // Place four emitters in corners pointing in circular directions to feed the vortex
+            let w = canvas.width;
+            let h = canvas.height;
+            emitters.push({ x: w * 0.25, y: h * 0.25, angle: 0, spread: 0.1, speed: 6.0, rate: 1, radius: 10 });
+            emitters.push({ x: w * 0.75, y: h * 0.25, angle: Math.PI / 2, spread: 0.1, speed: 6.0, rate: 1, radius: 10 });
+            emitters.push({ x: w * 0.75, y: h * 0.75, angle: Math.PI, spread: 0.1, speed: 6.0, rate: 1, radius: 10 });
+            emitters.push({ x: w * 0.25, y: h * 0.75, angle: -Math.PI / 2, spread: 0.1, speed: 6.0, rate: 1, radius: 10 });
+            
+            hudEmitters.textContent = emitters.length;
+        });
+
+
+        // --- Interaction Handlers ---
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Support touch events
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function handlePointerDown(e) {
+            // Prevent dragging on sidebar from interacting with the sandbox canvas
+            if (e.target.closest('#sidebar') || e.target.closest('#toggle-sidebar-btn') || e.target.closest('#help-overlay')) {
+                return;
+            }
+            
+            isMouseDown = true;
+            const pos = getMousePos(e);
+            mouseX = pos.x;
+            mouseY = pos.y;
+            prevMouseX = mouseX;
+            prevMouseY = mouseY;
+
+            // Handle instantaneous tools on click
+            if (activeTool === 'emitter') {
+                // Place an emitter at clicked location
+                // Randomize direction to make it interesting
+                let angle = Math.random() * Math.PI * 2;
+                emitters.push({
+                    x: mouseX,
+                    y: mouseY,
+                    angle: angle,
+                    spread: 0.25,
+                    speed: 5.0 + Math.random() * 5.0,
+                    rate: 2,
+                    radius: 12
+                });
+                hudEmitters.textContent = emitters.length;
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!isMouseDown) return;
+
+            const pos = getMousePos(e);
+            mouseX = pos.x;
+            mouseY = pos.y;
+        }
+
+        function handlePointerUp() {
+            isMouseDown = false;
+        }
+
+        // Mouse listeners
+        canvas.addEventListener('mousedown', handlePointerDown);
+        window.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+
+        // Touch listeners
+        canvas.addEventListener('touchstart', handlePointerDown, { passive: true });
+        window.addEventListener('touchmove', handlePointerMove, { passive: true });
+        window.addEventListener('touchend', handlePointerUp);
+
+
+        // --- Particle Spawning & Color Helpers ---
+
+        function createParticle(x, y, vx, vy) {
+            return {
+                x: x,
+                y: y,
+                vx: vx,
+                vy: vy,
+                age: 0,
+                maxLife: infiniteLife ? 999999 : Math.random() * (maxLifetime * 0.4) + (maxLifetime * 0.8),
+                baseHue: (frameCount * 0.1) % 360 // for rainbow cycle
+            };
+        }
+
+        function spawnParticleBurst(x, y, vx, vy, count) {
+            for (let i = 0; i < count; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                // Add some radial dispersion
+                let dispersion = Math.random() * 2.0;
+                let speedX = vx * 0.6 + Math.cos(angle) * dispersion;
+                let speedY = vy * 0.6 + Math.sin(angle) * dispersion;
+
+                // Spawn with a tiny random offset around pointer
+                let offsetRadius = Math.random() * 8;
+                let px = x + Math.cos(angle) * offsetRadius;
+                let py = y + Math.sin(angle) * offsetRadius;
+
+                particles.push(createParticle(px, py, speedX, speedY));
+            }
+        }
+
+        // Get particle color based on current styling settings
+        function getParticleColor(p, speedSq) {
+            switch (colorMode) {
+                case 'velocity': {
+                    // Map speed to hue (blue is slow, red is fast)
+                    let speed = Math.sqrt(speedSq);
+                    let hue = Math.max(0, 240 - speed * 35); // clamp hue to positive values
+                    return `hsl(${hue}, 100%, 55%)`;
+                }
+                case 'rainbow': {
+                    // Hue cycles over time and particle position
+                    let hue = (p.baseHue + p.age * 0.5) % 360;
+                    return `hsl(${hue}, 95%, 60%)`;
+                }
+                case 'fire': {
+                    // Fast is bright yellow, slow/old is deep red/grey ash
+                    let lifeRatio = p.age / p.maxLife;
+                    if (lifeRatio > 0.75 && !infiniteLife) {
+                        let ashVal = Math.floor(100 * (1 - lifeRatio) / 0.25);
+                        return `rgba(${ashVal}, ${ashVal}, ${ashVal}, 0.4)`; // Ash fade out
+                    }
+                    let speed = Math.sqrt(speedSq);
+                    let r = 255;
+                    let g = Math.min(255, Math.max(0, Math.floor(speed * 35)));
+                    let b = Math.min(255, Math.max(0, Math.floor(speed * 5)));
+                    return `rgb(${r}, ${g}, ${b})`;
+                }
+                case 'water': {
+                    // Deep ocean colors (blues, teals, whites)
+                    let speed = Math.sqrt(speedSq);
+                    let b = 255;
+                    let g = Math.min(240, Math.max(100, Math.floor(100 + speed * 25)));
+                    let r = Math.min(150, Math.max(20, Math.floor(20 + speed * 10)));
+                    return `rgb(${r}, ${g}, ${b})`;
+                }
+                case 'neon': {
+                    // Cyberpunk magenta/pink/cyan gradient based on particle index/age
+                    let ratio = (p.baseHue + p.age * 0.3) % 180;
+                    if (ratio < 90) {
+                        return `rgb(255, 0, 128)`; // Hot Pink
+                    } else {
+                        return `rgb(0, 243, 255)`; // Cyan
+                    }
+                }
+                case 'solid':
+                default:
+                    return customColor;
+            }
+        }
+
+
+        // --- Simulation Loop ---
+
+        function updateSimulation() {
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // 1. Process Active Mouse/Touch Interaction
+            if (isMouseDown) {
+                // Calculate drag velocity vector
+                let dx = mouseX - prevMouseX;
+                let dy = mouseY - prevMouseY;
+
+                // Scale to fluid coordinates
+                let gridX = (mouseX / width) * NX + 1;
+                let gridY = (mouseY / height) * NY + 1;
+
+                // Clamp to valid grid coordinates
+                gridX = Math.max(1, Math.min(NX, gridX));
+                gridY = Math.max(1, Math.min(NY, gridY));
+
+                if (activeTool === 'spawn' || activeTool === 'vortex') {
+                    // Inject force into the fluid grid around the mouse pointer
+                    let radius = 3;
+                    let forceScale = mouseForce * 0.8;
+
+                    for (let yOffset = -radius; yOffset <= radius; yOffset++) {
+                        for (let xOffset = -radius; xOffset <= radius; xOffset++) {
+                            let cx = Math.floor(gridX + xOffset);
+                            let cy = Math.floor(gridY + yOffset);
+
+                            if (cx >= 1 && cx <= NX && cy >= 1 && cy <= NY) {
+                                let dist = Math.sqrt(xOffset * xOffset + yOffset * yOffset);
+                                if (dist <= radius) {
+                                    let weight = 1.0 - (dist / radius);
+                                    let index = IX(cx, cy);
+
+                                    if (activeTool === 'spawn') {
+                                        // Standard push force along drag vector
+                                        fluid.u[index] += dx * weight * forceScale * 0.15;
+                                        fluid.v[index] += dy * weight * forceScale * 0.15;
+                                    } else if (activeTool === 'vortex') {
+                                        // Whirlpool: Create a circular rotational force field
+                                        // Rotational vector is (-yOffset, xOffset)
+                                        let speed = Math.sqrt(dx*dx + dy*dy) + 2.0; // scale with drag speed
+                                        fluid.u[index] += -yOffset * weight * forceScale * speed * 0.08;
+                                        fluid.v[index] += xOffset * weight * forceScale * speed * 0.08;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Spawn particle bursts along the drag line (to avoid gaps)
+                    if (activeTool === 'spawn') {
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        let steps = Math.max(1, Math.floor(dist / 4));
+                        for (let s = 0; s < steps; s++) {
+                            let t = s / steps;
+                            let px = prevMouseX + dx * t;
+                            let py = prevMouseY + dy * t;
+                            spawnParticleBurst(px, py, dx, dy, 2);
+                        }
+                    }
+                } 
+                else if (activeTool === 'obstacle' || activeTool === 'erase') {
+                    // Paint obstacles onto the grid
+                    let radius = 2;
+                    let isWall = (activeTool === 'obstacle') ? 1 : 0;
+
+                    for (let yOffset = -radius; yOffset <= radius; yOffset++) {
+                        for (let xOffset = -radius; xOffset <= radius; xOffset++) {
+                            let cx = Math.floor(gridX + xOffset);
+                            let cy = Math.floor(gridY + yOffset);
+
+                            // Keep outer borders intact as solid walls
+                            if (cx >= 1 && cx <= NX && cy >= 1 && cy <= NY) {
+                                let dist = Math.sqrt(xOffset * xOffset + yOffset * yOffset);
+                                if (dist <= radius) {
+                                    let index = IX(cx, cy);
+                                    fluid.obstacles[index] = isWall;
+                                    if (isWall) {
+                                        // Zero out any existing velocity inside newly drawn wall
+                                        fluid.u[index] = 0;
+                                        fluid.v[index] = 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Update previous mouse coordinates
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+            }
+
+            // 2. Process Continuous Emitters
+            for (let emitter of emitters) {
+                // Scale emitter coordinates to fluid grid
+                let gridX = Math.floor((emitter.x / width) * NX) + 1;
+                let gridY = Math.floor((emitter.y / height) * NY) + 1;
+
+                let forceVX = Math.cos(emitter.angle) * emitter.speed;
+                let forceVY = Math.sin(emitter.angle) * emitter.speed;
+
+                // Inject velocity into fluid grid
+                let radius = 2;
+                for (let yOffset = -radius; yOffset <= radius; yOffset++) {
+                    for (let xOffset = -radius; xOffset <= radius; xOffset++) {
+                        let cx = gridX + xOffset;
+                        let cy = gridY + yOffset;
+                        if (cx >= 1 && cx <= NX && cy >= 1 && cy <= NY) {
+                            let dist = Math.sqrt(xOffset * xOffset + yOffset * yOffset);
+                            if (dist <= radius) {
+                                let weight = 1.0 - (dist / radius);
+                                let idx = IX(cx, cy);
+                                fluid.u[idx] += forceVX * weight * 0.15;
+                                fluid.v[idx] += forceVY * weight * 0.15;
+                            }
+                        }
+                    }
+                }
+
+                // Spawn continuous stream of particles
+                for (let r = 0; r < emitter.rate; r++) {
+                    let streamAngle = emitter.angle + (Math.random() - 0.5) * emitter.spread;
+                    let speed = emitter.speed * (0.8 + Math.random() * 0.4);
+                    let pvx = Math.cos(streamAngle) * speed;
+                    let pvy = Math.sin(streamAngle) * speed;
+
+                    // Add radial offset to emitter source
+                    let offsetAngle = Math.random() * Math.PI * 2;
+                    let offsetR = Math.random() * emitter.radius;
+                    let px = emitter.x + Math.cos(offsetAngle) * offsetR;
+                    let py = emitter.y + Math.sin(offsetAngle) * offsetR;
+
+                    particles.push(createParticle(px, py, pvx, pvy));
+                }
+            }
+
+            // 3. Step the Fluid Velocity Field
+            fluid.step(1.0, 0.0, viscosity); // dt=1.0, diffusion is skipped, viscosity acts as friction
+
+            // 4. Update and Advect Particles
+            let activeParticles = [];
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+
+                p.age++;
+                if (!infiniteLife && p.age >= p.maxLife) {
+                    continue; // Let particle expire
+                }
+
+                // Map canvas coordinate to fluid grid cell coordinate
+                let gridX = (p.x / width) * NX + 0.5;
+                let gridY = (p.y / height) * NY + 0.5;
+
+                // Sample fluid flow velocity at particle location
+                let flow = fluid.sampleVelocity(gridX, gridY);
+
+                // Convert fluid velocity to canvas pixel movement space
+                // (Scaling factor maps simulation grid speeds to pixel movement)
+                let targetVX = flow.u * 4.5;
+                let targetVY = flow.v * 4.5;
+
+                // Update particle velocity based on fluid velocity and inertia (mass)
+                p.vx += (targetVX - p.vx) * (1 - particleInertia);
+                p.vy += (targetVY - p.vy) * (1 - particleInertia);
+
+                // Apply global gravity forces
+                p.vx += gravityX;
+                p.vy += gravityY;
+
+                // Update particle position coordinates
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // --- Boundary Collisions and Wall Bouncing ---
+                let collided = false;
+                let bounce = -0.3; // bounce coefficient
+
+                // Screen edge boundaries
+                if (p.x < 5) { p.x = 5; p.vx *= bounce; collided = true; }
+                else if (p.x > width - 5) { p.x = width - 5; p.vx *= bounce; collided = true; }
+
+                if (p.y < 5) { p.y = 5; p.vy *= bounce; collided = true; }
+                else if (p.y > height - 5) { p.y = height - 5; p.vy *= bounce; collided = true; }
+
+                // Check collisions with internal solid obstacle walls
+                let pGridX = Math.floor((p.x / width) * NX) + 1;
+                let pGridY = Math.floor((p.y / height) * NY) + 1;
+
+                if (pGridX >= 1 && pGridX <= NX && pGridY >= 1 && pGridY <= NY) {
+                    if (fluid.obstacles[IX(pGridX, pGridY)]) {
+                        // Collision detected! Push particle out of the obstacle cell to the nearest edge.
+                        let cellCenterX = ((pGridX - 0.5) / NX) * width;
+                        let cellCenterY = ((pGridY - 0.5) / NY) * height;
+                        let dx = p.x - cellCenterX;
+                        let dy = p.y - cellCenterY;
+                        
+                        if (Math.abs(dx) > Math.abs(dy)) {
+                            p.vx *= bounce;
+                            p.x = cellCenterX + Math.sign(dx || 1) * (width / NX) * 0.51;
+                        } else {
+                            p.vy *= bounce;
+                            p.y = cellCenterY + Math.sign(dy || 1) * (height / NY) * 0.51;
+                        }
+                    }
+                }
+
+                activeParticles.push(p);
+            }
+            particles = activeParticles;
+        }
+
+        function draw() {
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // 1. Semi-transparent clear to leave beautiful glowing trails behind particles
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = `rgba(11, 12, 16, ${trailLength})`;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Render Painted Solid Obstacles / Walls
+            ctx.fillStyle = 'rgba(60, 64, 75, 0.9)';
+            ctx.strokeStyle = 'rgba(100, 110, 130, 0.4)';
+            ctx.lineWidth = 1;
+
+            let cellW = width / NX;
+            let cellH = height / NY;
+
+            for (let j = 1; j <= NY; j++) {
+                for (let i = 1; i <= NX; i++) {
+                    if (fluid.obstacles[IX(i, j)]) {
+                        let rx = (i - 1) * cellW;
+                        let ry = (j - 1) * cellH;
+                        ctx.fillRect(rx, ry, cellW + 0.5, cellH + 0.5);
+                        ctx.strokeRect(rx, ry, cellW + 0.5, cellH + 0.5);
+                    }
+                }
+            }
+
+            // Render Continuous Emitters visually
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.strokeStyle = varColor('--accent-color');
+            ctx.lineWidth = 1.5;
+            for (let emitter of emitters) {
+                ctx.beginPath();
+                ctx.arc(emitter.x, emitter.y, emitter.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw direction indicator line
+                ctx.beginPath();
+                ctx.moveTo(emitter.x, emitter.y);
+                ctx.lineTo(
+                    emitter.x + Math.cos(emitter.angle) * (emitter.radius + 8),
+                    emitter.y + Math.sin(emitter.angle) * (emitter.radius + 8)
+                );
+                ctx.stroke();
+            }
+
+            // 3. Render Particles
+            ctx.globalCompositeOperation = blendMode;
+
+            // Group draw calls by color to optimize rendering performance
+            // (minimizes context.fillStyle state changes!)
+            let colorGroups = {};
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                let speedSq = p.vx * p.vx + p.vy * p.vy;
+                let color = getParticleColor(p, speedSq);
+
+                if (!colorGroups[color]) {
+                    colorGroups[color] = [];
+                }
+                colorGroups[color].push(p);
+            }
+
+            // Draw each color group
+            for (let color in colorGroups) {
+                ctx.fillStyle = color;
+                let group = colorGroups[color];
+                
+                ctx.beginPath();
+                for (let i = 0; i < group.length; i++) {
+                    let p = group[i];
+                    // moveTo prevents drawing connecting lines between particle circles
+                    ctx.moveTo(p.x + particleSize, p.y);
+                    ctx.arc(p.x, p.y, particleSize, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
+        }
+
+        // Helper to query CSS variable values dynamically
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        // Main animation frame loop
+        function tick() {
+            // Update performance HUD statistics
+            frameCount++;
+            let now = performance.now();
+            let delta = now - lastTime;
+            fpsTimer += delta;
+            
+            if (fpsTimer >= 1000) {
+                fps = Math.round((frameCount * 1000) / fpsTimer);
+                hudFps.textContent = fps;
+                frameCount = 0;
+                fpsTimer = 0;
+            }
+            lastTime = now;
+
+            hudParticles.textContent = particles.length;
+
+            if (!isPaused) {
+                updateSimulation();
+            }
+            draw();
+
+            requestAnimationFrame(tick);
+        }
+
+        // Launch the application loop
+        requestAnimationFrame(tick);
+
+    </script>
+</body>
+</html>

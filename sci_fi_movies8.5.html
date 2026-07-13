@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Sci-Fi Movies - Enhanced</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a0e34 100%); /* Smoother gradient background */
+            color: #ffffff;
+            margin: 0;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        /* Header Styling */
+        h1 {
+            text-align: center;
+            color: #ffcc00; /* Gold title */
+            font-family: 'Orbitron', sans-serif;
+            border-bottom: 4px solid #4d96ff;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(77, 150, 255, 0.8); /* Glowing effect */
+        }
+
+        /* Movie List Layout (Using Grid for a modern look) */
+        .movie-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            justify-content: center;
+        }
+
+        /* Movie Card Styling */
+        .movie-card {
+            background-color: rgba(45, 0, 77, 0.8); /* Semi-transparent dark purple card */
+            border: 1px solid #8a2be2; /* Blue violet border */
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.4s ease, box-shadow 0.4s ease, background-color 0.4s ease; /* Enhanced transition */
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Hover Effects - More dramatic lift and glow */
+        .movie-card:hover {
+            transform: translateY(-15px) scale(1.03); /* More pronounced lift */
+            box-shadow: 0 15px 30px rgba(255, 204, 0, 0.7), 0 0 20px rgba(77, 150, 255, 0.6); /* Gold/Cyan glow effect */
+            background-color: #5c007a; /* Slightly brighter on hover */
+        }
+
+        .movie-card h2 {
+            margin-top: 0;
+            color: #00ffff; /* Cyan for movie titles */
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <h1>2026 Sci-Fi Movie Lineup</h1>
+    <div class="movie-list">
+        <div class="movie-card">
+            <h2>Project Hail Mary</h2>
+        </div>
+        <div class="movie-card">
+            <h2>Disclosure Day</h2>
+        </div>
+        <div class="movie-card">
+            <h2>Backrooms</h2>
+        </div>
+        <div class="movie-card">
+            <h2>Supergirl</h2>
+        </div>
+        <div class="movie-card">
+            <h2>Dune: Part Three</h2>
+        </div>
+        <div class="movie-card">
+            <h2>Signal One</h2>
+        </div>
+    </div>
+</body>
+</html>
