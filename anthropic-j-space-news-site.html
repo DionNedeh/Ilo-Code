@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Anthropic Research & “J-Space” (Claude Science) — News Digest</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#111a33; --muted:#a9b4d0; --text:#e9eeff;
+      --accent:#7c5cff; --accent2:#2dd4bf; --border:rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:radial-gradient(1200px 600px at 20% -10%, rgba(124,92,255,.35), transparent 55%), radial-gradient(900px 500px at 100% 0%, rgba(45,212,191,.25), transparent 55%), var(--bg); color:var(--text)}
+    header{padding:28px 18px 12px; max-width:1100px; margin:0 auto}
+    .topbar{display:flex; gap:14px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap}
+    .brand{display:flex; gap:14px; align-items:center}
+    .logo{width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, rgba(124,92,255,.95), rgba(45,212,191,.75)); box-shadow:0 10px 30px rgba(124,92,255,.25); border:1px solid rgba(255,255,255,.15)}
+    h1{margin:0; font-size:18px; letter-spacing:.2px}
+    .subtitle{margin:4px 0 0; color:var(--muted); font-size:13px; line-height:1.35}
+
+    .layout{max-width:1100px; margin:0 auto; padding:14px 18px 44px; display:grid; grid-template-columns: 1.15fr .85fr; gap:16px}
+    @media (max-width: 940px){.layout{grid-template-columns: 1fr}}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:18px; padding:16px}
+    .card h2{margin:0 0 10px; font-size:14px; color:#dfe6ff; letter-spacing:.2px}
+    .muted{color:var(--muted)}
+
+    .grid{display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px}
+    @media (max-width: 560px){.grid{grid-template-columns:1fr}}
+
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:9px 10px; border-radius:999px; border:1px solid var(--border); background:rgba(17,26,51,.6); font-size:12px; color:#dbe3ff}
+    .dot{width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(124,92,255,.15)}
+    .dot2{background:var(--accent2); box-shadow:0 0 0 4px rgba(45,212,191,.15)}
+
+    ul{margin:8px 0 0; padding:0; list-style:none}
+    li{padding:10px 10px; border-radius:14px; border:1px solid rgba(255,255,255,.06); background:rgba(17,26,51,.35)}
+    li + li{margin-top:10px}
+    .item-title{font-size:13px; margin:0 0 4px; display:flex; gap:10px; align-items:flex-start}
+    .badge{font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:var(--muted)}
+    .item-desc{margin:0; color:var(--muted); font-size:12.5px; line-height:1.35}
+
+    .sources a{color:#cfd7ff; text-decoration:none; border-bottom:1px dashed rgba(207,215,255,.35)}
+    .sources a:hover{border-bottom-color:rgba(207,215,255,.8)}
+    .sources p{margin:10px 0 0; font-size:12.5px; color:var(--muted); line-height:1.45}
+
+    .callout{display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:16px; border:1px solid rgba(124,92,255,.25); background:rgba(124,92,255,.08)}
+    .callout strong{display:block; font-size:13px}
+    .callout span{display:block; margin-top:4px; color:var(--muted); font-size:12.5px; line-height:1.35}
+
+    footer{max-width:1100px; margin:0 auto; padding:0 18px 30px; color:rgba(233,238,255,.6); font-size:12px}
+    .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .btn{cursor:pointer; border-radius:14px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#e9eeff; font-size:12.5px}
+    .btn.primary{border-color:rgba(124,92,255,.35); background:rgba(124,92,255,.15)}
+    .hr{height:1px; background:rgba(255,255,255,.06); margin:12px 0}
+
+    code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; color:#d6ddff}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Anthropic Research Digest — “J-Space” / Claude Science Highlights</h1>
+          <p class="subtitle">A single-page summary created from the information captured on the Research & News pages during the previous browsing session.</p>
+        </div>
+      </div>
+      <div>
+        <div class="pill"><span class="dot"></span>Research framing</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card">
+      <h2>What the pages showed (captured items)</h2>
+
+      <div class="grid" style="margin-top:10px">
+        <div class="callout">
+          <div class="dot dot2" aria-hidden="true"></div>
+          <div>
+            <strong>Research landing sections</strong>
+            <span>The Research page presents multiple focus areas (e.g., Alignment, Interpretability, Economic Research, Societal Impacts, and Frontier Red Team), plus a feed of recent posts/publications.</span>
+          </div>
+        </div>
+        <div class="callout" style="border-color:rgba(45,212,191,.25); background:rgba(45,212,191,.08)">
+          <div class="dot dot" aria-hidden="true"></div>
+          <div>
+            <strong>Newsroom highlights</strong>
+            <span>The Newsroom feed includes several recent announcements and product/research updates, such as items about Claude updates and Claude Code, and other newsroom-style posts.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 style="margin-top:14px">Captured newsroom titles (examples)</h2>
+      <ul>
+        <li>
+          <p class="item-title"><span class="badge">Announcement / product</span><span>“The Making of Claude Code”</span></p>
+          <p class="item-desc">Listed among recent Newsroom items captured during the session.</p>
+        </li>
+        <li>
+          <p class="item-title"><span class="badge">Announcement</span><span>“Introducing Claude Sonnet 5”</span></p>
+          <p class="item-desc">Appeared in the same recent Newsroom feed capture.</p>
+        </li>
+        <li>
+          <p class="item-title"><span class="badge">News / availability</span><span>“Claude Science… now available”</span></p>
+          <p class="item-desc">A specific page link attempted during the session returned 404 in one capture, so details were not fully retrievable.</p>
+        </li>
+      </ul>
+
+      <div class="btnrow">
+        <button class="btn primary" onclick="window.scrollTo({top:0, behavior:'smooth'})">Back to top</button>
+        <button class="btn" onclick="toggleSources()">Toggle sources</button>
+      </div>
+
+      <div id="sources" class="sources" style="display:none; margin-top:14px">
+        <div class="hr"></div>
+        <h2>Sources (links)</h2>
+        <p><a href="https://www.anthropic.com/research/global-workspace" target="_blank" rel="noreferrer noopener">Anthropic research: https://www.anthropic.com/research/global-workspace</a></p>
+        <p><a href="https://unfinishablemap.org/research/anthropic-global-workspace-j-space-2026-07-07/" target="_blank" rel="noreferrer noopener">Research notes: https://unfinishablemap.org/research/anthropic-global-workspace-j-space-2026-07-07/</a></p>
+        <p><a href="https://transformer-circuits.pub/2026/workspace/index.html" target="_blank" rel="noreferrer noopener">Original paper write-up: https://transformer-circuits.pub/2026/workspace/index.html</a></p>
+        <p class="muted">Note: this digest reflects what was visible/recorded during the previous browsing session; it may be incomplete.</p>
+      </div>
+    </section>
+
+    <aside class="card">
+      <h2>Quick “J-Space” context (from the captured session)</h2>
+      <p class="muted" style="margin:0; font-size:12.8px; line-height:1.5">
+        The workflow captured pages describing “workspace/global workspace” research themes and linked them to Anthropic’s broader research structure (including Interpretability). A specific “Claude Science… now available” link was attempted but returned a 404 in one capture.
+      </p>
+
+      <div class="hr"></div>
+
+      <h2>Interpretability feed mention</h2>
+      <p class="muted" style="margin:0; font-size:12.8px; line-height:1.5">
+        The Research page capture referenced Interpretability-related items, including an example that mentioned a July 6, 2026 interpretability post about an “emergent mental workspace” in Claude.
+      </p>
+
+      <div class="hr"></div>
+
+      <h2>Try this page</h2>
+      <p class="muted" style="margin:0; font-size:12.8px; line-height:1.5">
+        Use this file as a template: replace the captured example titles/descriptions with exact quotes after a deeper extraction.
+      </p>
+
+      <div class="hr"></div>
+
+      <div class="pill" title="Lightweight, local-only HTML">
+        <span class="dot"></span>
+        Offline-friendly (no JS libraries)
+      </div>
+
+      <div style="margin-top:10px" class="muted">
+        Tip: open DevTools → Console and run <code>toggleSources()</code> to show sources.
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    Built locally as a single HTML file: <span class="muted">anthropic-j-space-news-site.html</span>.
+  </footer>
+
+  <script>
+    function toggleSources(){
+      const el = document.getElementById('sources');
+      el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

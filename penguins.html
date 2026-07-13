@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Penguins: Friendly Birds of the South</title>
+  <style>
+    :root{
+      --bg:#061826;
+      --card:#0b2a3c;
+      --card2:#0f344a;
+      --text:#e9f3ff;
+      --muted:#b9d3ea;
+      --accent:#4fd3ff;
+      --accent2:#ffd166;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(900px 600px at 10% 10%, rgba(79,211,255,.25), transparent 60%),
+        radial-gradient(700px 500px at 90% 20%, rgba(255,209,102,.18), transparent 55%),
+        linear-gradient(180deg, #04111f, var(--bg));
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      padding: 54px 18px 28px;
+      text-align:center;
+    }
+    .wrap{max-width: 1100px; margin:0 auto; padding:0 18px;}
+    h1{
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      letter-spacing: -0.02em;
+    }
+    .subtitle{margin:10px auto 0; max-width: 70ch; color:var(--muted);}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:16px;
+      margin: 18px 0 50px;
+    }
+    .card{
+      grid-column: span 6;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(500px 140px at 20% 0%, rgba(79,211,255,.25), transparent 45%);
+      pointer-events:none;
+      opacity:.85;
+    }
+    .card > *{position:relative}
+
+    .card h2{margin:0 0 10px; font-size:1.25rem}
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 12px;
+      border-radius: 999px;
+      background: rgba(79,211,255,.10);
+      border: 1px solid rgba(79,211,255,.25);
+      color: var(--accent);
+      font-weight: 650;
+      font-size: .9rem;
+      margin-bottom: 12px;
+    }
+
+    .facts{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:12px;
+      margin-top:12px;
+    }
+    .fact{
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .fact b{display:block; color: var(--accent2)}
+    .fact span{color:var(--muted); font-size:.95rem}
+
+    .photo{
+      grid-column: span 12;
+      background: linear-gradient(180deg, rgba(79,211,255,.08), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+      min-height: 260px;
+      display:flex;
+      align-items:flex-end;
+    }
+    .photo::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 260px at 50% 70%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(120deg, rgba(79,211,255,.20), transparent 40%),
+        linear-gradient(0deg, rgba(0,0,0,.20), rgba(0,0,0,.05));
+      pointer-events:none;
+    }
+    .penguin-svg{
+      position:absolute;
+      right:-10px;
+      bottom:-30px;
+      width:min(560px, 70vw);
+      opacity:.95;
+      filter: drop-shadow(0 18px 35px rgba(0,0,0,.35));
+    }
+
+    .photo .content{
+      position:relative;
+      z-index:1;
+      max-width: 62ch;
+    }
+    .photo .content p{color:var(--muted); margin: 8px 0 0}
+
+    .list{
+      margin: 0; padding-left: 18px;
+      color: var(--muted);
+    }
+    .list li{margin: 8px 0}
+
+    footer{
+      padding: 20px 18px 34px;
+      color: var(--muted);
+      text-align:center;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    @media (max-width: 900px){
+      .card{grid-column: span 12;}
+      .facts{grid-template-columns:1fr;}
+      .photo{min-height: 320px;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Penguins: Friendly Birds of the South</h1>
+      <p class="subtitle">
+        Penguins are flightless seabirds that thrive in cold, coastal waters. Here’s a quick, fun overview of
+        what makes them so special.
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="grid" aria-label="Penguins website content">
+      <article class="card">
+        <div class="tag">🧊 Cold-water champions</div>
+        <h2>Built for life at sea</h2>
+        <p style="color:var(--muted); margin:0;">
+          Penguins have streamlined bodies and strong flippers that help them swim efficiently.
+          Thick feathers and a layer of insulation keep them warm even in icy conditions.
+        </p>
+        <div class="facts" role="list">
+          <div class="fact" role="listitem"><b>Feathers</b><span>Dense, waterproof layers</span></div>
+          <div class="fact" role="listitem"><b>Flippers</b><span>Steer and propel in water</span></div>
+          <div class="fact" role="listitem"><b>Diet</b><span>Fish, krill, and squid</span></div>
+          <div class="fact" role="listitem"><b>Breeding</b><span>Often nest in colonies</span></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="tag">🌍 Different species</div>
+        <h2>Meet a few penguin types</h2>
+        <p style="color:var(--muted); margin:0;">
+          There are many penguin species worldwide, each with its own look and habits.
+          Some prefer snowy coastlines, while others live in warmer southern regions.
+        </p>
+        <ul class="list">
+          <li><b>Emperor penguins</b> — famous for breeding in extreme winter conditions.</li>
+          <li><b>Adélie penguins</b> — known for their energy and lively colonies.</li>
+          <li><b>Gentoo penguins</b> — easily spotted by their bold markings and red/orange beaks.</li>
+          <li><b>Magellanic penguins</b> — found in parts of South America with cool coastal climates.</li>
+        </ul>
+      </article>
+
+      <section class="photo" aria-label="Decorative penguin illustration">
+        <svg class="penguin-svg" viewBox="0 0 900 650" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustration of a penguin">
+          <!-- Simple stylized penguin (no external assets) -->
+          <defs>
+            <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1f2a44"/>
+              <stop offset="1" stop-color="#0b1428"/>
+            </linearGradient>
+            <linearGradient id="gBelly" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#eaf7ff" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#c8e6ff" stop-opacity="0.90"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Shadow -->
+          <ellipse cx="520" cy="580" rx="190" ry="44" fill="rgba(0,0,0,.25)"/>
+
+          <!-- Body -->
+          <path d="M420 150
+                   C365 180, 340 240, 350 310
+                   C370 450, 420 535, 520 535
+                   C620 535, 690 455, 705 345
+                   C715 265, 685 190, 620 155
+                   C570 128, 475 125, 420 150 Z" fill="url(#gBody)"/>
+
+          <!-- Belly -->
+          <path d="M445 235
+                   C420 270, 420 330, 430 380
+                   C450 470, 505 505, 565 495
+                   C635 482, 660 410, 660 350
+                   C660 290, 635 250, 600 228
+                   C560 205, 480 205, 445 235 Z" fill="url(#gBelly)"/>
+
+          <!-- Head -->
+          <path d="M485 90
+                   C540 55, 625 75, 650 135
+                   C668 178, 645 220, 598 240
+                   C545 262, 485 242, 468 195
+                   C455 158, 458 112, 485 90 Z" fill="#111b33"/>
+
+          <!-- Beak -->
+          <path d="M595 190
+                   C625 185, 676 180, 706 208
+                   C678 242, 625 247, 596 232 Z" fill="#ffd166"/>
+          <path d="M605 205
+                   C635 200, 662 204, 682 218
+                   C665 235, 638 238, 607 230 Z" fill="#f6b04c" opacity="0.9"/>
+
+          <!-- Eyes -->
+          <circle cx="585" cy="160" r="11" fill="#eaf7ff"/>
+          <circle cx="588" cy="162" r="6" fill="#0b1428"/>
+
+          <!-- Flippers -->
+          <path d="M350 330
+                   C312 360, 300 430, 330 455
+                   C365 485, 430 470, 445 420
+                   C430 365, 390 310, 350 330 Z" fill="#0c1732"/>
+          <path d="M710 325
+                   C750 355, 765 420, 735 448
+                   C700 482, 640 465, 625 420
+                   C635 365, 675 305, 710 325 Z" fill="#0c1732"/>
+
+          <!-- Wings highlights -->
+          <path d="M362 350
+                   C340 375, 340 410, 360 425
+                   C382 442, 420 435, 430 410
+                   C410 372, 392 342, 362 350 Z" fill="#1f2a44" opacity="0.65"/>
+          <path d="M698 350
+                   C720 375, 720 410, 700 425
+                   C678 442, 640 435, 630 410
+                   C650 372, 668 342, 698 350 Z" fill="#1f2a44" opacity="0.65"/>
+
+          <!-- Feet -->
+          <path d="M468 535
+                   C445 565, 460 610, 505 610
+                   C525 585, 520 555, 505 535 Z" fill="#ff7a59"/>
+          <path d="M585 535
+                   C610 560, 610 610, 565 610
+                   C545 585, 550 555, 565 535 Z" fill="#ff7a59"/>
+        </svg>
+
+        <div class="content">
+          <h2 style="margin:0; font-size:1.35rem;">A little penguin, a lot of charm</h2>
+          <p>
+            From waddling on ice to gliding through water, penguins are built for movement.
+            They use their flippers like hands in the sea, and their flippers + tails to balance on land.
+          </p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <div>&copy; <span id="y"></span> Penguins page • Made with HTML &amp; CSS</div>
+  </footer>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
