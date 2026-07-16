@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Colorful Website</title>
+  <style>
+    :root{
+      --bg1:#0ea5e9; /* sky */
+      --bg2:#8b5cf6; /* violet */
+      --card:#0b1220cc;
+      --text:#eaf2ff;
+      --muted:#b8c3dc;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px circle at 20% 10%, rgba(255,255,255,.22), transparent 55%),
+        radial-gradient(900px circle at 80% 20%, rgba(255,255,255,.18), transparent 50%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+
+    /* floating blobs */
+    .blob{
+      position:absolute;
+      width:340px;
+      height:340px;
+      border-radius:50%;
+      filter: blur(30px);
+      opacity:.45;
+      animation: floaty 10s ease-in-out infinite;
+      pointer-events:none;
+    }
+    .b1{ left:-120px; top:70px; background:#34d399; }
+    .b2{ right:-130px; top:140px; background:#f472b6; animation-delay:-3s; }
+    .b3{ left:18%; bottom:-160px; background:#fbbf24; animation-delay:-6s; }
+    @keyframes floaty{
+      0%,100%{ transform: translate3d(0,0,0) scale(1); }
+      50%{ transform: translate3d(0,-28px,0) scale(1.05); }
+    }
+
+    header{
+      position:relative;
+      padding: 44px 18px 20px;
+      max-width: 1100px;
+      margin:0 auto;
+    }
+
+    .nav{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .logo{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      background:
+        radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,.3) 35%, transparent 60%),
+        linear-gradient(135deg, #22c55e, #06b6d4, #a855f7);
+      box-shadow: 0 14px 35px rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+
+    .pill{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .chip{
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.22);
+      padding: 10px 12px;
+      border-radius: 999px;
+      color: var(--text);
+      text-decoration:none;
+      font-weight:650;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+      transition: transform .15s ease, background .15s ease;
+      user-select:none;
+    }
+    .chip:hover{ transform: translateY(-2px); background: rgba(255,255,255,.18); }
+
+    .hero{
+      margin-top: 26px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:stretch;
+    }
+
+    @media (max-width: 900px){
+      .hero{ grid-template-columns: 1fr; }
+      .pill{ justify-content:flex-start; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(11,18,32,.85), rgba(11,18,32,.65));
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    h1{
+      margin:0;
+      font-size: 40px;
+      line-height:1.08;
+      letter-spacing:-.5px;
+    }
+    .sub{
+      margin: 12px 0 18px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height:1.45;
+    }
+
+    .ctaRow{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius: 14px;
+      padding: 12px 14px;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.2px;
+      transition: transform .15s ease, filter .15s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-2px); }
+
+    .btnPrimary{
+      color:#071019;
+      background: linear-gradient(135deg, #34d399, #06b6d4, #a855f7);
+      box-shadow: 0 16px 40px rgba(0,0,0,.25);
+    }
+    .btnGhost{
+      color: var(--text);
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.22);
+      backdrop-filter: blur(10px);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:12px;
+      margin-top:18px;
+    }
+    .stat{
+      padding:14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+    .stat b{ display:block; font-size: 18px; }
+    .stat span{ color:var(--muted); font-size: 13px; }
+
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .miniTitle{ margin:0; font-size: 14px; letter-spacing:.18em; text-transform:uppercase; color: rgba(234,242,255,.8); }
+
+    .gradientBox{
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      background:
+        radial-gradient(500px circle at 20% 20%, rgba(34,197,94,.35), transparent 45%),
+        radial-gradient(500px circle at 80% 40%, rgba(168,85,247,.35), transparent 50%),
+        rgba(255,255,255,.08);
+      overflow:hidden;
+      position:relative;
+      min-height: 170px;
+    }
+
+    .gradientBox::after{
+      content:"";
+      position:absolute;
+      inset:-60px;
+      background: conic-gradient(from 180deg, rgba(52,211,153,.0), rgba(52,211,153,.55), rgba(6,182,212,.55), rgba(168,85,247,.55), rgba(52,211,153,.0));
+      opacity:.28;
+      animation: spin 7s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+
+    .gradientBox .content{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .badgeRow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .badge{
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.16);
+      font-weight:800;
+      font-size: 13px;
+    }
+
+    .section{
+      max-width: 1100px;
+      margin: 14px auto 60px;
+      padding: 0 18px;
+    }
+
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:14px;
+    }
+
+    @media (max-width: 900px){
+      .grid3{ grid-template-columns: 1fr; }
+    }
+
+    .feature{
+      padding:18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(11,18,32,.55);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 45px rgba(0,0,0,.20);
+      min-height: 150px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .feature::before{
+      content:"";
+      position:absolute;
+      width:180px;
+      height:180px;
+      border-radius:50%;
+      right:-80px;
+      top:-90px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,.0) 60%),
+                  linear-gradient(135deg, rgba(52,211,153,.8), rgba(168,85,247,.8));
+      opacity:.18;
+      filter: blur(0px);
+    }
+
+    .feature h3{ margin:0 0 8px; font-size: 18px; }
+    .feature p{ margin:0; color: var(--muted); line-height:1.5; }
+
+    footer{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 40px;
+      color: rgba(234,242,255,.8);
+      font-size: 14px;
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .kbd{
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-weight:800;
+      color: rgba(234,242,255,.92);
+    }
+  </style>
+</head>
+<body>
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+
+  <header>
+    <div class="nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>Rainbow Lab</div>
+      </div>
+      <div class="pill" aria-label="quick links">
+        <a class="chip" href="#features">Features</a>
+        <a class="chip" href="#gallery">Gallery</a>
+        <a class="chip" href="#contact">Contact</a>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="card">
+        <h1>Colorful design that feels fun.</h1>
+        <p class="sub">A playful, responsive single-page website with gradients, cards, and interactive buttons. Press <span class="kbd">C</span> to cycle the accent colors.</p>
+        <div class="ctaRow">
+          <button class="btn btnPrimary" id="accentBtn" type="button">Change accent</button>
+          <button class="btn btnGhost" type="button" id="toastBtn">Show a toast</button>
+        </div>
+
+        <div class="stats" aria-label="highlights">
+          <div class="stat"><b>Fast</b><span>pure HTML/CSS/JS</span></div>
+          <div class="stat"><b>Responsive</b><span>mobile-friendly layout</span></div>
+          <div class="stat"><b>Bright</b><span>animated gradients</span></div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="card">
+          <p class="miniTitle">Color mixer</p>
+          <div class="gradientBox" aria-live="polite">
+            <div class="content">
+              <div class="badgeRow">
+                <span class="badge" id="badge1">Mint</span>
+                <span class="badge" id="badge2">Sky</span>
+                <span class="badge" id="badge3">Violet</span>
+              </div>
+              <div style="color:rgba(234,242,255,.9);font-weight:800;line-height:1.3">
+                Accent preview updates instantly.
+              </div>
+              <div style="color:rgba(184,195,220,.95);font-size:14px;line-height:1.4">
+                Click the button (or press <span class="kbd">C</span>) to cycle.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="gallery">
+          <p class="miniTitle">Mini gallery</p>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; margin-top:12px;">
+            <div style="height:48px;border-radius:14px;background:linear-gradient(135deg,#34d399,#06b6d4); border:1px solid rgba(255,255,255,.16);"></div>
+            <div style="height:48px;border-radius:14px;background:linear-gradient(135deg,#a855f7,#06b6d4); border:1px solid rgba(255,255,255,.16);"></div>
+            <div style="height:48px;border-radius:14px;background:linear-gradient(135deg,#f472b6,#a855f7); border:1px solid rgba(255,255,255,.16);"></div>
+            <div style="height:48px;border-radius:14px;background:linear-gradient(135deg,#fbbf24,#f472b6); border:1px solid rgba(255,255,255,.16);"></div>
+            <div style="height:48px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#fbbf24); border:1px solid rgba(255,255,255,.16);"></div>
+            <div style="height:48px;border-radius:14px;background:linear-gradient(135deg,#06b6d4,#a855f7); border:1px solid rgba(255,255,255,.16);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <section class="grid3" id="features" aria-label="features">
+      <article class="feature">
+        <h3>Gradient cards</h3>
+        <p>Soft glassy surfaces with animated glow. Looks great on both dark and bright displays.</p>
+      </article>
+      <article class="feature">
+        <h3>Interactive accent</h3>
+        <p>Cycle mint/sky/violet palettes with a button or keyboard shortcut for quick experimentation.</p>
+      </article>
+      <article class="feature">
+        <h3>Accessible structure</h3>
+        <p>Semantic sections, focusable controls, and legible contrast for a clean reading experience.</p>
+      </article>
+    </section>
+
+    <section class="card" style="margin-top:14px" id="contact">
+      <p class="miniTitle">Contact</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px;">
+        <div style="flex:1;min-width:220px;color:var(--muted);line-height:1.5">
+          This is a demo page. Hook the buttons up to your own API when you’re ready.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btnPrimary" type="button" id="emailBtn">Email us</button>
+          <button class="btn btnGhost" type="button" id="copyBtn">Copy tagline</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>© <span id="year"></span> Rainbow Lab. All vibes reserved.</div>
+    <div>Tip: Press <span class="kbd">C</span> to cycle colors.</div>
+  </footer>
+
+  <!-- Toast -->
+  <div id="toast" style="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);padding:12px 14px;border-radius:14px;
+       background:rgba(11,18,32,.78);border:1px solid rgba(255,255,255,.18);color:var(--text);
+       box-shadow: 0 20px 60px rgba(0,0,0,.35);backdrop-filter: blur(10px);display:none;z-index:9999;max-width:92vw;">
+    <span id="toastText">Toast</span>
+  </div>
+
+  <script>
+    const accentBtn = document.getElementById('accentBtn');
+    const toastBtn = document.getElementById('toastBtn');
+    const emailBtn = document.getElementById('emailBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+
+    const year = document.getElementById('year');
+    year.textContent = new Date().getFullYear();
+
+    const palettes = [
+      { a:'#34d399', b:'#06b6d4', c:'#a855f7', names:['Mint','Sky','Violet'] },
+      { a:'#f472b6', b:'#a855f7', c:'#06b6d4', names:['Pink','Violet','Sky'] },
+      { a:'#fbbf24', b:'#f472b6', c:'#22c55e', names:['Amber','Rose','Green'] },
+      { a:'#22c55e', b:'#60a5fa', c:'#f97316', names:['Green','Blue','Orange'] }
+    ];
+
+    let idx = 0;
+
+    function applyPalette(p){
+      document.documentElement.style.setProperty('--bg1', p.b);
+      document.documentElement.style.setProperty('--bg2', p.c);
+
+      // Update the accent gradient used by the primary button.
+      // We do this by directly setting the button background.
+      const btn = document.querySelector('.btnPrimary');
+      btn.style.background = `linear-gradient(135deg, ${p.a}, ${p.b}, ${p.c})`;
+
+      // Keep the secondary button label consistent.
+      document.getElementById('badge1').textContent = p.names[0];
+      document.getElementById('badge2').textContent = p.names[1];
+      document.getElementById('badge3').textContent = p.names[2];
+
+      // Make sure hover gradient looks alive by changing the conic overlay opacity via CSS variables.
+      // (No extra CSS vars needed; this is intentionally simple.)
+    }
+
+    function cycle(){
+      idx = (idx + 1) % palettes.length;
+      applyPalette(palettes[idx]);
+    }
+
+    function showToast(msg){
+      toastText.textContent = msg;
+      toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => { toast.style.display = 'none'; }, 2400);
+    }
+
+    accentBtn.addEventListener('click', () => {
+      cycle();
+      showToast('Accent updated ✨');
+    });
+
+    toastBtn.addEventListener('click', () => {
+      showToast('Hello! This toast proves the JavaScript is wired up.');
+    });
+
+    emailBtn.addEventListener('click', () => {
+      showToast('Demo action: connect this to mailto: when ready.');
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const text = 'Colorful design that feels fun.';
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('Copied tagline to clipboard.');
+      }catch(e){
+        showToast('Copy failed in this browser.');
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if(e.key.toLowerCase() === 'c'){
+        cycle();
+        showToast('Accent updated ✨');
+      }
+    });
+
+    // Initialize palette.
+    applyPalette(palettes[idx]);
+  </script>
+</body>
+</html>
