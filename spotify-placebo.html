@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spotify Placebo — Mock Player</title>
+  <style>
+    :root{
+      --bg1:#070707;
+      --bg2:#121212;
+      --panel:#0f0f0f;
+      --panel2:#151515;
+      --text:#eaeaea;
+      --muted:#b3b3b3;
+      --line:rgba(255,255,255,.08);
+      --green:#1d4ed8;
+      --green2:#60a5fa;
+      --card:#151515;
+      --card2:#1b1b1b;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(96,165,250,.28), transparent 60%),
+                  linear-gradient(180deg, #04122a, #06162f);
+      height:100vh;
+      overflow:hidden;
+    }
+
+    /* Layout */
+    .app{
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    .topbar{
+      height:56px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:0 14px;
+      background:rgba(0,0,0,.15);
+      border-bottom:1px solid var(--line);
+      flex:0 0 auto;
+    }
+    .brand{
+      display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px;
+    }
+    .brand .logo{
+      width:26px;height:26px;border-radius:50%;
+      background:conic-gradient(from 200deg, var(--green), var(--green2));
+      box-shadow:0 0 0 6px rgba(29,185,84,.12);
+    }
+    .search{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      max-width:720px;
+      margin:0 auto;
+      padding:10px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .search input{
+      width:100%;
+      border:0;outline:0;background:transparent;color:var(--text);
+      font-size:14px;
+    }
+    .pill{
+      display:flex;align-items:center;gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .content{
+      display:flex;
+      flex:1;
+      min-height:0;
+    }
+
+    .sidebar{
+      width:260px;
+      border-right:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+      padding:14px 12px;
+      overflow:auto;
+    }
+    .navGroup{margin-bottom:18px}
+    .navTitle{font-size:12px;color:var(--muted);margin:10px 10px}
+    .navItem{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      color:var(--muted);
+      user-select:none;
+    }
+    .navItem:hover{background:rgba(255,255,255,.05);color:var(--text)}
+    .navItem.active{background:rgba(29,185,84,.12);color:var(--text);border:1px solid rgba(29,185,84,.25)}
+    .navIcon{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;opacity:.95}
+
+    .main{
+      flex:1;
+      overflow:auto;
+      padding:18px 18px 96px;
+    }
+    .sectionHeader{
+      display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px;
+    }
+    .sectionHeader h2{margin:0;font-size:18px}
+    .sectionHeader .sub{color:var(--muted);font-size:13px}
+
+    .cardsGrid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      gap:14px;
+    }
+    @media (max-width: 1200px){ .cardsGrid{grid-template-columns: repeat(4, minmax(160px, 1fr));} .sidebar{width:230px;} }
+    @media (max-width: 980px){ .cardsGrid{grid-template-columns: repeat(3, minmax(160px, 1fr));} }
+    @media (max-width: 780px){ .cardsGrid{grid-template-columns: repeat(2, minmax(160px, 1fr));} .sidebar{display:none;} }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      padding:12px;
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      position:relative;
+      min-height:178px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .card:hover{ transform: translateY(-2px); border-color: rgba(29,185,84,.35); background:linear-gradient(180deg, rgba(29,185,84,.12), rgba(255,255,255,.01)); }
+
+    .cover{
+      height:106px;
+      border-radius:12px;
+      background: radial-gradient(80px 60px at 30% 20%, rgba(29,185,84,.35), transparent 60%),
+                  linear-gradient(135deg, rgba(255,255,255,.06), rgba(0,0,0,.15));
+      border:1px solid rgba(255,255,255,.08);
+      position:relative;
+      overflow:hidden;
+    }
+    .cover::after{
+      content:"";
+      position:absolute;
+      inset:-40px;
+      background: conic-gradient(from 210deg, rgba(29,185,84,.0), rgba(29,185,84,.22), rgba(29,185,84,.0));
+      transform: rotate(12deg);
+      opacity:.9;
+    }
+
+    .cardTitle{font-weight:650; font-size:13px; line-height:1.2; margin-top:auto}
+    .cardMeta{color:var(--muted); font-size:12px; margin-top:2px}
+
+    .plus{
+      position:absolute;
+      top:10px;
+      right:10px;
+      width:32px;height:32px;
+      border-radius:999px;
+      display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .card:hover .plus{ transform: scale(1.04); border-color: rgba(29,185,84,.4); background:rgba(29,185,84,.12)}
+    .plus span{font-size:18px;line-height:0}
+
+    /* Bottom player */
+    .player{
+      height:82px;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.28);
+      display:flex;
+      align-items:center;
+      padding:10px 16px;
+      gap:14px;
+      flex:0 0 auto;
+      backdrop-filter: blur(8px);
+    }
+    .miniCover{width:54px;height:54px;border-radius:12px;background:linear-gradient(135deg, rgba(29,185,84,.35), rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.1)}
+    .trackInfo{min-width:240px}
+    .trackInfo .t1{font-weight:650;font-size:13px}
+    .trackInfo .t2{color:var(--muted);font-size:12px;margin-top:2px}
+
+    .controls{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+    .btn{
+      width:38px;height:38px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn:hover{border-color:rgba(29,185,84,.35)}
+    .play{
+      width:44px;height:44px;border-radius:999px;
+      background:rgba(29,185,84,.95);
+      border:1px solid rgba(29,185,84,.6);
+      box-shadow:0 10px 24px rgba(29,185,84,.22);
+    }
+
+    .timeline{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:260px;
+    }
+    .timeRow{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+    .bar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
+    .bar .fill{position:absolute;inset:0; width:40%; background:linear-gradient(90deg, rgba(29,185,84,.95), rgba(29,185,84,.45));}
+
+    /* Modal */
+    .modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+    .modal{
+      width:min(820px, 100%);
+      background:linear-gradient(180deg, rgba(25,25,25,.96), rgba(10,10,10,.96));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      box-shadow:0 30px 90px rgba(0,0,0,.6);
+      overflow:hidden;
+    }
+    .modalTop{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .modalTop .h{font-weight:700}
+    .closeBtn{width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .modalBody{padding:16px;display:grid;grid-template-columns: 220px 1fr;gap:16px}
+    @media (max-width: 720px){ .modalBody{grid-template-columns: 1fr;} }
+
+    .modalCover{
+      height:220px;border-radius:14px;
+      background: radial-gradient(90px 70px at 30% 20%, rgba(29,185,84,.40), transparent 60%),
+                  linear-gradient(135deg, rgba(255,255,255,.08), rgba(0,0,0,.25));
+      border:1px solid rgba(255,255,255,.1);
+    }
+    .modalList{color:var(--muted);font-size:13px;line-height:1.5}
+    .modalActions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+    .actionPrimary{
+      padding:10px 14px;border-radius:999px;
+      background:rgba(29,185,84,.95);
+      border:1px solid rgba(29,185,84,.6);
+      color:#06130b;font-weight:750;cursor:pointer;
+    }
+    .actionGhost{
+      padding:10px 14px;border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--text);cursor:pointer;
+    }
+
+    /* Toast */
+    .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(20,20,20,.9);border:1px solid rgba(255,255,255,.12);color:var(--text);padding:10px 14px;border-radius:999px;display:none;z-index:60;box-shadow:0 20px 60px rgba(0,0,0,.6);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><div class="logo"></div><div>Spotify Placebo</div></div>
+      <div class="search"><span style="opacity:.8">🔎</span><input id="searchInput" placeholder="Search for songs, artists, albums" /></div>
+      <div class="pill">Local Mock</div>
+    </div>
+
+    <div class="content">
+      <aside class="sidebar">
+        <div class="navGroup">
+          <div class="navItem active" data-route="home"><span class="navIcon">🏠</span><span>Home</span></div>
+          <div class="navItem" data-route="search"><span class="navIcon">🧭</span><span>Search</span></div>
+          <div class="navItem" data-route="library"><span class="navIcon">📚</span><span>Your Library</span></div>
+        </div>
+        <div class="navTitle">Playlists</div>
+        <div class="navItem" data-route="pl1"><span class="navIcon">🎧</span><span>Chill Vibes</span></div>
+        <div class="navItem" data-route="pl2"><span class="navIcon">⚡</span><span>Focus Beats</span></div>
+        <div class="navItem" data-route="pl3"><span class="navIcon">🌙</span><span>Night Drive</span></div>
+      </aside>
+
+      <main class="main">
+        <div class="sectionHeader">
+          <div>
+            <h2>Made for you</h2>
+            <div class="sub">Click a card to open details (placebo).</div>
+          </div>
+          <div class="sub" id="resultCount">—</div>
+        </div>
+
+        <div class="cardsGrid" id="cardsGrid"></div>
+      </main>
+    </div>
+
+    <div class="player" aria-label="Player">
+      <div class="miniCover" id="playerCover"></div>
+      <div class="trackInfo">
+        <div class="t1" id="playerTitle">No track selected</div>
+        <div class="t2" id="playerArtist">Choose a card above</div>
+      </div>
+
+      <div class="controls">
+        <div class="btn" title="Previous">⏮️</div>
+        <div class="btn play" id="playBtn" title="Play/Pause">⏯️</div>
+        <div class="btn" title="Next">⏭️</div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeRow"><span>0:42</span><span>3:18</span></div>
+        <div class="bar"><div class="fill" id="barFill"></div></div>
+      </div>
+
+      <div class="pill" style="margin-left:8px">🔊 Volume 38</div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalTop">
+        <div class="h" id="modalTitle">Details</div>
+        <div class="closeBtn" id="closeModal" title="Close">✕</div>
+      </div>
+      <div class="modalBody">
+        <div class="modalCover" id="modalCover"></div>
+        <div>
+          <div class="modalList" id="modalText">
+            —
+          </div>
+          <div class="modalActions">
+            <div class="actionPrimary" id="modalPlay">Play</div>
+            <div class="actionGhost" id="modalAdd">Add to playlist</div>
+            <div class="actionGhost" id="modalOpen">Open link</div>
+          </div>
+          <div class="modalList" style="margin-top:10px;opacity:.95">
+            (This is a local placebo UI—no real Spotify content is loaded.)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const DATA = [
+      { id:'s1', type:'Playlist', title:'Chill Vibes', meta:'50 songs • Smooth & slow', tracks:['Soft Horizons','Breeze Lines','Midnight Tea','Golden Hour','Driftwood Dreams'], hue:130 },
+      { id:'s2', type:'Album', title:'Focus Beats', meta:'28 tracks • Deep work', tracks:['Task Mode','Neon Flow','Copy/Paste','Quiet Voltage','Clarity Loop'], hue:145 },
+      { id:'s3', type:'Playlist', title:'Night Drive', meta:'42 songs • City lights', tracks:['Afterglow Avenue','Neon Rain','Late Signal','Roadside Echo','Midnight Switch'], hue:155 },
+      { id:'s4', type:'Album', title:'Sunrise Sessions', meta:'19 tracks • Warm energy', tracks:['Warm Start','Coffee Clouds','First Light','Easy Miles','Daybreak Drift'], hue:110 },
+      { id:'s5', type:'Playlist', title:'Lo-fi Corner', meta:'60 songs • Study mode', tracks:['Paper Lanterns','Tape Dust','Rainy Keys','Slow Bloom','Velvet Static'], hue:165 },
+      { id:'s6', type:'Album', title:'Synth Nights', meta:'23 tracks • Retro glow', tracks:['Chromewave','Moonlit Circuit','Neon Lullaby','Star Runner','Retro Orbit'], hue:175 },
+      { id:'s7', type:'Playlist', title:'Acoustic Atlas', meta:'37 songs • Earthy & intimate', tracks:['Woodland Notes','Trailside Hymn','Stone & String','Open Sky','Cedar Whisper'], hue:120 },
+      { id:'s8', type:'Album', title:'Pulse & Pop', meta:'16 tracks • Catchy hooks', tracks:['Button Eyes','Jump Rope Heart','Sugar Static','Happy Transit','Pop Theory'], hue:140 },
+      { id:'s9', type:'Playlist', title:'Gym Motivation', meta:'55 songs • Lift & go', tracks:['Iron Tempo','Crank It Up','Sweat Symphony','Reboot Rhythm','Final Set'], hue:135 },
+      { id:'s10', type:'Album', title:'Calm Waters', meta:'14 tracks • Breath & reset', tracks:['Slow Tides','Riverstone','Still Air','Deep Exhale','Gentle Wake'], hue:150 }
+    ];
+
+    const grid = document.getElementById('cardsGrid');
+    const resultCount = document.getElementById('resultCount');
+    const searchInput = document.getElementById('searchInput');
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const closeModal = document.getElementById('closeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalText = document.getElementById('modalText');
+    const modalCover = document.getElementById('modalCover');
+    const modalPlay = document.getElementById('modalPlay');
+    const modalAdd = document.getElementById('modalAdd');
+    const modalOpen = document.getElementById('modalOpen');
+
+    const playerTitle = document.getElementById('playerTitle');
+    const playerArtist = document.getElementById('playerArtist');
+    const playerCover = document.getElementById('playerCover');
+
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> toast.style.display = 'none', 1600);
+    }
+
+    function coverStyle(h){
+      // Use HSL for variation
+      return `radial-gradient(90px 70px at 30% 20%, hsla(${h},90%,55%,.40), transparent 60%), linear-gradient(135deg, rgba(255,255,255,.08), rgba(0,0,0,.25))`;
+    }
+
+    function cardTemplate(item){
+      const hue = item.hue ?? 140;
+      return `
+        <div class="card" role="button" tabindex="0" data-id="${item.id}">
+          <div class="plus" title="Quick add" data-add="${item.id}"><span>+</span></div>
+          <div class="cover" style="background:${coverStyle(hue)}"></div>
+          <div>
+            <div class="cardTitle">${item.title}</div>
+            <div class="cardMeta">${item.type} • ${item.meta}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function render(list){
+      grid.innerHTML = list.map(cardTemplate).join('');
+      resultCount.textContent = `${list.length} cards`;
+    }
+
+    function getById(id){
+      return DATA.find(x=>x.id===id);
+    }
+
+    function openDetails(id){
+      const item = getById(id);
+      if(!item) return;
+      const hue = item.hue ?? 140;
+      modalTitle.textContent = item.title;
+      modalCover.style.background = coverStyle(hue);
+
+      modalText.innerHTML = `
+        <div><b>${item.type}</b> — ${item.meta}</div>
+        <div style="height:10px"></div>
+        <div><b>Tracklist (placebo):</b></div>
+        <div style="margin-top:6px">${item.tracks.map(t=>`• ${t}`).join('<br/>')}</div>
+      `;
+
+      modalOpen.onclick = ()=>{
+        // Open a local “details page” behavior via anchor-like toast.
+        showToast('Opened a placeholder link for: ' + item.title);
+      };
+
+      modalPlay.onclick = ()=>{
+        const first = item.tracks[0] || '—';
+        playerTitle.textContent = first;
+        playerArtist.textContent = item.title;
+        playerCover.style.background = coverStyle(hue);
+        showToast('Playing (placebo): ' + first);
+        modalOverlay.style.display = 'none';
+      };
+
+      modalAdd.onclick = ()=>{
+        showToast('Added to playlist (placebo): ' + item.title);
+      };
+
+      modalOverlay.style.display = 'flex';
+    }
+
+    grid.addEventListener('click', (e)=>{
+      const card = e.target.closest('.card');
+      if(!card) return;
+      const id = card.getAttribute('data-id');
+      const add = e.target.closest('[data-add]');
+      if(add){
+        const item = getById(add.getAttribute('data-add'));
+        showToast('Quick added (placebo): ' + (item?.title || id));
+        return;
+      }
+      openDetails(id);
+    });
+
+    grid.addEventListener('keydown', (e)=>{
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      const card = e.target.closest('.card');
+      if(!card) return;
+      e.preventDefault();
+      openDetails(card.getAttribute('data-id'));
+    });
+
+    closeModal.addEventListener('click', ()=> modalOverlay.style.display = 'none');
+    modalOverlay.addEventListener('click', (e)=>{ if(e.target === modalOverlay) modalOverlay.style.display='none'; });
+
+    // Simple “play” toggle
+    let playing = false;
+    document.getElementById('playBtn').addEventListener('click', ()=>{
+      playing = !playing;
+      showToast(playing ? 'Play (placebo)' : 'Pause (placebo)');
+      document.getElementById('barFill').style.width = playing ? '40%' : '10%';
+    });
+
+    searchInput.addEventListener('input', ()=>{
+      const q = searchInput.value.trim().toLowerCase();
+      if(!q){ render(DATA); return; }
+      const filtered = DATA.filter(x => (x.title + ' ' + x.type + ' ' + x.meta).toLowerCase().includes(q));
+      render(filtered);
+    });
+
+    // Render initial
+    render(DATA);
+
+    // Route clicks (placebo)
+    document.querySelectorAll('.navItem[data-route]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const r = el.getAttribute('data-route');
+        showToast('Opened ' + r + ' (placebo)');
+      });
+    });
+  </script>
+</body>
+</html>
