@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transformers: A Deep Dive Learning Page</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --panel2:#0f1730;
+      --text:#e8eefc;
+      --muted:#aab6e6;
+      --accent:#7aa2ff;
+      --accent2:#57e3c3;
+      --border:rgba(255,255,255,.12);
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    body{margin:0;font-family:var(--sans);background:linear-gradient(180deg,#070a14, var(--bg));color:var(--text);}
+    a{color:var(--accent);text-decoration:none}
+    .wrap{max-width:1180px;margin:0 auto;padding:24px 18px 80px;}
+    header{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px;}
+    .hero h1{margin:0 0 6px;font-size:32px;letter-spacing:.2px}
+    .hero p{margin:0;color:var(--muted);max-width:820px;line-height:1.5}
+
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start;}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr;}}
+
+    .main{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px;}
+    .side{position:sticky;top:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:12px;}
+
+    h2{margin:28px 0 10px;font-size:22px}
+    h3{margin:18px 0 8px;font-size:17px;color:#dbe4ff}
+    p{line-height:1.65;color:#dfe6ff;margin:10px 0}
+    ul{color:#dfe6ff;line-height:1.65;margin:10px 0 10px 18px}
+    code.inline{font-family:var(--mono);background:rgba(122,162,255,.12);border:1px solid rgba(122,162,255,.25);padding:2px 6px;border-radius:8px;color:#dce8ff}
+
+    .callout{border:1px solid rgba(87,227,195,.25);background:rgba(87,227,195,.08);padding:12px;border-radius:12px;margin:12px 0}
+    .callout strong{color:#d7fff4}
+    .warn{border-color:rgba(255,175,90,.35);background:rgba(255,175,90,.08)}
+    .hr{height:1px;background:rgba(255,255,255,.12);margin:18px 0}
+
+    .diagram{border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));border-radius:12px;padding:14px;}
+    .diagram .note{color:var(--muted);margin-top:8px;font-size:13px;line-height:1.45}
+
+    details{border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.02);padding:12px;margin:10px 0}
+    summary{cursor:pointer;color:#dfe6ff;font-weight:650}
+
+    /* Side: deep dive tabs */
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .tabbtn{appearance:none;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:650;font-size:13px}
+    .tabbtn[aria-selected="true"]{border-color:rgba(122,162,255,.6);background:rgba(122,162,255,.12);}
+    .tabpanel{display:none}
+    .tabpanel.active{display:block}
+
+    .mini{border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.12);border-radius:12px;padding:12px;margin-top:12px}
+    .mini label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+    textarea{width:100%;min-height:88px;resize:vertical;background:rgba(255,255,255,.03);color:var(--text);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;font-family:var(--mono);line-height:1.4}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+    .sliderwrap{flex:1;min-width:160px}
+    input[type="range"]{width:100%}
+    button.primary{appearance:none;border:1px solid rgba(122,162,255,.7);background:rgba(122,162,255,.18);color:var(--text);padding:10px 12px;border-radius:12px;font-weight:750;cursor:pointer}
+    button.primary:disabled{opacity:.6;cursor:not-allowed}
+
+    .result{margin-top:10px;color:#dfe6ff;line-height:1.55}
+    .pill{display:inline-block;padding:2px 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:var(--muted);font-size:12px;margin:4px 6px 0 0}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+    .modal-backdrop.show{display:flex}
+    .modal{width:min(820px,100%);background:#0e1632;border:1px solid rgba(255,255,255,.14);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden}
+    .modal header{padding:14px 14px;border-bottom:1px solid rgba(255,255,255,.12);margin:0;display:flex;justify-content:space-between;align-items:center}
+    .modal header h3{margin:0;font-size:16px}
+    .modal .modal-body{padding:14px;max-height:70vh;overflow:auto}
+    .modal .close{appearance:none;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:var(--text);border-radius:12px;padding:8px 10px;cursor:pointer}
+
+    .footer-note{color:var(--muted);font-size:13px;margin-top:22px;line-height:1.5}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="hero">
+        <h1>Transformers, explained (and explored)</h1>
+        <p>
+          This page is a long-form guide to the key ideas behind Transformers—<em>embeddings</em>, <em>attention</em>, positional information,
+          residual connections &amp; normalization, and <em>how decoding + training objectives</em> shape real behavior.
+          Use the interactive diagram and the mini “generation simulator” to connect intuition to mechanics.
+        </p>
+      </div>
+      <div class="hero" style="text-align:right">
+        <div class="pill">Interactive diagram</div>
+        <div class="pill">Deep-dive tabs</div>
+        <div class="pill">Glossary modal</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <main class="main">
+        <section class="diagram" id="interactive-diagram">
+          <h2 style="margin-top:0">Interactive: from tokens to an output distribution</h2>
+          <p>
+            Use the controls in the right column to “sample” a next token. The diagram below is an educational visualization
+            (not a full model). It highlights how <span class="pill" style="border:none;background:rgba(122,162,255,.14);color:#dce8ff">Q/K/V attention</span>
+            mixes information and how a final projection produces logits.
+          </p>
+
+          <svg id="tfDiagram" viewBox="0 0 980 420" width="100%" role="img" aria-label="Transformer dataflow diagram">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="rgba(122,162,255,.9)" />
+                <stop offset="1" stop-color="rgba(87,227,195,.9)" />
+              </linearGradient>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="rgba(232,238,252,.85)" />
+              </marker>
+            </defs>
+
+            <!-- Boxes -->
+            <g>
+              <rect x="20" y="40" width="160" height="90" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.18)" />
+              <text x="100" y="85" text-anchor="middle" fill="#e8eefc" font-size="16" font-family="var(--mono)">Tokens</text>
+
+              <rect x="220" y="40" width="210" height="90" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.18)" />
+              <text x="325" y="76" text-anchor="middle" fill="#e8eefc" font-size="16" font-family="var(--mono)">Embedding</text>
+              <text x="325" y="102" text-anchor="middle" fill="#aab6e6" font-size="13" font-family="var(--mono)">+ Pos</text>
+
+              <rect x="470" y="40" width="200" height="90" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.18)" />
+              <text x="570" y="85" text-anchor="middle" fill="#e8eefc" font-size="16" font-family="var(--mono)">Attention</text>
+
+              <rect x="700" y="40" width="260" height="90" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.18)" />
+              <text x="830" y="70" text-anchor="middle" fill="#e8eefc" font-size="16" font-family="var(--mono)">Residual + LN</text>
+              <text x="830" y="100" text-anchor="middle" fill="#aab6e6" font-size="13" font-family="var(--mono)">stack</text>
+
+              <rect x="310" y="190" width="200" height="80" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.18)" />
+              <text x="410" y="220" text-anchor="middle" fill="#e8eefc" font-size="15" font-family="var(--mono)">FFN</text>
+              <text x="410" y="245" text-anchor="middle" fill="#aab6e6" font-size="12" font-family="var(--mono)">nonlinearity</text>
+
+              <rect x="560" y="190" width="320" height="80" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.18)" />
+              <text x="720" y="220" text-anchor="middle" fill="#e8eefc" font-size="15" font-family="var(--mono)">Logits over vocab</text>
+              <text x="720" y="245" text-anchor="middle" fill="#aab6e6" font-size="12" font-family="var(--mono)">projection</text>
+            </g>
+
+            <!-- Arrows -->
+            <g fill="none" stroke="#e8eefc" stroke-width="2" opacity=".85" marker-end="url(#arrow)">
+              <path d="M180 85 C200 85, 200 85, 220 85" />
+              <path d="M430 85 C450 85, 450 85, 470 85" />
+              <path d="M670 85 C690 85, 690 85, 700 85" />
+
+              <path d="M800 130 C800 150, 720 150, 720 190" opacity=".55" />
+              <path d="M570 130 C570 150, 410 150, 410 190" opacity=".55" />
+
+              <path d="M510 230 C530 230, 530 230, 560 230" opacity=".85" />
+            </g>
+
+            <!-- Highlight layer -->
+            <g id="tfHighlight" opacity=".95">
+              <rect id="hlAttention" x="470" y="40" width="200" height="90" rx="14" fill="rgba(122,162,255,.14)" stroke="rgba(122,162,255,.55)" />
+              <rect id="hlResid" x="700" y="40" width="260" height="90" rx="14" fill="rgba(87,227,195,.12)" stroke="rgba(87,227,195,.5)" />
+              <rect id="hlLogits" x="560" y="190" width="320" height="80" rx="14" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.2)" />
+            </g>
+
+            <text id="diagStatus" x="20" y="390" fill="#aab6e6" font-family="var(--mono)" font-size="13">Ready.</text>
+          </svg>
+          <div class="note">
+            Tip: as you change the simulator settings, the diagram emphasizes different “steps” of the computation.
+          </div>
+        </section>
+
+        <section id="overview">
+          <h2>What a Transformer really does (in one pass)</h2>
+          <p>
+            A Transformer maps an input sequence of token IDs to a probability distribution for the next token.
+            The key mechanism is <span class="callout" style="padding:8px 10px;margin:0;display:inline-block;vertical-align:middle"><strong>self-attention</strong></span>:
+            every token can “look at” other tokens to decide what information is relevant.
+          </p>
+
+          <div class="callout">
+            <strong>Big picture:</strong>
+            <ul>
+              <li><strong>Embeddings</strong> turn tokens into vectors.</li>
+              <li><strong>Attention</strong> mixes information across positions (with masking for decoding).</li>
+              <li><strong>Residual + LayerNorm</strong> keep training stable and preserve gradients.</li>
+              <li><strong>FFN (feed-forward network)</strong> adds nonlinearity per token.</li>
+              <li><strong>Projection to logits</strong> gives scores for every vocab token.</li>
+              <li><strong>Sampling / decoding</strong> chooses the next token.</li>
+            </ul>
+          </div>
+        </section>
+
+        <div class="hr"></div>
+
+        <section id="token-to-embedding">
+          <h2>1) Embeddings deeper dive</h2>
+          <p>
+            An <strong>embedding</strong> is a learned lookup table: for each token ID, you retrieve a vector.
+            But embeddings aren’t just IDs→vectors; they’re the model’s learned coordinate system.
+          </p>
+          <h3>Why vectors at all?</h3>
+          <ul>
+            <li>Similarity matters: attention scores are computed from dot-products of these vectors.</li>
+            <li>Arithmetic emerges: relationships (e.g., “king - man + woman”) can become approximately linear in embedding space.</li>
+            <li>Generalization: unseen combinations can still land near familiar regions.</li>
+          </ul>
+
+          <h3>Token identity vs context</h3>
+          <p>
+            The embedding alone encodes token identity. Context is added when the model applies attention and feed-forward layers.
+            In other words: embeddings are necessary, but not sufficient.
+          </p>
+        </section>
+
+        <section id="positional">
+          <h2>2) Positional information: more than “sequence order”</h2>
+          <p>
+            Attention is permutation-invariant by default, so the model needs a way to know <em>where</em> tokens occur.
+            Positional encodings add position-dependent signals.
+          </p>
+
+          <h3>Common variants</h3>
+          <ul>
+            <li><strong>Sinusoidal</strong> encodings: fixed functions of position; enable extrapolation.</li>
+            <li><strong>Learned absolute</strong> embeddings: each position has a learned vector.</li>
+            <li><strong>Relative</strong> encodings: attention depends on relative offsets (often improves long-range behavior).</li>
+            <li><strong>RoPE</strong> (rotary): rotates query/key vectors based on position.</li>
+          </ul>
+
+          <div class="callout warn">
+            <strong>Watch out:</strong>
+            if positional encoding doesn’t match training/test lengths or distribution, behavior can degrade.
+          </div>
+        </section>
+
+        <section id="attention-masks">
+          <h2>3) Attention masks &amp; decoding modes</h2>
+          <p>
+            During training with teacher forcing, you often see full-sequence visibility.
+            During autoregressive decoding, you must prevent the model from “cheating” by attending to future tokens.
+          </p>
+
+          <h3>Mask types you’ll hear about</h3>
+          <ul>
+            <li><strong>Causal mask</strong>: token <code class="inline">t</code> can attend only to positions ≤ <code class="inline">t</code>.</li>
+            <li><strong>Padding mask</strong>: ignore padded tokens in variable-length batches.</li>
+            <li><strong>Cross-attention mask</strong>: in encoder-decoder models, control which source positions are visible.</li>
+          </ul>
+
+          <h3>Intuition</h3>
+          <p>
+            Masking changes the attention pattern, which changes the information each position can carry.
+            Many “it doesn’t work” issues are actually mask or decoding bugs.
+          </p>
+        </section>
+
+        <section id="multihead">
+          <h2>4) Multi-head attention: different “views” per head</h2>
+          <p>
+            Multi-head attention runs several attention mechanisms in parallel (heads). Each head learns a different similarity metric.
+          </p>
+
+          <h3>What do heads learn?</h3>
+          <ul>
+            <li><strong>Local heads</strong> may focus on nearby tokens.</li>
+            <li><strong>Copy heads</strong> may track lexical overlap or repeated patterns.</li>
+            <li><strong>Syntax heads</strong> may align with grammatical structures.</li>
+            <li><strong>Coreference heads</strong> may connect pronouns to antecedents.</li>
+          </ul>
+
+          <h3>Per-head intuition (not one-size-fits-all)</h3>
+          <p>
+            It’s tempting to think all heads do the same thing with different parameters.
+            In practice, they specialize—so removing heads can degrade different behaviors differently.
+          </p>
+        </section>
+
+        <section id="residual-ln">
+          <h2>5) Residual connections &amp; LayerNorm: pre vs post</h2>
+          <p>
+            Residual pathways help gradients flow; LayerNorm stabilizes activations.
+            Two common layouts: <strong>Pre-LN</strong> (normalize before sublayer) and <strong>Post-LN</strong> (after).
+          </p>
+
+          <h3>Pre-LN intuition</h3>
+          <ul>
+            <li>Often trains more stably for deep Transformers.</li>
+            <li>Makes optimization easier because residual branch starts closer to identity.</li>
+          </ul>
+
+          <h3>Post-LN intuition</h3>
+          <ul>
+            <li>Normalize after sublayer; can work well but may be more sensitive to depth / learning rate.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>Why it matters:</strong>
+            subtle architectural choices can change convergence, calibration, and sometimes long-range behaviors.
+          </div>
+        </section>
+
+        <section id="ffn">
+          <h2>6) FFN blocks: token-wise transformation with nonlinearity</h2>
+          <p>
+            The feed-forward network (FFN) is applied to each position independently.
+            It expands dimensionality, applies a nonlinearity, then projects back.
+          </p>
+          <p>
+            While attention mixes information across positions, the FFN refines what each position “means” after mixing.
+            Think of attention as <em>communication</em> and FFN as <em>interpretation</em>.
+          </p>
+        </section>
+
+        <section id="decoding">
+          <h2>7) Decoding strategies &amp; the generation loop</h2>
+          <p>
+            Autoregressive generation repeatedly:
+            <span class="pill" style="border:none;background:rgba(122,162,255,.14);color:#dce8ff">(1)</span> run the model,
+            <span class="pill" style="border:none;background:rgba(122,162,255,.14);color:#dce8ff">(2)</span> pick the next token,
+            <span class="pill" style="border:none;background:rgba(122,162,255,.14);color:#dce8ff">(3)</span> append it, and continue.
+          </p>
+
+          <h3>Sampling vs search</h3>
+          <ul>
+            <li><strong>Greedy</strong>: pick argmax. Coherent but can get stuck in bland patterns.</li>
+            <li><strong>Temperature</strong>: smooths or sharpens probability distribution.</li>
+            <li><strong>Top-k</strong>: restrict to k most likely tokens.</li>
+            <li><strong>Top-p</strong> (nucleus): restrict to smallest set whose cumulative prob ≥ p.</li>
+            <li><strong>Beam search</strong>: keeps multiple hypotheses; can improve some tasks but may hurt diversity.</li>
+          </ul>
+
+          <div class="callout warn">
+            <strong>Common confusion:</strong> temperature affects distribution shape, while top-k/top-p changes support. They’re different knobs.
+          </div>
+        </section>
+
+        <section id="training">
+          <h2>8) Training objective: teacher forcing &amp; next-token prediction</h2>
+          <p>
+            Transformers are commonly trained with <strong>next-token prediction</strong>.
+            Given a sequence, you shift it by one token and ask the model to predict the “future” token at each position.
+          </p>
+
+          <h3>Teacher forcing</h3>
+          <p>
+            During training, the model is given the ground-truth previous tokens (not its own generated tokens).
+            This reduces error compounding and makes optimization feasible.
+          </p>
+
+          <h3>Why this objective works</h3>
+          <ul>
+            <li>It turns learning into a standard supervised classification problem over vocab tokens.</li>
+            <li>Gradients flow through the entire sequence in parallel (unlike step-by-step sampling).</li>
+            <li>It naturally supports autoregressive generation at inference time.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>Practical note:</strong>
+            evaluation metrics like perplexity relate to cross-entropy loss under the same next-token objective.
+          </div>
+        </section>
+
+        <section id="failure">
+          <h2>9) Common failure modes (and what they reveal)</h2>
+          <ul>
+            <li><strong>Repetition loops</strong>: can indicate overly peaked distributions or decoding settings that lack diversity.</li>
+            <li><strong>Hallucination</strong>: the model predicts plausible continuations rather than verified facts.</li>
+            <li><strong>Attention confusion</strong>: wrong masks or positional encoding mismatches can cause incoherence.</li>
+            <li><strong>Degenerate sampling</strong>: low temperature + no support restriction can collapse into repetitive tokens.</li>
+            <li><strong>Long-context drift</strong>: some positional schemes degrade outside training length.</li>
+          </ul>
+        </section>
+
+        <section id="walkthrough">
+          <h2>10) End-to-end walkthrough: tying it back to the simulator</h2>
+          <p>
+            Let’s connect the story to the interactive prompt.
+            Suppose your prompt text becomes token IDs:
+            <span class="pill" style="border:none;background:rgba(87,227,195,.14);color:#d7fff4">[t₁, t₂, …, tₙ]</span>.
+            A real Transformer doesn’t “pick a token” from a simple if/then rule. Instead, it builds representations for each position,
+            runs attention and FFN layers, then produces <strong>logits</strong> for the next position.
+          </p>
+          <p>
+            Still, you can map the simulator knobs to the mental model of decoding:
+          </p>
+          <ul>
+            <li><strong>Attention emphasis</strong> (in the diagram) corresponds to how strongly the next-token prediction depends on previous tokens.</li>
+            <li><strong>Residual + LayerNorm</strong> corresponds to stabilizing the representation: the model tends not to wildly overwrite everything each layer.</li>
+            <li><strong>Logits projection</strong> corresponds to the final scores for each vocabulary entry.</li>
+          </ul>
+          <p>
+            The simulator then uses <strong>temperature</strong> and <strong>top-k</strong> to sample from the final distribution.
+            In other words: the diagram highlights stages of computation, while temperature/top-k control how you explore the model’s likely next tokens.
+          </p>
+
+          <div class="callout" style="margin-top:14px">
+            <strong>Walkthrough exercise:</strong>
+            <ol style="margin:8px 0 0 18px;line-height:1.7">
+              <li>Use a short prompt: “In a distant future, the city”.</li>
+              <li>Generate once with <strong>Temperature ≈ 0.4</strong> and <strong>Top-k ≈ 10</strong>.</li>
+              <li>Increase temperature to <strong>≈ 1.2</strong> while keeping top-k fixed. Observe whether more varied continuations appear.</li>
+              <li>Decrease top-k to <strong>≈ 5</strong> while keeping temperature moderate. Observe how the simulator becomes conservative.</li>
+              <li>Repeat with a different prompt and compare how the “shape” of candidate tokens shifts.</li>
+            </ol>
+          </div>
+        </section>
+
+        <section id="glossary-inline">
+          <h2>Glossary (quick links)</h2>
+          <p>
+            Click a term to open the full glossary modal.
+            <span class="pill" role="button" tabindex="0" data-glossary="attention">attention</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="embedding">embedding</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="positional_encoding">positional encoding</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="residual">residual</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="teacher_forcing">teacher forcing</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="top_p">top-p</span>
+          </p>
+        </section>
+
+        <div class="footer-note">
+          This page is designed for learning: read section-by-section, then return to the simulator when something feels abstract.
+        </div>
+      </main>
+
+      <aside class="side">
+        <div class="tabs" role="tablist" aria-label="Deep dive tabs">
+          <button class="tabbtn" type="button" role="tab" aria-selected="true" aria-controls="tab-deep" id="btn-deep">Deep dive</button>
+          <button class="tabbtn" type="button" role="tab" aria-selected="false" aria-controls="tab-concepts" id="btn-concepts">Concepts</button>
+          <button class="tabbtn" type="button" role="tab" aria-selected="false" aria-controls="tab-variants" id="btn-variants">Variants</button>
+          <button class="tabbtn" type="button" role="tab" aria-selected="false" aria-controls="tab-intuitions" id="btn-intuitions">Intuitions</button>
+        </div>
+
+        <div id="tab-deep" class="tabpanel active" role="tabpanel" aria-labelledby="btn-deep">
+          <h3 style="margin-top:0">Deep dive: attention in 60 seconds</h3>
+          <p style="margin-top:8px;color:var(--muted)">What happens inside one attention head?</p>
+          <ul>
+            <li><strong>Project</strong> inputs to queries (Q), keys (K), and values (V).</li>
+            <li><strong>Score</strong> each token pair with a similarity (often dot-product).</li>
+            <li><strong>Mask</strong> future positions in causal decoding.</li>
+            <li><strong>Normalize</strong> scores with softmax → attention weights.</li>
+            <li><strong>Mix</strong> values using weighted sum.</li>
+          </ul>
+          <div class="callout" style="margin-top:12px">
+            <strong>Try this:</strong> when decoding, attention weights near the end usually matter most.
+          </div>
+        </div>
+
+        <div id="tab-concepts" class="tabpanel" role="tabpanel" aria-labelledby="btn-concepts">
+          <h3 style="margin-top:0">Concept checklist</h3>
+          <ul>
+            <li><strong>Logits</strong> are unnormalized scores.</li>
+            <li><strong>Softmax</strong> converts logits to probabilities.</li>
+            <li><strong>Embeddings</strong> define the model’s geometry.</li>
+            <li><strong>Positional encodings</strong> inject order information.</li>
+            <li><strong>Residual connections</strong> preserve information.</li>
+            <li><strong>LayerNorm</strong> stabilizes training.</li>
+          </ul>
+        </div>
+
+        <div id="tab-variants" class="tabpanel" role="tabpanel" aria-labelledby="btn-variants">
+          <h3 style="margin-top:0">Common architectural variants</h3>
+          <details>
+            <summary>Encoder-only</summary>
+            <p style="margin:8px 0;color:var(--muted)">BERT-style masked language modeling; no autoregressive mask for generation.</p>
+          </details>
+          <details>
+            <summary>Decoder-only</summary>
+            <p style="margin:8px 0;color:var(--muted)">GPT-style causal self-attention for next-token generation.</p>
+          </details>
+          <details>
+            <summary>Encoder-decoder</summary>
+            <p style="margin:8px 0;color:var(--muted)">Transformer for seq2seq; cross-attention links target to source tokens.</p>
+          </details>
+        </div>
+
+        <div id="tab-intuitions" class="tabpanel" role="tabpanel" aria-labelledby="btn-intuitions">
+          <h3 style="margin-top:0">Intuition: why residuals help</h3>
+          <p style="margin-top:8px;color:var(--muted)">
+            Residual connections mean each layer can learn “deltas” rather than replace everything.
+            That keeps representations from drifting too far while learning new refinements.
+          </p>
+          <div class="callout" style="margin-top:12px">
+            <strong>Another way to say it:</strong> early layers can preserve the identity path; later layers add semantics.
+          </div>
+        </div>
+
+        <div class="mini" id="simulator">
+          <h3 style="margin-top:0">Mini generation simulator</h3>
+          <p style="margin:8px 0;color:var(--muted);line-height:1.45">
+            This is a toy simulator inspired by autoregressive decoding. It won’t reproduce a real model,
+            but it does demonstrate how <strong>temperature</strong> and <strong>support restriction</strong> (top-k) change the next-token outcome.
+          </p>
+
+          <div class="hr" style="margin:12px 0"></div>
+
+          <div id="usePage" class="callout" style="border-radius:12px;">
+            <strong>How to use this page</strong>
+            <ol style="margin:8px 0 0 18px;color:#dfe6ff;line-height:1.6">
+              <li>Read the left column sections in order until attention and decoding feel familiar.</li>
+              <li>In this simulator, type a short prompt (a sentence or phrase).</li>
+              <li>Adjust <strong>Temperature</strong> to control randomness and <strong>Top-k</strong> to limit candidate tokens.</li>
+              <li>Press <strong>Generate next token</strong>.</li>
+              <li>Re-run with slightly different settings to see how outputs shift.</li>
+            </ol>
+          </div>
+
+          <div style="margin-top:12px">
+            <label for="prompt">Prompt</label>
+            <textarea id="prompt" placeholder="Try: 'In a distant future, the city'">In a distant future, the city</textarea>
+            <div class="row">
+              <div class="sliderwrap">
+                <label for="temp">Temperature: <span id="tempVal" style="font-family:var(--mono)">0.9</span></label>
+                <input id="temp" type="range" min="0.1" max="1.8" step="0.05" value="0.9" />
+              </div>
+              <div class="sliderwrap">
+                <label for="topk">Top-k: <span id="topkVal" style="font-family:var(--mono)">20</span></label>
+                <input id="topk" type="range" min="1" max="50" step="1" value="20" />
+              </div>
+            </div>
+
+            <div class="row">
+              <button class="primary" id="genBtn" type="button">Generate next token</button>
+              <button class="primary" id="moreBtn" type="button" style="border-color:rgba(87,227,195,.6);background:rgba(87,227,195,.14)">Generate 5-step continuation</button>
+            </div>
+
+            <div class="result" id="simResult" aria-live="polite">
+              <p style="color:var(--muted);margin:10px 0 0">The simulator will display a sampled next token here.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Glossary modal -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <header>
+        <h3 id="modalTitle">Glossary</h3>
+        <button class="close" id="modalClose" type="button">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      // Tabs
+      const tabDefs = [
+        {btn:'btn-deep', panel:'tab-deep'},
+        {btn:'btn-concepts', panel:'tab-concepts'},
+        {btn:'btn-variants', panel:'tab-variants'},
+        {btn:'btn-intuitions', panel:'tab-intuitions'}
+      ];
+
+      function setTab(idx){
+        tabDefs.forEach((t,i)=>{
+          const btn=document.getElementById(t.btn);
+          const panel=document.getElementById(t.panel);
+          const active=i===idx;
+          if(btn){btn.setAttribute('aria-selected', active?'true':'false');}
+          if(panel){panel.classList.toggle('active', active); panel.style.display = active?'block':'none';}
+        });
+      }
+      tabDefs.forEach((t,i)=>{
+        const btn=document.getElementById(t.btn);
+        btn.addEventListener('click', ()=>setTab(i));
+      });
+
+      // Glossary modal
+      const glossary = {
+        attention: {
+          def: 'A mechanism that computes how much each token should “pay attention” to other tokens.',
+          details: 'Self-attention forms attention weights from query-key interactions, applies a mask when needed, then mixes values using those weights.'
+        },
+        embedding: {
+          def: 'A learned vector representation for tokens (and sometimes positions).',
+          details: 'Embeddings map discrete token IDs into a continuous space where similarity and linear structure become useful.'
+        },
+        positional_encoding: {
+          def: 'Information added to token representations to encode order.',
+          details: 'Because attention alone is permutation-invariant, position signals let the model distinguish different sequences.'
+        },
+        residual: {
+          def: 'A skip connection that adds a sublayer’s output back to its input.',
+          details: 'Residuals help gradients flow and allow each layer to learn refinements (deltas) rather than entirely new representations.'
+        },
+        teacher_forcing: {
+          def: 'Training technique that feeds the ground-truth previous token to predict the next token.',
+          details: 'This prevents error compounding during training and makes sequence-level learning tractable.'
+        },
+        top_p: {
+          def: 'Nucleus sampling: restricts candidates to a minimal set whose cumulative probability ≥ p.',
+          details: 'Like top-k, it controls randomness—but it adapts the candidate set size to the model’s distribution.'
+        }
+      };
+
+      const backdrop=document.getElementById('modalBackdrop');
+      const modalTitle=document.getElementById('modalTitle');
+      const modalBody=document.getElementById('modalBody');
+      const modalClose=document.getElementById('modalClose');
+
+      function openGlossary(key){
+        const item=glossary[key] || {def:'No definition found.',details:''};
+        modalTitle.textContent = key.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+        modalBody.innerHTML = `
+          <p style="margin-top:0;color:#dfe6ff;line-height:1.65"><strong>${item.def}</strong></p>
+          <p style="color:var(--muted);line-height:1.65">${item.details}</p>
+        `;
+        backdrop.classList.add('show');
+      }
+      function closeGlossary(){ backdrop.classList.remove('show'); }
+
+      document.querySelectorAll('[data-glossary]').forEach(el=>{
+        el.addEventListener('click', ()=>openGlossary(el.getAttribute('data-glossary')));
+        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openGlossary(el.getAttribute('data-glossary')); } });
+      });
+      modalClose.addEventListener('click', closeGlossary);
+      backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) closeGlossary(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeGlossary(); });
+
+      // Simulator (toy)
+      const promptEl=document.getElementById('prompt');
+      const tempEl=document.getElementById('temp');
+      const topkEl=document.getElementById('topk');
+      const tempVal=document.getElementById('tempVal');
+      const topkVal=document.getElementById('topkVal');
+      const genBtn=document.getElementById('genBtn');
+      const moreBtn=document.getElementById('moreBtn');
+      const simResult=document.getElementById('simResult');
+
+      const diagStatus=document.getElementById('diagStatus');
+      const hlAttention=document.getElementById('hlAttention');
+      const hlResid=document.getElementById('hlResid');
+      const hlLogits=document.getElementById('hlLogits');
+
+      function mulberry32(a){
+        return function(){
+          var t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+      }
+
+      function tokenizeToy(s){
+        // Very rough: split on spaces, keep punctuation-attached as part of token.
+        const cleaned = s.trim().replace(/\s+/g,' ');
+        if(!cleaned) return [];
+        return cleaned.split(' ');
+      }
+
+      function buildCandidateTokens(tokens){
+        const last = tokens[tokens.length-1] || '';
+        const vocab = [
+          'the','a','an','and','but','so','because','as','while','when','then','there','here',
+          'future','past','city','world','system','model','attention','learning','tokens','layers','heads','time',
+          'will','can','may','should','might','must','be','have','has','are','is',
+          'in','on','to','from','with','without','within','over','under','near','far',
+          'next','first','finally','now','soon','always','never','again','together'
+        ];
+
+        // Heuristic: if last token contains punctuation/word roots, add some related candidates.
+        const low = last.toLowerCase().replace(/[^a-z]/g,'');
+        const extra=[];
+        if(low.includes('city')) extra.push('streets','lights','skyline','machines');
+        if(low.includes('future')) extra.push('tomorrow','years','centuries','tomorrow');
+        if(low.includes('model')) extra.push('weights','training','loss','gradient');
+        if(low.includes('attention')) extra.push('queries','keys','values','softmax');
+
+        return Array.from(new Set([...vocab, ...extra]));
+      }
+
+      function softmax(arr){
+        const m=Math.max(...arr);
+        const ex=arr.map(x=>Math.exp(x-m));
+        const sum=ex.reduce((a,b)=>a+b,0);
+        return ex.map(e=>e/sum);
+      }
+
+      function sampleFromDistribution(items, probs, rnd){
+        let r=rnd();
+        let acc=0;
+        for(let i=0;i<items.length;i++){
+          acc += probs[i];
+          if(r<=acc) return items[i];
+        }
+        return items[items.length-1];
+      }
+
+      function computeToyNextToken(prompt, temperature, topk){
+        const tokens=tokenizeToy(prompt);
+        const candidates=buildCandidateTokens(tokens);
+
+        // Build base logit scores from simple features.
+        const last = (tokens[tokens.length-1]||'').toLowerCase();
+        const seed = tokens.join('|').length + Math.floor(temperature*1000) + topk;
+        const rnd = mulberry32(seed);
+
+        // Score scheme:
+        // - encourage sentence-like continuations
+        // - encourage overlap if last ends with common patterns
+        const baseLogits = candidates.map(tok=>{
+          let s=0;
+          if(['the','a','an'].includes(tok)) s += last.endsWith('.')? 0.6 : 0.25;
+          if(['and','but','so','because','as','while'].includes(tok)) s += 0.35;
+          if(last.length>0){
+            const lowTok=tok.toLowerCase();
+            const lowLast=last.replace(/[^a-z]/g,'');
+            if(lowTok===lowLast) s += 1.2;
+            if(lowLast.includes(lowTok.slice(0,3)) && lowTok.length>3) s += 0.5;
+          }
+          // temperature will reshape; add tiny deterministic noise
+          s += (rnd()-0.5)*0.35;
+          return s;
+        });
+
+        // Apply temperature
+        const scaled = baseLogits.map(x=>x/Math.max(0.0001, temperature));
+        let probs = softmax(scaled);
+
+        // Top-k support restriction
+        const pairs = candidates.map((t,i)=>({t, p:probs[i]}));
+        pairs.sort((a,b)=>b.p-a.p);
+        const kk=Math.max(1, Math.min(topk, pairs.length));
+        const topPairs=pairs.slice(0,kk);
+        const topItems=topPairs.map(x=>x.t);
+        const topProbs=topPairs.map(x=>x.p);
+        const sum=topProbs.reduce((a,b)=>a+b,0) || 1;
+        const normProbs=topProbs.map(p=>p/sum);
+
+        const chosen = sampleFromDistribution(topItems, normProbs, rnd);
+        return {chosen, candidatesTop: topPairs.slice(0, Math.min(8, kk))};
+      }
+
+      function updateDiagram(stage){
+        // stage: 'attention'|'residual'|'logits'
+        hlAttention.setAttribute('fill', stage==='attention' ? 'rgba(122,162,255,.18)' : 'rgba(122,162,255,.10)');
+        hlAttention.setAttribute('stroke', stage==='attention' ? 'rgba(122,162,255,.7)' : 'rgba(122,162,255,.35)');
+        hlResid.setAttribute('fill', stage==='residual' ? 'rgba(87,227,195,.18)' : 'rgba(87,227,195,.10)');
+        hlResid.setAttribute('stroke', stage==='residual' ? 'rgba(87,227,195,.7)' : 'rgba(87,227,195,.35)');
+        hlLogits.setAttribute('stroke', stage==='logits' ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.18)');
+        diagStatus.textContent = stage==='attention' ? 'Emphasizing attention mixing…' : stage==='residual' ? 'Applying residual + normalization…' : 'Projecting to logits and sampling…';
+      }
+
+      function generateOnce(){
+        const prompt = promptEl.value;
+        const temperature = parseFloat(tempEl.value);
+        const topk = parseInt(topkEl.value,10);
+
+        updateDiagram('attention');
+        const delay1=setTimeout(()=>{
+          updateDiagram('residual');
+          const delay2=setTimeout(()=>{
+            updateDiagram('logits');
+            const {chosen, candidatesTop} = computeToyNextToken(prompt, temperature, topk);
+            simResult.innerHTML = `
+              <p style="margin:0 0 6px;line-height:1.55">
+                <strong>Next token (sampled):</strong>
+                <span style="font-family:var(--mono);font-size:15px;background:rgba(122,162,255,.14);border:1px solid rgba(122,162,255,.25);padding:2px 8px;border-radius:10px;">${chosen}</span>
+              </p>
+              <p style="margin:0;color:var(--muted)">Top-k candidates shown (toy scores):</p>
+              <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">
+                ${candidatesTop.map((x,i)=>`<span class="pill" style="background:rgba(255,255,255,.03)" title="Candidate ${i+1}">${x.t}</span>`).join('')}
+              </div>
+              <p style="margin:10px 0 0;color:var(--muted)">Hint: increase temperature for more diverse outputs, decrease top-k to restrict choices.</p>
+            `;
+          }, 260);
+        }, 220);
+      }
+
+      function generateSteps(n){
+        const orig = promptEl.value;
+        let cur = orig;
+        simResult.innerHTML = `<p style="color:var(--muted);margin:10px 0 0">Generating ${n} tokens…</p>`;
+        let step=0;
+
+        const temperature = parseFloat(tempEl.value);
+        const topk = parseInt(topkEl.value,10);
+
+        function tick(){
+          step++;
+          updateDiagram(step===1?'attention':step===2?'residual':'logits');
+          const {chosen} = computeToyNextToken(cur, temperature, topk);
+          cur = (cur.trim().length?cur.trim()+' ':'') + chosen;
+          simResult.innerHTML = `
+            <p style="margin:0;color:var(--muted)">Step ${step}/${n}</p>
+            <p style="margin:6px 0 0;line-height:1.6"><strong>Continuation:</strong> <span style="font-family:var(--mono)">${escapeHtml(cur)}</span></p>
+          `;
+          if(step<n){ setTimeout(tick, 240);} else { promptEl.value = cur; updateDiagram('logits'); }
+        }
+        setTimeout(tick, 160);
+      }
+
+      function escapeHtml(s){
+        return String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+      }
+
+      function syncVals(){
+        tempVal.textContent = String(parseFloat(tempEl.value).toFixed(2));
+        topkVal.textContent = String(topkEl.value);
+      }
+      tempEl.addEventListener('input', syncVals);
+      topkEl.addEventListener('input', syncVals);
+      syncVals();
+
+      genBtn.addEventListener('click', generateOnce);
+      moreBtn.addEventListener('click', ()=>generateSteps(5));
+
+      // Ensure initial diagram state
+      updateDiagram('attention');
+
+      // Prevent accidental form submits if embedded
+      document.addEventListener('submit', (e)=>{ e.preventDefault(); });
+    })();
+  </script>
+</body>
+</html>
+eractive prompt.
+            Suppose your prompt text becomes token IDs: 
+            <span class="pill" style="border:none;background:rgba(87,227,195,.14);color:#d7fff4">[t₁, t₂, …, tₙ]</span>.
+            The simulator then chooses a next token using a simple heuristic that mimics:
+          </p>
+          <ul>
+            <li><strong>Attention emphasis</strong>: how strongly the last token “looks back”.</li>
+            <li><strong>Normalization/residual effect</strong>: prevents extreme swings by blending base distribution.</li>
+            <li><strong>Logit projection + sampling</strong>: temperature/top-k influence the final choice.</li>
+          </ul>
+          <p>
+            As you change the controls, you should notice that the same prompt can yield different next-token outcomes.
+            In real Transformers, this comes from how logits change across layers—not from a single heuristic.
+          </p>
+        </section>
+
+        <section id="glossary-inline">
+          <h2>Glossary (quick links)</h2>
+          <p>
+            Click a term to open the full glossary modal.
+            <span class="pill" role="button" tabindex="0" data-glossary="attention">attention</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="embedding">embedding</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="positional_encoding">positional encoding</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="residual">residual</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="teacher_forcing">teacher forcing</span>
+            <span class="pill" role="button" tabindex="0" data-glossary="top_p">top-p</span>
+          </p>
+        </section>
+
+        <div class="footer-note">
+          This page is designed for learning: read section-by-section, then return to the simulator when something feels abstract.
+        </div>
+      </main>
+
+      <aside class="side">
+        <div class="tabs" role="tablist" aria-label="Deep dive tabs">
+          <button class="tabbtn" type="button" role="tab" aria-selected="true" aria-controls="tab-deep" id="btn-deep">Deep dive</button>
+          <button class="tabbtn" type="button" role="tab" aria-selected="false" aria-controls="tab-concepts" id="btn-concepts">Concepts</button>
+          <button class="tabbtn" type="button" role="tab" aria-selected="false" aria-controls="tab-variants" id="btn-variants">Variants</button>
+          <button class="tabbtn" type="button" role="tab" aria-selected="false" aria-controls="tab-intuitions" id="btn-intuitions">Intuitions</button>
+        </div>
+
+        <div id="tab-deep" class="tabpanel active" role="tabpanel" aria-labelledby="btn-deep">
+          <h3 style="margin-top:0">Deep dive: attention in 60 seconds</h3>
+          <p style="margin-top:8px;color:var(--muted)">What happens inside one attention head?</p>
+          <ul>
+            <li><strong>Project</strong> inputs to queries (Q), keys (K), and values (V).</li>
+            <li><strong>Score</strong> each token pair with a similarity (often dot-product).</li>
+            <li><strong>Mask</strong> future positions in causal decoding.</li>
+            <li><strong>Normalize</strong> scores with softmax → attention weights.</li>
+            <li><strong>Mix</strong> values using weighted sum.</li>
+          </ul>
+          <div class="callout" style="margin-top:12px">
+            <strong>Try this:</strong> when decoding, attention weights near the end usually matter most.
+          </div>
+        </div>
+
+        <div id="tab-concepts" class="tabpanel" role="tabpanel" aria-labelledby="btn-concepts">
+          <h3 style="margin-top:0">Concept checklist</h3>
+          <ul>
+            <li><strong>Logits</strong> are unnormalized scores.</li>
+            <li><strong>Softmax</strong> converts logits to probabilities.</li>
+            <li><strong>Embeddings</strong> define the model’s geometry.</li>
+            <li><strong>Positional encodings</strong> inject order information.</li>
+            <li><strong>Residual connections</strong> preserve information.</li>
+            <li><strong>LayerNorm</strong> stabilizes training.</li>
+          </ul>
+        </div>
+
+        <div id="tab-variants" class="tabpanel" role="tabpanel" aria-labelledby="btn-variants">
+          <h3 style="margin-top:0">Common architectural variants</h3>
+          <details>
+            <summary>Encoder-only</summary>
+            <p style="margin:8px 0;color:var(--muted)">BERT-style masked language modeling; no autoregressive mask for generation.</p>
+          </details>
+          <details>
+            <summary>Decoder-only</summary>
+            <p style="margin:8px 0;color:var(--muted)">GPT-style causal self-attention for next-token generation.</p>
+          </details>
+          <details>
+            <summary>Encoder-decoder</summary>
+            <p style="margin:8px 0;color:var(--muted)">Transformer for seq2seq; cross-attention links target to source tokens.</p>
+          </details>
+        </div>
+
+        <div id="tab-intuitions" class="tabpanel" role="tabpanel" aria-labelledby="btn-intuitions">
+          <h3 style="margin-top:0">Intuition: why residuals help</h3>
+          <p style="margin-top:8px;color:var(--muted)">
+            Residual connections mean each layer can learn “deltas” rather than replace everything.
+            That keeps representations from drifting too far while learning new refinements.
+          </p>
+          <div class="callout" style="margin-top:12px">
+            <strong>Another way to say it:</strong> early layers can preserve the identity path; later layers add semantics.
+          </div>
+        </div>
+
+        <div class="mini" id="simulator">
+          <h3 style="margin-top:0">Mini generation simulator</h3>
+          <p style="margin:8px 0;color:var(--muted);line-height:1.45">
+            This is a toy simulator inspired by autoregressive decoding. It won’t reproduce a real model,
+            but it does demonstrate how <strong>temperature</strong> and <strong>support restriction</strong> (top-k) change the next-token outcome.
+          </p>
+
+          <div class="hr" style="margin:12px 0"></div>
+
+          <div id="usePage" class="callout" style="border-radius:12px;">
+            <strong>How to use this page</strong>
+            <ol style="margin:8px 0 0 18px;color:#dfe6ff;line-height:1.6">
+              <li>Read the left column sections in order until attention and decoding feel familiar.</li>
+              <li>In this simulator, type a short prompt (a sentence or phrase).</li>
+              <li>Adjust <strong>Temperature</strong> to control randomness and <strong>Top-k</strong> to limit candidate tokens.</li>
+              <li>Press <strong>Generate next token</strong>.</li>
+              <li>Re-run with slightly different settings to see how outputs shift.</li>
+            </ol>
+          </div>
+
+          <div style="margin-top:12px">
+            <label for="prompt">Prompt</label>
+            <textarea id="prompt" placeholder="Try: 'In a distant future, the city'">In a distant future, the city</textarea>
+            <div class="row">
+              <div class="sliderwrap">
+                <label for="temp">Temperature: <span id="tempVal" style="font-family:var(--mono)">0.9</span></label>
+                <input id="temp" type="range" min="0.1" max="1.8" step="0.05" value="0.9" />
+              </div>
+              <div class="sliderwrap">
+                <label for="topk">Top-k: <span id="topkVal" style="font-family:var(--mono)">20</span></label>
+                <input id="topk" type="range" min="1" max="50" step="1" value="20" />
+              </div>
+            </div>
+
+            <div class="row">
+              <button class="primary" id="genBtn" type="button">Generate next token</button>
+              <button class="primary" id="moreBtn" type="button" style="border-color:rgba(87,227,195,.6);background:rgba(87,227,195,.14)">Generate 5-step continuation</button>
+            </div>
+
+            <div class="result" id="simResult" aria-live="polite">
+              <p style="color:var(--muted);margin:10px 0 0">The simulator will display a sampled next token here.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Glossary modal -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <header>
+        <h3 id="modalTitle">Glossary</h3>
+        <button class="close" id="modalClose" type="button">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      // Tabs
+      const tabDefs = [
+        {btn:'btn-deep', panel:'tab-deep'},
+        {btn:'btn-concepts', panel:'tab-concepts'},
+        {btn:'btn-variants', panel:'tab-variants'},
+        {btn:'btn-intuitions', panel:'tab-intuitions'}
+      ];
+
+      function setTab(idx){
+        tabDefs.forEach((t,i)=>{
+          const btn=document.getElementById(t.btn);
+          const panel=document.getElementById(t.panel);
+          const active=i===idx;
+          if(btn){btn.setAttribute('aria-selected', active?'true':'false');}
+          if(panel){panel.classList.toggle('active', active); panel.style.display = active?'block':'none';}
+        });
+      }
+      tabDefs.forEach((t,i)=>{
+        const btn=document.getElementById(t.btn);
+        btn.addEventListener('click', ()=>setTab(i));
+      });
+
+      // Glossary modal
+      const glossary = {
+        attention: {
+          def: 'A mechanism that computes how much each token should “pay attention” to other tokens.',
+          details: 'Self-attention forms attention weights from query-key interactions, applies a mask when needed, then mixes values using those weights.'
+        },
+        embedding: {
+          def: 'A learned vector representation for tokens (and sometimes positions).',
+          details: 'Embeddings map discrete token IDs into a continuous space where similarity and linear structure become useful.'
+        },
+        positional_encoding: {
+          def: 'Information added to token representations to encode order.',
+          details: 'Because attention alone is permutation-invariant, position signals let the model distinguish different sequences.'
+        },
+        residual: {
+          def: 'A skip connection that adds a sublayer’s output back to its input.',
+          details: 'Residuals help gradients flow and allow each layer to learn refinements (deltas) rather than entirely new representations.'
+        },
+        teacher_forcing: {
+          def: 'Training technique that feeds the ground-truth previous token to predict the next token.',
+          details: 'This prevents error compounding during training and makes sequence-level learning tractable.'
+        },
+        top_p: {
+          def: 'Nucleus sampling: restricts candidates to a minimal set whose cumulative probability ≥ p.',
+          details: 'Like top-k, it controls randomness—but it adapts the candidate set size to the model’s distribution.'
+        }
+      };
+
+      const backdrop=document.getElementById('modalBackdrop');
+      const modalTitle=document.getElementById('modalTitle');
+      const modalBody=document.getElementById('modalBody');
+      const modalClose=document.getElementById('modalClose');
+
+      function openGlossary(key){
+        const item=glossary[key] || {def:'No definition found.',details:''};
+        modalTitle.textContent = key.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+        modalBody.innerHTML = `
+          <p style="margin-top:0;color:#dfe6ff;line-height:1.65"><strong>${item.def}</strong></p>
+          <p style="color:var(--muted);line-height:1.65">${item.details}</p>
+        `;
+        backdrop.classList.add('show');
+      }
+      function closeGlossary(){ backdrop.classList.remove('show'); }
+
+      document.querySelectorAll('[data-glossary]').forEach(el=>{
+        el.addEventListener('click', ()=>openGlossary(el.getAttribute('data-glossary')));
+        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openGlossary(el.getAttribute('data-glossary')); } });
+      });
+      modalClose.addEventListener('click', closeGlossary);
+      backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) closeGlossary(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeGlossary(); });
+
+      // Simulator (toy)
+      const promptEl=document.getElementById('prompt');
+      const tempEl=document.getElementById('temp');
+      const topkEl=document.getElementById('topk');
+      const tempVal=document.getElementById('tempVal');
+      const topkVal=document.getElementById('topkVal');
+      const genBtn=document.getElementById('genBtn');
+      const moreBtn=document.getElementById('moreBtn');
+      const simResult=document.getElementById('simResult');
+
+      const diagStatus=document.getElementById('diagStatus');
+      const hlAttention=document.getElementById('hlAttention');
+      const hlResid=document.getElementById('hlResid');
+      const hlLogits=document.getElementById('hlLogits');
+
+      function mulberry32(a){
+        return function(){
+          var t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+      }
+
+      function tokenizeToy(s){
+        // Very rough: split on spaces, keep punctuation-attached as part of token.
+        const cleaned = s.trim().replace(/\s+/g,' ');
+        if(!cleaned) return [];
+        return cleaned.split(' ');
+      }
+
+      function buildCandidateTokens(tokens){
+        const last = tokens[tokens.length-1] || '';
+        const vocab = [
+          'the','a','an','and','but','so','because','as','while','when','then','there','here',
+          'future','past','city','world','system','model','attention','learning','tokens','layers','heads','time',
+          'will','can','may','should','might','must','be','have','has','are','is',
+          'in','on','to','from','with','without','within','over','under','near','far',
+          'next','first','finally','now','soon','always','never','again','together'
+        ];
+
+        // Heuristic: if last token contains punctuation/word roots, add some related candidates.
+        const low = last.toLowerCase().replace(/[^a-z]/g,'');
+        const extra=[];
+        if(low.includes('city')) extra.push('streets','lights','skyline','machines');
+        if(low.includes('future')) extra.push('tomorrow','years','centuries','tomorrow');
+        if(low.includes('model')) extra.push('weights','training','loss','gradient');
+        if(low.includes('attention')) extra.push('queries','keys','values','softmax');
+
+        return Array.from(new Set([...vocab, ...extra]));
+      }
+
+      function softmax(arr){
+        const m=Math.max(...arr);
+        const ex=arr.map(x=>Math.exp(x-m));
+        const sum=ex.reduce((a,b)=>a+b,0);
+        return ex.map(e=>e/sum);
+      }
+
+      function sampleFromDistribution(items, probs, rnd){
+        let r=rnd();
+        let acc=0;
+        for(let i=0;i<items.length;i++){
+          acc += probs[i];
+          if(r<=acc) return items[i];
+        }
+        return items[items.length-1];
+      }
+
+      function computeToyNextToken(prompt, temperature, topk){
+        const tokens=tokenizeToy(prompt);
+        const candidates=buildCandidateTokens(tokens);
+
+        // Build base logit scores from simple features.
+        const last = (tokens[tokens.length-1]||'').toLowerCase();
+        const seed = tokens.join('|').length + Math.floor(temperature*1000) + topk;
+        const rnd = mulberry32(seed);
+
+        // Score scheme:
+        // - encourage sentence-like continuations
+        // - encourage overlap if last ends with common patterns
+        const baseLogits = candidates.map(tok=>{
+          let s=0;
+          if(['the','a','an'].includes(tok)) s += last.endsWith('.')? 0.6 : 0.25;
+          if(['and','but','so','because','as','while'].includes(tok)) s += 0.35;
+          if(last.length>0){
+            const lowTok=tok.toLowerCase();
+            const lowLast=last.replace(/[^a-z]/g,'');
+            if(lowTok===lowLast) s += 1.2;
+            if(lowLast.includes(lowTok.slice(0,3)) && lowTok.length>3) s += 0.5;
+          }
+          // temperature will reshape; add tiny deterministic noise
+          s += (rnd()-0.5)*0.35;
+          return s;
+        });
+
+        // Apply temperature
+        const scaled = baseLogits.map(x=>x/Math.max(0.0001, temperature));
+        let probs = softmax(scaled);
+
+        // Top-k support restriction
+        const pairs = candidates.map((t,i)=>({t, p:probs[i]}));
+        pairs.sort((a,b)=>b.p-a.p);
+        const kk=Math.max(1, Math.min(topk, pairs.length));
+        const topPairs=pairs.slice(0,kk);
+        const topItems=topPairs.map(x=>x.t);
+        const topProbs=topPairs.map(x=>x.p);
+        const sum=topProbs.reduce((a,b)=>a+b,0) || 1;
+        const normProbs=topProbs.map(p=>p/sum);
+
+        const chosen = sampleFromDistribution(topItems, normProbs, rnd);
+        return {chosen, candidatesTop: topPairs.slice(0, Math.min(8, kk))};
+      }
+
+      function updateDiagram(stage){
+        // stage: 'attention'|'residual'|'logits'
+        hlAttention.setAttribute('fill', stage==='attention' ? 'rgba(122,162,255,.18)' : 'rgba(122,162,255,.10)');
+        hlAttention.setAttribute('stroke', stage==='attention' ? 'rgba(122,162,255,.7)' : 'rgba(122,162,255,.35)');
+        hlResid.setAttribute('fill', stage==='residual' ? 'rgba(87,227,195,.18)' : 'rgba(87,227,195,.10)');
+        hlResid.setAttribute('stroke', stage==='residual' ? 'rgba(87,227,195,.7)' : 'rgba(87,227,195,.35)');
+        hlLogits.setAttribute('stroke', stage==='logits' ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.18)');
+        diagStatus.textContent = stage==='attention' ? 'Emphasizing attention mixing…' : stage==='residual' ? 'Applying residual + normalization…' : 'Projecting to logits and sampling…';
+      }
+
+      function generateOnce(){
+        const prompt = promptEl.value;
+        const temperature = parseFloat(tempEl.value);
+        const topk = parseInt(topkEl.value,10);
+
+        updateDiagram('attention');
+        const delay1=setTimeout(()=>{
+          updateDiagram('residual');
+          const delay2=setTimeout(()=>{
+            updateDiagram('logits');
+            const {chosen, candidatesTop} = computeToyNextToken(prompt, temperature, topk);
+            simResult.innerHTML = `
+              <p style="margin:0 0 6px;line-height:1.55">
+                <strong>Next token (sampled):</strong>
+                <span style="font-family:var(--mono);font-size:15px;background:rgba(122,162,255,.14);border:1px solid rgba(122,162,255,.25);padding:2px 8px;border-radius:10px;">${chosen}</span>
+              </p>
+              <p style="margin:0;color:var(--muted)">Top-k candidates shown (toy scores):</p>
+              <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">
+                ${candidatesTop.map((x,i)=>`<span class="pill" style="background:rgba(255,255,255,.03)" title="Candidate ${i+1}">${x.t}</span>`).join('')}
+              </div>
+              <p style="margin:10px 0 0;color:var(--muted)">Hint: increase temperature for more diverse outputs, decrease top-k to restrict choices.</p>
+            `;
+          }, 260);
+        }, 220);
+      }
+
+      function generateSteps(n){
+        const orig = promptEl.value;
+        let cur = orig;
+        simResult.innerHTML = `<p style="color:var(--muted);margin:10px 0 0">Generating ${n} tokens…</p>`;
+        let step=0;
+
+        const temperature = parseFloat(tempEl.value);
+        const topk = parseInt(topkEl.value,10);
+
+        function tick(){
+          step++;
+          updateDiagram(step===1?'attention':step===2?'residual':'logits');
+          const {chosen} = computeToyNextToken(cur, temperature, topk);
+          cur = (cur.trim().length?cur.trim()+' ':'') + chosen;
+          simResult.innerHTML = `
+            <p style="margin:0;color:var(--muted)">Step ${step}/${n}</p>
+            <p style="margin:6px 0 0;line-height:1.6"><strong>Continuation:</strong> <span style="font-family:var(--mono)">${escapeHtml(cur)}</span></p>
+          `;
+          if(step<n){ setTimeout(tick, 240);} else { promptEl.value = cur; updateDiagram('logits'); }
+        }
+        setTimeout(tick, 160);
+      }
+
+      function escapeHtml(s){
+        return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+      }
+
+      function syncVals(){
+        tempVal.textContent = String(parseFloat(tempEl.value).toFixed(2));
+        topkVal.textContent = String(topkEl.value);
+      }
+      tempEl.addEventListener('input', syncVals);
+      topkEl.addEventListener('input', syncVals);
+      syncVals();
+
+      genBtn.addEventListener('click', generateOnce);
+      moreBtn.addEventListener('click', ()=>generateSteps(5));
+
+      // Ensure initial diagram state
+      updateDiagram('attention');
+
+      // Prevent accidental form submits if embedded
+      document.addEventListener('submit', (e)=>{ e.preventDefault(); });
+    })();
+  </script>
+</body>
+</html>
