@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple FPS (Three.js)</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+    #hud {
+      position: absolute; left: 12px; top: 12px; color: #fff;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-size: 13px; line-height: 1.35;
+      user-select: none; pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+    #center {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.7);
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.5) inset;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    #hint {
+      position: absolute; left: 50%; top: 65%; transform: translate(-50%, -50%);
+      color: rgba(255,255,255,0.85);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-size: 13px;
+      user-select: none; pointer-events: none;
+      text-align: center;
+      max-width: 520px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.35);
+      border-radius: 10px;
+    }
+    a { color: #7dd3fc; }
+    #crosshairDot {
+      width: 4px; height: 4px; background: rgba(255,255,255,0.85); border-radius: 50%;
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div><strong>Simple FPS</strong></div>
+    <div>W/A/S/D: move</div>
+    <div>Mouse: look</div>
+    <div>Left click: shoot</div>
+    <div>R: reset</div>
+    <div id="status" style="margin-top:6px; opacity:0.95;">Click inside the page to lock pointer.</div>
+    <div id="ammo">Ammo: 30</div>
+    <div id="score">Targets hit: 0</div>
+  </div>
+  <div id="center"><div id="crosshairDot"></div></div>
+  <div id="hint">
+    Click to play. Shoot the red targets. You can reset with <strong>R</strong>.
+    <div style="margin-top:6px; opacity:0.9">Tip: run this file with a local web server (for modules) like:</div>
+    <div style="margin-top:4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 12px;">
+      python -m http.server
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+    // ---------- Renderer / Scene / Camera ----------
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070a);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.05, 300);
+
+    // ---------- Lighting ----------
+    const hemi = new THREE.HemisphereLight(0xbdd7ff, 0x0a1220, 0.9);
+    scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 1.1);
+    dir.position.set(10, 15, 8);
+    dir.castShadow = true;
+    dir.shadow.mapSize.set(1024, 1024);
+    dir.shadow.camera.near = 0.5;
+    dir.shadow.camera.far = 60;
+    dir.shadow.camera.left = -20;
+    dir.shadow.camera.right = 20;
+    dir.shadow.camera.top = 20;
+    dir.shadow.camera.bottom = -20;
+    scene.add(dir);
+
+    // ---------- Ground ----------
+    const groundGeo = new THREE.PlaneGeometry(200, 200, 1, 1);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x0b1220, roughness: 0.95, metalness: 0.0 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ---------- Environment: walls (simple bounds) ----------
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.95 });
+    const wallGeo = new THREE.BoxGeometry(200, 10, 1);
+    function addWall(x, z, rot) {
+      const m = new THREE.Mesh(wallGeo, wallMat);
+      m.position.set(x, 5, z);
+      if (rot) m.rotation.y = rot;
+      m.receiveShadow = true;
+      m.castShadow = true;
+      scene.add(m);
+    }
+    addWall(0, -60);
+    addWall(0, 60);
+    const wallGeo2 = new THREE.BoxGeometry(1, 10, 200);
+    function addWall2(x, z) {
+      const m = new THREE.Mesh(wallGeo2, wallMat);
+      m.position.set(x, 5, z);
+      m.receiveShadow = true;
+      m.castShadow = true;
+      scene.add(m);
+    }
+    addWall2(-60, 0);
+    addWall2(60, 0);
+
+    // ---------- Targets ----------
+    const targets = [];
+    const targetGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+    const aliveMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5, metalness: 0.0 });
+    const deadMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 1.0, metalness: 0.0 });
+
+    const gridSize = 12;
+    for (let i = 0; i < 24; i++) {
+      const tx = (Math.random() * 2 - 1) * 45;
+      const tz = (Math.random() * 2 - 1) * 45;
+      const ty = 0.6;
+      // keep some space around spawn
+      if (Math.hypot(tx, tz) < 10) continue;
+
+      const m = new THREE.Mesh(targetGeo, aliveMat.clone());
+      m.position.set(tx, ty, tz);
+      m.castShadow = true;
+      m.receiveShadow = true;
+
+      // small motion baseline
+      m.userData = {
+        alive: true,
+        baseY: ty,
+        t: Math.random() * 10,
+        wobble: 0.25 + Math.random() * 0.4,
+        rotSpeed: (Math.random() * 2 - 1) * 0.8
+      };
+      // also tag for hit test
+      m.userData.isTarget = true;
+
+      scene.add(m);
+      targets.push(m);
+    }
+
+    // ---------- Player controls (pointer-lock FPS) ----------
+    const player = {
+      position: new THREE.Vector3(0, 1.6, 0),
+      velocity: new THREE.Vector3(),
+      yaw: 0,
+      pitch: 0,
+      speed: 10,
+      mouseSensitivity: 0.0022,
+      onGround: true
+    };
+
+    camera.position.copy(player.position);
+
+    let isPointerLocked = false;
+    const statusEl = document.getElementById('status');
+    const hintEl = document.getElementById('hint');
+
+    const keys = new Set();
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyR') resetGame();
+      keys.add(e.code);
+    });
+    window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+    // Hide hint on interaction
+    function lock() {
+      renderer.domElement.requestPointerLock?.();
+    }
+    window.addEventListener('click', () => {
+      if (!isPointerLocked) lock();
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+      isPointerLocked = document.pointerLockElement === renderer.domElement;
+      if (isPointerLocked) {
+        statusEl.textContent = 'Pointer locked. Shoot the red targets!';
+        hintEl.style.display = 'none';
+      } else {
+        statusEl.textContent = 'Click inside the page to lock pointer.';
+        hintEl.style.display = 'block';
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPointerLocked) return;
+      player.yaw -= e.movementX * player.mouseSensitivity;
+      player.pitch -= e.movementY * player.mouseSensitivity;
+      player.pitch = Math.max(-Math.PI / 2 + 0.02, Math.min(Math.PI / 2 - 0.02, player.pitch));
+    });
+
+    function updateCameraOrientation() {
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = player.yaw;
+      camera.rotation.x = player.pitch;
+    }
+
+    // ---------- Shooting ----------
+    const ammoEl = document.getElementById('ammo');
+    const scoreEl = document.getElementById('score');
+
+    let ammo = 30;
+    let score = 0;
+
+    const muzzleFlashes = [];
+    function spawnMuzzleFlash() {
+      const g = new THREE.SphereGeometry(0.08, 10, 10);
+      const m = new THREE.MeshBasicMaterial({ color: 0xfff3b0 });
+      const s = new THREE.Mesh(g, m);
+      const pos = new THREE.Vector3();
+      pos.copy(camera.getWorldPosition(new THREE.Vector3()));
+      s.position.copy(pos);
+      s.position.add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.5));
+      scene.add(s);
+      muzzleFlashes.push({ mesh: s, life: 0.08 });
+    }
+
+    function resetGame() {
+      // reset player
+      player.position.set(0, 1.6, 0);
+      player.velocity.set(0,0,0);
+      player.yaw = 0;
+      player.pitch = 0;
+      camera.position.copy(player.position);
+      updateCameraOrientation();
+
+      // reset targets
+      for (const t of targets) {
+        t.userData.alive = true;
+        t.material = aliveMat;
+        // randomize appearance slightly
+        t.material = aliveMat.clone();
+        t.position.y = t.userData.baseY;
+        t.rotation.set(0, 0, 0);
+      }
+
+      ammo = 30;
+      score = 0;
+      ammoEl.textContent = `Ammo: ${ammo}`;
+      scoreEl.textContent = `Targets hit: ${score}`;
+    }
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      if (!isPointerLocked) return;
+      if (ammo <= 0) return;
+      ammo--;
+      ammoEl.textContent = `Ammo: ${ammo}`;
+      shoot();
+    });
+
+    const raycaster = new THREE.Raycaster();
+    function shoot() {
+      spawnMuzzleFlash();
+
+      const origin = camera.getWorldPosition(new THREE.Vector3());
+      const dir = camera.getWorldDirection(new THREE.Vector3()).normalize();
+
+      raycaster.set(origin, dir);
+      // test against alive targets only
+      const aliveTargets = targets.filter(t => t.userData.alive);
+      const hits = raycaster.intersectObjects(aliveTargets, false);
+      if (hits.length) {
+        const hit = hits[0].object;
+        hit.userData.alive = false;
+        hit.material = deadMat;
+        hit.userData.deadTime = performance.now();
+        score++;
+        scoreEl.textContent = `Targets hit: ${score}`;
+
+        // tiny "knock" effect
+        hit.rotation.x += (Math.random() * 2 - 1) * 0.7;
+        hit.rotation.y += (Math.random() * 2 - 1) * 0.7;
+        hit.position.y -= 0.05;
+      }
+    }
+
+    // ---------- Movement + bounds ----------
+    const clock = new THREE.Clock();
+    const tmp = new THREE.Vector3();
+
+    function clampToBounds(pos) {
+      // keep inside walls
+      const r = 2.0;
+      pos.x = Math.max(-60 + r, Math.min(60 - r, pos.x));
+      pos.z = Math.max(-60 + r, Math.min(60 - r, pos.z));
+      return pos;
+    }
+
+    function handleMovement(dt) {
+      // Direction vectors based on yaw
+      const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0,1,0), player.yaw);
+      const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0,1,0), player.yaw);
+
+      let move = new THREE.Vector3();
+      if (keys.has('KeyW')) move.add(forward);
+      if (keys.has('KeyS')) move.sub(forward);
+      if (keys.has('KeyD')) move.add(right);
+      if (keys.has('KeyA')) move.sub(right);
+
+      if (move.lengthSq() > 0) move.normalize();
+
+      // Simple ground movement (no gravity, keep y fixed)
+      player.position.addScaledVector(move, player.speed * dt);
+      clampToBounds(player.position);
+      player.position.y = 1.6;
+
+      camera.position.copy(player.position);
+      updateCameraOrientation();
+    }
+
+    // ---------- Resize ----------
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ---------- Animate ----------
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 1/30);
+
+      handleMovement(dt);
+
+      // animate targets
+      const tNow = performance.now() * 0.001;
+      for (const m of targets) {
+        if (m.userData.alive) {
+          m.userData.t += dt;
+          m.position.y = m.userData.baseY + Math.sin(m.userData.t * 2.2) * m.userData.wobble * 0.25;
+          m.rotation.y += dt * m.userData.rotSpeed;
+        } else {
+          // fade-ish drop
+          const deadAge = (tNow * 1000 - (m.userData.deadTime || 0));
+          if (deadAge > 0) {
+            m.position.y = Math.max(0.2, m.position.y - dt * 2.5);
+            m.rotation.x += dt * 1.5;
+          }
+        }
+      }
+
+      // muzzle flash life
+      for (let i = muzzleFlashes.length - 1; i >= 0; i--) {
+        const f = muzzleFlashes[i];
+        f.life -= dt;
+        f.mesh.material.opacity = Math.max(0, f.life / 0.08);
+        f.mesh.scale.setScalar(1 + (0.08 - f.life) * 8);
+        if (f.life <= 0) {
+          scene.remove(f.mesh);
+          muzzleFlashes.splice(i, 1);
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    resetGame();
+    updateCameraOrientation();
+    animate();
+  </script>
+</body>
+</html>
