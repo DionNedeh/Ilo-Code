@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sand Physics Sandbox (CPU Grid)</title>
+  <style>
+    :root { --bg:#0b1020; --panel:#111a33; --text:#d7e2ff; --muted:#91a3d9; --accent:#5aa7ff; }
+    html,body{height:100%;}
+    body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;}
+    #wrap{display:grid; grid-template-columns: 320px 1fr; gap:14px; padding:14px; height:100%; box-sizing:border-box;}
+    #panel{background:rgba(17,26,51,.9); border:1px solid rgba(90,167,255,.25); border-radius:12px; padding:14px; overflow:auto;}
+    #panel h1{font-size:14px; margin:0 0 10px 0; letter-spacing:.2px; font-weight:650; color:var(--muted); text-transform:uppercase;}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:10px 0;}
+    .row label{font-size:13px; color:var(--text);}
+    input[type=range]{width:180px;}
+    select, button, input[type=checkbox]{font-size:13px;}
+    select{width:100%; background:#0e1631; color:var(--text); border:1px solid rgba(90,167,255,.35); border-radius:10px; padding:8px;}
+    button{background:#0e1631; color:var(--text); border:1px solid rgba(90,167,255,.35); border-radius:10px; padding:9px 10px; cursor:pointer;}
+    button:hover{border-color:rgba(90,167,255,.75)}
+    .btns{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    #help{font-size:12px; color:var(--muted); line-height:1.5; margin-top:14px;}
+    #canvasWrap{position:relative; background:rgba(17,26,51,.3); border:1px solid rgba(90,167,255,.18); border-radius:12px; overflow:hidden;}
+    canvas{display:block; width:100%; height:100%; image-rendering:pixelated;}
+    #hud{position:absolute; left:10px; top:10px; font-size:12px; padding:6px 8px; border-radius:10px; background:rgba(0,0,0,.25); border:1px solid rgba(90,167,255,.2); color:var(--muted); pointer-events:none;}
+    .key{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; border:1px solid rgba(90,167,255,.25); padding:1px 6px; border-radius:7px; background:rgba(0,0,0,.18); color:var(--text)}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="panel">
+      <h1>Sand Physics Sandbox</h1>
+      <div class="row">
+        <label for="material">Material</label>
+        <select id="material"></select>
+      </div>
+
+      <div class="row">
+        <label for="brush">Brush size</label>
+        <input id="brush" type="range" min="1" max="14" value="5" />
+      </div>
+
+      <div class="row">
+        <label for="speed">Simulation speed</label>
+        <input id="speed" type="range" min="1" max="8" value="4" />
+      </div>
+
+      <div class="row">
+        <label for="gravity">Gravity</label>
+        <input id="gravity" type="range" min="1" max="40" value="18" />
+      </div>
+
+      <div class="row">
+        <label for="wind">Wind</label>
+        <input id="wind" type="range" min="-20" max="20" value="0" />
+      </div>
+
+      <div class="row">
+        <label for="wall">Walls</label>
+        <input id="wall" type="checkbox" checked />
+      </div>
+
+      <div class="btns" style="margin-top:12px;">
+        <button id="btnClear">Clear</button>
+        <button id="btnRandom">Random fill</button>
+        <button id="btnResetView">Reset view</button>
+        <button id="btnStamp">Stamp funnel</button>
+      </div>
+
+      <div id="help">
+        <div><span class="key">LMB</span> paint • <span class="key">RMB</span> erase</div>
+        <div><span class="key">1</span> Sand • <span class="key">2</span> Water • <span class="key">3</span> Stone</div>
+        <div><span class="key">Space</span> pause/resume</div>
+        <div><span class="key">C</span> clear • <span class="key">F</span> funnel stamp</div>
+        <div>Drag to pan, <span class="key">Z</span>/<span class="key">X</span> zoom.</div>
+      </div>
+    </div>
+
+    <div id="canvasWrap">
+      <canvas id="c"></canvas>
+      <div id="hud">FPS: -- | Cells: --</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const hud = document.getElementById('hud');
+
+  // Materials: 0 empty, 1 sand, 2 water, 3 stone
+  const MATERIALS = {
+    1: { name: 'Sand', color: [226, 192, 92], density: 3, fallRate: 1, slip: 0.65, buoyancy: false },
+    2: { name: 'Water', color: [80, 150, 255], density: 2, fallRate: 0.6, slip: 0.9, buoyancy: true },
+    3: { name: 'Stone', color: [170, 175, 185], density: 5, fallRate: 1, slip: 0.2, buoyancy: false }
+  };
+
+  const sel = document.getElementById('material');
+  for (const id of Object.keys(MATERIALS)) {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = MATERIALS[id].name;
+    sel.appendChild(opt);
+  }
+  sel.value = '1';
+
+  const brush = document.getElementById('brush');
+  const speed = document.getElementById('speed');
+  const gravity = document.getElementById('gravity');
+  const wind = document.getElementById('wind');
+  const wall = document.getElementById('wall');
+
+  const btnClear = document.getElementById('btnClear');
+  const btnRandom = document.getElementById('btnRandom');
+  const btnResetView = document.getElementById('btnResetView');
+  const btnStamp = document.getElementById('btnStamp');
+
+  const state = {
+    paused: false,
+    currentMat: 1,
+    LMB: false,
+    RMB: false,
+    lastT: performance.now(),
+    fps: 0,
+    stepsAccum: 0,
+    stepBudget: 1,
+  };
+
+  sel.addEventListener('change', () => state.currentMat = Number(sel.value));
+
+  // World: grid with typed arrays.
+  // We'll choose a grid size based on container.
+  let W=240, H=160; // internal resolution
+  let grid, nextGrid;
+  let cellSize = 2; // not used directly
+
+  // view transform (pan/zoom)
+  let view = { zoom: 3, x: 0, y: 0, dragging: false, lastMx: 0, lastMy: 0 };
+
+  function allocateGrid() {
+    grid = new Uint8Array(W * H);
+    nextGrid = new Uint8Array(W * H);
+    // start empty
+  }
+
+  function idx(x,y){ return y*W+x; }
+  function inb(x,y){ return x>=0 && x<W && y>=0 && y<H; }
+
+  function clearGrid(){ grid.fill(0); }
+
+  function randomFill(){
+    // light random distribution
+    for (let y=0; y<H; y++){
+      for (let x=0; x<W; x++){
+        const r = Math.random();
+        let v=0;
+        if (r < 0.10) v=1;
+        else if (r < 0.14) v=2;
+        else if (r < 0.16) v=3;
+        grid[idx(x,y)] = v;
+      }
+    }
+  }
+
+  function stampFunnel(){
+    // draw a funnel near top-middle
+    const cx = Math.floor(W/2);
+    const top = Math.floor(H*0.10);
+    const height = Math.floor(H*0.55);
+    for (let y=0; y<height; y++){
+      const yy = top + y;
+      const t = y/height;
+      const halfWidth = Math.floor(2 + (1.2 + 8*t)*t* (W*0.015 + 6));
+      for (let x=cx-halfWidth; x<=cx+halfWidth; x++){
+        if (!inb(x,yy)) continue;
+        const inside = Math.abs(x-cx) < halfWidth - 1;
+        if (inside) grid[idx(x,yy)] = 1;
+        // walls
+        else if (Math.abs(x-cx) >= halfWidth-1 && Math.abs(x-cx) <= halfWidth) grid[idx(x,yy)] = 3;
+      }
+    }
+  }
+
+  // physics step
+  function stepOnce(){
+    // copy to next
+    nextGrid.set(grid);
+
+    const g = Number(gravity.value);
+    const wv = Number(wind.value);
+    const useWalls = wall.checked;
+
+    // Iterate bottom-up for stability
+    // We'll shuffle order slightly via alternating scan direction.
+    for (let y=H-1; y>=0; y--){
+      const dir = ((y & 1) === 0) ? 1 : -1;
+      const xStart = dir === 1 ? 0 : W-1;
+      const xEnd = dir === 1 ? W-1 : 0;
+      for (let xi=0; xi<W; xi++){
+        const x = xStart + dir*xi;
+        const i = idx(x,y);
+        const mat = grid[i];
+        if (mat === 0) continue;
+
+        const info = MATERIALS[mat];
+
+        // If we already moved this cell in nextGrid, it still might show old value.
+        // We'll use nextGrid as source of occupancy checks only.
+
+        // Determine candidate moves.
+        // Gravity tries to move down by 1; sometimes move further based on g.
+        const fallProb = Math.min(1, info.fallRate * (g/18));
+        const tryDown = (Math.random() < fallProb);
+
+        const trySides = (Math.random() < 0.7);
+        const slideProb = info.slip;
+
+        // helpers
+        const setCell = (nx,ny,v) => {
+          if (!inb(nx,ny)) return false;
+          if (useWalls && (nx<0 || nx>=W || ny<0 || ny>=H)) return false;
+          // occupancy: nextGrid should not already have something except maybe overwrite.
+          const ni = idx(nx,ny);
+          if (nextGrid[ni] === 0 || (mat === 2 && nextGrid[ni] === 1 && MATERIALS[nextGrid[ni]].density > info.density)) {
+            // For water/sand interactions: let water displace sand by swapping rule.
+            if (nextGrid[ni] !== 0) {
+              // swap
+              const other = nextGrid[ni];
+              nextGrid[ni] = mat;
+              nextGrid[i] = other;
+            } else {
+              nextGrid[ni] = v;
+              nextGrid[i] = 0;
+            }
+            return true;
+          }
+          return false;
+        };
+
+        // Attempt vertical moves.
+        if (tryDown){
+          const ny = y+1;
+          if (!useWalls || ny < H){
+            const ni = inb(x,ny) ? idx(x,ny) : -1;
+            if (inb(x,ny)){
+              const below = nextGrid[ni];
+              if (below === 0){
+                // fall
+                nextGrid[ni] = mat;
+                nextGrid[i] = 0;
+                continue;
+              }
+              // buoyancy swap
+              if (mat === 2 && below === 1){
+                // water displaces sand if sand is below and water above
+                nextGrid[ni] = mat;
+                nextGrid[i] = 1;
+                continue;
+              }
+              // stone stays unless empty below
+            }
+          }
+        }
+
+        // Attempt diagonal / sideways (sand-like)
+        if (trySides && nextGrid[i] === mat){
+          // wind influences horizontal preference
+          let bias = Math.sign(wv);
+          let mag = Math.min(1, Math.abs(wv)/20);
+
+          const choices = [
+            {dx: bias===0?-1:-1, dy: 1, p: 0.5 + (bias<0?0.2*mag:0)},
+            {dx: bias===0?1:1, dy: 1, p: 0.5 + (bias>0?0.2*mag:0)}
+          ];
+
+          // For better behavior, just try left/right with probabilities
+          const directions = (Math.random() < 0.5 ? -1 : 1) * (Math.random() < mag ? bias : 1);
+
+          // For water: more lateral spread
+          const lateral = (mat === 2) ? 2 : 1;
+          const candidates = [];
+          for (let step=0; step<lateral+1; step++){
+            candidates.push({dx:-1*step, dy:0});
+            candidates.push({dx: 1*step, dy:0});
+            candidates.push({dx:-1*step, dy:1});
+            candidates.push({dx: 1*step, dy:1});
+          }
+          // randomize candidates
+          for (let k=candidates.length-1;k>0;k--){
+            const j = (Math.random()*(k+1))|0;
+            [candidates[k], candidates[j]] = [candidates[j], candidates[k]];
+          }
+
+          for (const c of candidates){
+            if (Math.random() > slideProb) continue;
+            const nx = x + c.dx;
+            const ny = y + c.dy;
+            if (!inb(nx,ny)) continue;
+            if (useWalls && (nx<0 || nx>=W || ny<0 || ny>=H)) continue;
+
+            const ni = idx(nx,ny);
+            const dest = nextGrid[ni];
+            if (dest === 0){
+              nextGrid[ni] = mat;
+              nextGrid[i] = 0;
+              break;
+            }
+            if (mat === 2 && dest === 1){
+              // water can swap with sand
+              nextGrid[ni] = 2;
+              nextGrid[i] = 1;
+              break;
+            }
+          }
+        }
+
+        // Water spreading when resting
+        if (mat === 2 && nextGrid[i] === 2){
+          const spreadProb = 0.55;
+          if (Math.random() < spreadProb){
+            const tries = 2;
+            for (let t=0; t<tries; t++){
+              const dx = (Math.random() < 0.5 ? -1 : 1);
+              const nx = x+dx;
+              const ny = y;
+              if (!inb(nx,ny)) continue;
+              const ni = idx(nx,ny);
+              if (nextGrid[ni] === 0){
+                nextGrid[ni] = 2;
+                nextGrid[i] = 0;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // swap grids
+    let tmp = grid; grid = nextGrid; nextGrid = tmp;
+  }
+
+  // Rendering
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    // choose internal grid resolution proportional to canvas, but cap.
+    const targetCellsW = Math.min(360, Math.max(180, Math.floor(rect.width / 3)));
+    const targetCellsH = Math.min(260, Math.max(120, Math.floor(rect.height / 3)));
+
+    const newW = targetCellsW;
+    const newH = targetCellsH;
+
+    if (newW !== W || newH !== H){
+      W = newW; H = newH;
+      allocateGrid();
+      view.x = 0; view.y = 0; view.zoom = 3;
+      // keep it empty (or could randomize)
+    }
+
+    // canvas actual pixel size
+    canvas.width = Math.floor(rect.width * devicePixelRatio);
+    canvas.height = Math.floor(rect.height * devicePixelRatio);
+  }
+
+  function draw(){
+    const rect = canvas.getBoundingClientRect();
+    const cw = canvas.width, ch = canvas.height;
+
+    ctx.fillStyle = '#0b1020';
+    ctx.fillRect(0,0,cw,ch);
+
+    // Each cell drawn as square with size based on zoom.
+    const base = Math.min(cw / W, ch / H);
+    const cellPx = Math.max(1, base * (view.zoom/3));
+
+    const originX = (cw - W*cellPx)/2 + view.x;
+    const originY = (ch - H*cellPx)/2 + view.y;
+
+    ctx.imageSmoothingEnabled = false;
+
+    // Draw only visible cells (simple bounds)
+    const startX = Math.max(0, Math.floor((-originX)/cellPx) - 1);
+    const startY = Math.max(0, Math.floor((-originY)/cellPx) - 1);
+    const endX = Math.min(W, Math.ceil((cw - originX)/cellPx) + 1);
+    const endY = Math.min(H, Math.ceil((ch - originY)/cellPx) + 1);
+
+    for (let y=startY; y<endY; y++){
+      for (let x=startX; x<endX; x++){
+        const v = grid[idx(x,y)];
+        if (v===0) continue;
+        const [r,g,b] = MATERIALS[v].color;
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        const px = originX + x*cellPx;
+        const py = originY + y*cellPx;
+        ctx.fillRect(px, py, cellPx+0.5, cellPx+0.5);
+      }
+    }
+  }
+
+  // Input mapping
+  function canvasToCell(clientX, clientY){
+    const rect = canvas.getBoundingClientRect();
+    const cw = canvas.width, ch = canvas.height;
+
+    const base = Math.min(cw / W, ch / H);
+    const cellPx = Math.max(1, base * (view.zoom/3));
+    const originX = (cw - W*cellPx)/2 + view.x * devicePixelRatio;
+    const originY = (ch - H*cellPx)/2 + view.y * devicePixelRatio;
+
+    const x = Math.floor(( (clientX - rect.left) * devicePixelRatio - originX) / cellPx);
+    const y = Math.floor(( (clientY - rect.top) * devicePixelRatio - originY) / cellPx);
+    return {x,y};
+  }
+
+  function paintAt(x,y,mat,rad){
+    for (let dy=-rad; dy<=rad; dy++){
+      for (let dx=-rad; dx<=rad; dx++){
+        const nx=x+dx, ny=y+dy;
+        if (!inb(nx,ny)) continue;
+        if (dx*dx + dy*dy > rad*rad) continue;
+        grid[idx(nx,ny)] = mat;
+      }
+    }
+  }
+
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  canvas.addEventListener('pointerdown', (e)=>{
+    canvas.setPointerCapture(e.pointerId);
+    if (e.button === 0) state.LMB=true;
+    if (e.button === 2) state.RMB=true;
+    const {x,y} = canvasToCell(e.clientX, e.clientY);
+    const r = Number(brush.value);
+    const mat = state.currentMat;
+    if (state.LMB) paintAt(x,y,mat,r);
+    if (state.RMB) paintAt(x,y,0,r);
+    if (e.button === 1 || (e.button===0 && e.shiftKey)){
+      view.dragging=true;
+      view.lastMx = e.clientX;
+      view.lastMy = e.clientY;
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e)=>{
+    if (view.dragging){
+      const dx = e.clientX - view.lastMx;
+      const dy = e.clientY - view.lastMy;
+      view.lastMx = e.clientX;
+      view.lastMy = e.clientY;
+      view.x += dx;
+      view.y += dy;
+      return;
+    }
+    if (!state.LMB && !state.RMB) return;
+    const {x,y} = canvasToCell(e.clientX, e.clientY);
+    const r = Number(brush.value);
+    if (state.LMB) paintAt(x,y,state.currentMat,r);
+    if (state.RMB) paintAt(x,y,0,r);
+  });
+
+  canvas.addEventListener('pointerup', (e)=>{
+    if (e.button === 0) state.LMB=false;
+    if (e.button === 2) state.RMB=false;
+    if (view.dragging){ view.dragging=false; }
+  });
+
+  canvas.addEventListener('wheel', (e)=>{
+    e.preventDefault();
+    const delta = Math.sign(e.deltaY);
+    if (delta>0) view.zoom = Math.max(1, view.zoom - 0.2);
+    else view.zoom = Math.min(10, view.zoom + 0.2);
+  }, {passive:false});
+
+  btnClear.addEventListener('click', clearGrid);
+  btnRandom.addEventListener('click', randomFill);
+  btnResetView.addEventListener('click', ()=>{ view.zoom=3; view.x=0; view.y=0; });
+  btnStamp.addEventListener('click', stampFunnel);
+
+  window.addEventListener('keydown', (e)=>{
+    if (e.key === ' ') { e.preventDefault(); state.paused = !state.paused; }
+    if (e.key.toLowerCase() === 'c') clearGrid();
+    if (e.key.toLowerCase() === 'f') stampFunnel();
+    if (e.key === '1') state.currentMat = 1, sel.value='1';
+    if (e.key === '2') state.currentMat = 2, sel.value='2';
+    if (e.key === '3') state.currentMat = 3, sel.value='3';
+    if (e.key.toLowerCase() === 'z') view.zoom = Math.min(10, view.zoom + 0.3);
+    if (e.key.toLowerCase() === 'x') view.zoom = Math.max(1, view.zoom - 0.3);
+  });
+
+  function loop(){
+    const t = performance.now();
+    const dt = t - state.lastT;
+    state.lastT = t;
+    const instFps = 1000 / Math.max(1, dt);
+    state.fps = state.fps ? (state.fps*0.9 + instFps*0.1) : instFps;
+
+    const steps = Number(speed.value);
+    if (!state.paused){
+      for (let s=0; s<steps; s++) stepOnce();
+    }
+
+    // HUD
+    let count=0;
+    for (let i=0;i<grid.length;i++) if (grid[i]!==0) count++;
+    hud.textContent = `FPS: ${state.fps.toFixed(0)} | Filled: ${count} / ${W*H}`;
+
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // Boot
+  const ro = new ResizeObserver(() => { resize(); });
+  ro.observe(canvas);
+  resize();
+  // initial random
+  stampFunnel();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
