@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Care Quest</title>
+  <style>
+    :root{
+      --bg1:#060a1a;
+      --bg2:#0b1636;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --brand:#68d6ff;
+      --brand2:#7cffc4;
+      --danger:#ff6b6b;
+      --warn:#ffd166;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius:18px;
+      --radius2:26px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(104,214,255,.25), transparent 55%),
+        radial-gradient(900px 650px at 85% 15%, rgba(124,255,196,.20), transparent 50%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+    }
+
+    .app{
+      width:min(980px, 100%);
+      display:grid;
+      gap:14px;
+      grid-template-columns: 1.1fr .9fr;
+    }
+
+    @media (max-width: 880px){
+      .app{grid-template-columns: 1fr;}
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .header{
+      padding:18px 18px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), transparent 55%),
+                  linear-gradient(135deg, rgba(104,214,255,.95), rgba(124,255,196,.95));
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 16px 40px rgba(104,214,255,.20);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;
+      color:#06213a;
+    }
+
+    .title{
+      display:flex;flex-direction:column;gap:2px;
+      line-height:1.1;
+    }
+    .title strong{font-size:14px; letter-spacing:.2px; color:rgba(255,255,255,.95)}
+    .title span{font-size:12px;color:var(--muted)}
+
+    .pillRow{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex;gap:8px;align-items:center;
+    }
+    .pill b{color:rgba(255,255,255,.92)}
+
+    .content{
+      padding:14px 18px 18px;
+      display:grid;
+      gap:14px;
+      grid-template-rows:auto auto 1fr;
+    }
+
+    .topGrid{
+      display:grid;
+      gap:12px;
+      grid-template-columns: 1fr;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 520px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      padding:14px;
+    }
+
+    .row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .muted{color:var(--muted)}
+
+    .progressWrap{display:grid; gap:10px}
+    .barLabel{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+    .bar{
+      height:12px;border-radius:999px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .fill{
+      height:100%;
+      width:50%;
+      background: linear-gradient(90deg, rgba(104,214,255,.95), rgba(124,255,196,.95));
+      border-radius:999px;
+    }
+
+    .petStage{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:12px;
+      align-items:stretch;
+    }
+    @media (max-width: 720px){
+      .petStage{grid-template-columns:1fr}
+    }
+
+    .petViz{
+      position:relative;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(500px 220px at 30% 15%, rgba(104,214,255,.18), transparent 55%),
+        radial-gradient(420px 200px at 90% 25%, rgba(124,255,196,.14), transparent 50%),
+        rgba(255,255,255,.04);
+      overflow:hidden;
+      padding:14px;
+      min-height:240px;
+    }
+
+    .petName{
+      position:absolute; left:14px; top:14px;
+      display:flex; flex-direction:column; gap:3px;
+    }
+    .petName strong{font-size:14px}
+    .petName span{font-size:12px;color:var(--muted)}
+
+    /* Pet “bird” (simple vector via CSS) */
+    .birdWrap{
+      position:absolute;
+      left:50%; top:58%;
+      transform: translate(-50%,-50%);
+      width:170px; height:170px;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none;
+    }
+
+    .bird{
+      width:140px;height:140px;
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 35% 25%, rgba(255,255,255,.35), transparent 45%),
+        radial-gradient(circle at 55% 60%, rgba(0,0,0,.18), transparent 55%),
+        linear-gradient(145deg, rgba(104,214,255,.85), rgba(124,255,196,.85));
+      box-shadow: 0 30px 80px rgba(104,214,255,.22);
+      border:1px solid rgba(255,255,255,.18);
+      position:relative;
+      transition: transform .25s ease, filter .25s ease;
+    }
+    .bird::before{
+      content:"";
+      position:absolute;
+      left:26px; top:34px;
+      width:78px; height:58px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 45%),
+        linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
+      border-radius: 65px 65px 70px 70px;
+      transform: rotate(-18deg);
+      opacity:.65;
+    }
+    .bird .eye{
+      position:absolute; right:40px; top:48px;
+      width:12px; height:12px;
+      border-radius:50%;
+      background: rgba(5,20,35,.95);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.20);
+    }
+    .bird .beak{
+      position:absolute; right:23px; top:70px;
+      width:18px; height:10px;
+      border-radius: 10px 0 10px 0;
+      background: linear-gradient(180deg, rgba(255,209,102,.95), rgba(255,107,107,.75));
+      transform: rotate(20deg);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .wing{
+      position:absolute;
+      left:10px; top:62px;
+      width:62px; height:50px;
+      border-radius: 45px;
+      background: linear-gradient(135deg, rgba(124,255,196,.35), rgba(104,214,255,.25));
+      border:1px solid rgba(255,255,255,.12);
+      transform-origin: 100% 50%;
+      animation: flap 1.2s ease-in-out infinite;
+    }
+    @keyframes flap{0%,100%{transform: rotate(-10deg)}50%{transform: rotate(16deg)}}
+
+    .petMood{
+      position:absolute; left:14px; right:14px; bottom:14px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+
+    .moodChip{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex; gap:8px; align-items:center;
+      white-space:nowrap;
+    }
+    .moodChip .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--brand);
+      box-shadow: 0 0 0 4px rgba(104,214,255,.15);
+    }
+
+    .spark{
+      position:absolute; inset:0;
+      background:
+        radial-gradient(200px 100px at 70% 20%, rgba(255,255,255,.18), transparent 55%),
+        radial-gradient(220px 120px at 20% 55%, rgba(255,255,255,.10), transparent 60%);
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    .actions{
+      display:flex; flex-wrap:wrap; gap:10px;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:rgba(255,255,255,.95);
+      padding:10px 12px;
+      border-radius: 14px;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .12s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    button:hover{transform: translateY(-1px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22)}
+    button:active{transform: translateY(0px) scale(.99)}
+
+    .btnPrimary{
+      background: linear-gradient(135deg, rgba(104,214,255,.95), rgba(124,255,196,.95));
+      color:#06213a;
+      border-color: rgba(255,255,255,.25);
+    }
+    .btnPrimary:hover{background: linear-gradient(135deg, rgba(104,214,255,1), rgba(124,255,196,1));}
+
+    .btnWarn{background: rgba(255,209,102,.16); border-color: rgba(255,209,102,.35)}
+    .btnDanger{background: rgba(255,107,107,.14); border-color: rgba(255,107,107,.30)}
+
+    .log{
+      height: 220px;
+      overflow:auto;
+      padding:10px;
+      border-radius: var(--radius);
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .logLine{
+      font-size:12px;
+      color:rgba(255,255,255,.78);
+      padding:8px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.08);
+      margin-bottom:8px;
+      background: rgba(255,255,255,.04);
+    }
+    .logLine b{color:rgba(255,255,255,.95)}
+
+    .side{
+      padding:14px;
+      display:grid;
+      gap:12px;
+      grid-auto-rows: min-content;
+    }
+
+    .sectionTitle{font-size:13px; color:rgba(255,255,255,.92); font-weight:900; letter-spacing:.2px}
+
+    .tasksGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+
+    .task{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .taskHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .task strong{font-size:13px}
+    .tag{
+      font-size:11px;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .task p{margin:0; font-size:12px; color:var(--muted); line-height:1.35}
+
+    .taskBottom{display:flex; justify-content:space-between; align-items:center; gap:10px}
+    .smallBtn{padding:8px 10px; border-radius:12px; font-size:12px; font-weight:800}
+
+    .modalOverlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .modal{
+      width:min(560px, 100%);
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(25,40,90,.92), rgba(10,20,50,.92));
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 40px 120px rgba(0,0,0,.65);
+      overflow:hidden;
+    }
+    .modalTop{
+      padding:16px 18px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .modalTop strong{font-size:14px}
+    .modalTop span{font-size:12px;color:var(--muted)}
+    .modalBody{padding:16px 18px; display:grid; gap:12px}
+    .modalGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    @media (max-width:560px){.modalGrid{grid-template-columns:1fr}}
+
+    .choice{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      padding:12px;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .choice b{font-size:13px}
+    .choice p{margin:0;font-size:12px; color:var(--muted); line-height:1.35}
+
+    .kbd{font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      font-size:11px;
+      border:1px solid rgba(255,255,255,.14);
+      padding:3px 7px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.85);
+      white-space:nowrap;
+    }
+
+    .footerNote{font-size:11px; color:rgba(255,255,255,.55); padding:2px 4px}
+
+    .shake{animation: shake .25s ease-in-out}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+    .grow{animation: grow .25s ease-in-out}
+    @keyframes grow{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}100%{transform:translate(-50%,-50%) scale(1)}}
+
+    .birdAlive{filter:saturate(1.15) brightness(1.05)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+      <div class="header">
+        <div class="brand">
+          <div class="logo">F</div>
+          <div class="title">
+            <strong>Finch-inspired Care Quest</strong>
+            <span>Self-care prompts • Pet progress • Daily wins</span>
+          </div>
+        </div>
+        <div class="pillRow">
+          <div class="pill">Today: <b id="todayCount">0</b></div>
+          <div class="pill">XP: <b id="xp">0</b></div>
+          <div class="pill">Level: <b id="level">1</b></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="topGrid">
+          <div class="card">
+            <div class="row">
+              <div>
+                <div style="font-weight:900">Your pet</div>
+                <div class="muted" style="font-size:12px">A tiny buddy that grows when you do.</div>
+              </div>
+              <div class="actions">
+                <button class="btnPrimary" id="btnStart">Start day</button>
+                <button class="btnWarn" id="btnFeed">Treat</button>
+                <button class="btnDanger" id="btnReset">New save</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="petStage">
+            <div class="petViz" id="petViz">
+              <div class="spark"></div>
+              <div class="petName">
+                <strong id="petName">Mochi</strong>
+                <span id="petStatus">Say hi to start your day.</span>
+              </div>
+              <div class="birdWrap" id="birdWrap">
+                <div class="bird" id="bird">
+                  <div class="wing"></div>
+                  <div class="eye"></div>
+                  <div class="beak"></div>
+                </div>
+              </div>
+              <div class="petMood">
+                <div class="moodChip"><span class="dot" id="moodDot"></span><span id="moodText">Calm</span></div>
+                <div class="moodChip">Happiness: <b id="happyPct">50%</b></div>
+              </div>
+            </div>
+
+            <div class="progressWrap">
+              <div class="card">
+                <div class="barLabel"><span>Happiness</span><span id="happyLabel">50/100</span></div>
+                <div class="bar"><div class="fill" id="happyBar"></div></div>
+              </div>
+
+              <div class="card">
+                <div class="barLabel"><span>Energy</span><span id="energyLabel">50/100</span></div>
+                <div class="bar"><div class="fill" id="energyBar" style="background:linear-gradient(90deg, rgba(255,209,102,.95), rgba(104,214,255,.95));"></div></div>
+              </div>
+
+              <div class="card">
+                <div class="barLabel"><span>Cleanliness</span><span id="cleanLabel">50/100</span></div>
+                <div class="bar"><div class="fill" id="cleanBar" style="background:linear-gradient(90deg, rgba(124,255,196,.95), rgba(104,214,255,.95));"></div></div>
+              </div>
+
+              <div class="card">
+                <div class="row">
+                  <div>
+                    <div style="font-weight:900">Daily focus</div>
+                    <div class="muted" style="font-size:12px">Pick one prompt and do it for real.</div>
+                  </div>
+                  <button id="btnOpenModal">Choose</button>
+                </div>
+                <div class="footerNote">Tip: Press <span class="kbd">C</span> to open choices.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div style="font-weight:900; margin-bottom:10px">Recent care log</div>
+            <div class="log" id="log"></div>
+          </div>
+          <div class="card">
+            <div style="font-weight:900; margin-bottom:10px">Quick actions</div>
+            <div class="tasksGrid" style="gap:10px">
+              <div class="task">
+                <div class="taskHead"><strong>Breathing reset</strong><span class="tag">2 min</span></div>
+                <p>Breathe in 4 • hold 2 • out 4. Count 6 rounds.</p>
+                <div class="taskBottom">
+                  <span class="muted" style="font-size:12px">+XP • happiness</span>
+                  <button class="smallBtn" data-act="breathe">Do</button>
+                </div>
+              </div>
+              <div class="task">
+                <div class="taskHead"><strong>Drink some water</strong><span class="tag">30 sec</span></div>
+                <p>Hydrate your body. Small step, big ripple.</p>
+                <div class="taskBottom">
+                  <span class="muted" style="font-size:12px">+energy</span>
+                  <button class="smallBtn" data-act="water">Do</button>
+                </div>
+              </div>
+              <div class="task">
+                <div class="taskHead"><strong>Tidy for 1 minute</strong><span class="tag">1 min</span></div>
+                <p>Set a timer and clear one small area.</p>
+                <div class="taskBottom">
+                  <span class="muted" style="font-size:12px">+clean</span>
+                  <button class="smallBtn" data-act="tidy">Do</button>
+                </div>
+              </div>
+              <div class="task">
+                <div class="taskHead"><strong>Kind message</strong><span class="tag">1 min</span></div>
+                <p>Send a note to someone (or to yourself).</p>
+                <div class="taskBottom">
+                  <span class="muted" style="font-size:12px">+happiness</span>
+                  <button class="smallBtn" data-act="kind">Do</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div>
+              <div style="font-weight:900">More to explore</div>
+              <div class="muted" style="font-size:12px">Unlock “rituals” as you level up. (Fun extras!)</div>
+            </div>
+            <button id="btnDailyMystery" class="btnPrimary">Daily Mystery</button>
+          </div>
+          <div class="footerNote" id="mysteryText" style="margin-top:8px">Complete a task to generate your next reward.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="side">
+        <div class="sectionTitle">Care quests</div>
+        <div class="muted" style="font-size:12px;line-height:1.35">These are small, real-world prompts. When you complete one, your pet grows. No accounts—everything stays in your browser.</div>
+
+        <div class="tasksGrid" id="quests"></div>
+
+        <div class="card">
+          <div class="row">
+            <div>
+              <div style="font-weight:900">Pet name</div>
+              <div class="muted" style="font-size:12px">Change it anytime.</div>
+            </div>
+            <button id="btnRename">Rename</button>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+            <input id="nameInput" style="flex:1; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:rgba(255,255,255,.92);" placeholder="Mochi" />
+            <button class="btnPrimary" id="btnSaveName">Save</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div>
+              <div style="font-weight:900">Settings</div>
+              <div class="muted" style="font-size:12px">Tweak the vibes.</div>
+            </div>
+            <button id="btnExport">Export</button>
+          </div>
+          <div class="footerNote" style="margin-top:8px">Export saves a JSON snapshot you can keep or share.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modalOverlay" id="modal">
+    <div class="modal">
+      <div class="modalTop">
+        <div>
+          <strong>Pick a care prompt</strong>
+          <div><span>Completing it moves your pet.</span></div>
+        </div>
+        <button id="btnCloseModal">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="modalGrid" id="modalChoices"></div>
+        <div class="footerNote">Pro tip: Choose something you can finish in 2–10 minutes.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (sel)=>document.querySelector(sel);
+    const els = {
+      todayCount: $('#todayCount'),
+      xp: $('#xp'),
+      level: $('#level'),
+      petName: $('#petName'),
+      petStatus: $('#petStatus'),
+      moodDot: $('#moodDot'),
+      moodText: $('#moodText'),
+      happyPct: $('#happyPct'),
+      happyLabel: $('#happyLabel'),
+      energyLabel: $('#energyLabel'),
+      cleanLabel: $('#cleanLabel'),
+      happyBar: $('#happyBar'),
+      energyBar: $('#energyBar'),
+      cleanBar: $('#cleanBar'),
+      log: $('#log'),
+      quests: $('#quests'),
+      modal: $('#modal'),
+      modalChoices: $('#modalChoices'),
+      bird: $('#bird'),
+      birdWrap: $('#birdWrap'),
+      mysteryText: $('#mysteryText'),
+      nameInput: $('#nameInput')
+    };
+
+    const STORAGE_KEY = 'careQuest_v1';
+
+    const baseQuests = [
+      {id:'breathe', title:'Breathing reset', tag:'2 min', desc:'Breathe in 4 • hold 2 • out 4. Count 6 rounds.', reward:{xp:10, happy:10, energy:2, clean:0}},
+      {id:'water', title:'Drink some water', tag:'30 sec', desc:'Hydrate your body. Small step, big ripple.', reward:{xp:7, happy:2, energy:12, clean:0}},
+      {id:'tidy', title:'Tidy for 1 minute', tag:'1 min', desc:'Clear one small area. Set a timer.', reward:{xp:9, happy:3, energy:2, clean:15}},
+      {id:'kind', title:'Kind message', tag:'1 min', desc:'Send a note to someone (or to yourself).', reward:{xp:12, happy:16, energy:0, clean:0}},
+      {id:'stretch', title:'Gentle stretch', tag:'3 min', desc:'Shoulders • neck • hamstrings. Go easy.', reward:{xp:11, happy:5, energy:10, clean:0}},
+      {id:'walk', title:'Tiny walk', tag:'5 min', desc:'Step outside or walk around the room slowly.', reward:{xp:16, happy:8, energy:16, clean:0}},
+      {id:'journal', title:'1-minute journal', tag:'2 min', desc:'Write 3 lines: what you feel, what you need, what helps.', reward:{xp:14, happy:10, energy:0, clean:0}},
+      {id:'snack', title:'Choose a supportive snack', tag:'5 min', desc:'Fruit • yogurt • nuts—something that feels kind.', reward:{xp:13, happy:6, energy:12, clean:0}},
+      {id:'clean', title:'Quick refresh', tag:'4 min', desc:'Wash face, brush teeth, or change into comfy clothes.', reward:{xp:15, happy:6, energy:4, clean:18}},
+      {id:'music', title:'Music for your mood', tag:'3 min', desc:'Pick one song and notice how your body feels.', reward:{xp:10, happy:14, energy:2, clean:0}},
+      {id:'breathe2', title:'Grounding (5-4-3-2-1)', tag:'4 min', desc:'Name 5 things you see, 4 you feel, 3 you hear, 2 you smell, 1 you taste.', reward:{xp:17, happy:12, energy:2, clean:0}},
+      {id:'sun', title:'Get a little light', tag:'5 min', desc:'Open a window or step near sunlight.', reward:{xp:18, happy:10, energy:12, clean:0}},
+    ];
+
+    const dailyRituals = [
+      {reqLevel:1, title:'Sparkle Soother', tip:'When you finish a quest, take a sip of water too.', style:{happy:4}},
+      {reqLevel:2, title:'Cozy Corner', tip:'Tidy one surface before bed or work.', style:{clean:5}},
+      {reqLevel:3, title:'Brave Breaths', tip:'Do breathing even when you don’t “feel like it”.', style:{happy:6, energy:2}},
+      {reqLevel:4, title:'Motion Buddy', tip:'A tiny walk counts. Even in circles.', style:{energy:6}},
+      {reqLevel:5, title:'Kindness Boost', tip:'Send one kind message daily—small and sincere.', style:{happy:8}},
+    ];
+
+    function defaultSave(){
+      return {
+        version:1,
+        started:false,
+        dayKey: todayKey(),
+        pet:{
+          name:'Mochi',
+          happy:50,
+          energy:50,
+          clean:50,
+          xp:0,
+          level:1,
+          streak:0
+        },
+        stats:{
+          today:{completed:0, lastReward:''}
+        },
+        log:[]
+      };
+    }
+
+    function todayKey(){
+      const d = new Date();
+      const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,'0');
+      const day=String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function loadSave(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return defaultSave();
+        const s = JSON.parse(raw);
+        if(!s || s.version !== 1) return defaultSave();
+        // reset day if needed
+        if(s.dayKey !== todayKey()){
+          // streak logic: if you had completed something yesterday
+          const hadCompleted = (s.stats?.today?.completed || 0) > 0;
+          s.pet.streak = hadCompleted ? (s.pet.streak + 1) : 0;
+          s.dayKey = todayKey();
+          s.stats.today = {completed:0, lastReward:''};
+          s.started = false;
+          s.log.unshift({t:Date.now(), text:`New day! Streak: ${s.pet.streak}.`});
+          s.log = s.log.slice(0,40);
+        }
+        return s;
+      }catch(e){
+        return defaultSave();
+      }
+    }
+
+    function saveToDisk(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    let state = loadSave();
+
+    function clamp(n,min,max){return Math.max(min, Math.min(max, n));}
+
+    function levelFromXP(xp){
+      // smooth-ish curve
+      let lvl = 1;
+      let remaining = xp;
+      while(true){
+        const cost = Math.floor(60 + lvl*25);
+        if(remaining >= cost){
+          remaining -= cost;
+          lvl++;
+          if(lvl>200) break;
+        } else break;
+      }
+      return lvl;
+    }
+
+    function nextLevelXP(xp){
+      let lvl = 1;
+      let remaining = xp;
+      while(true){
+        const cost = Math.floor(60 + lvl*25);
+        if(remaining >= cost){
+          remaining -= cost;
+          lvl++;
+        } else {
+          return {lvl, into: remaining, cost};
+        }
+      }
+    }
+
+    function mood(){
+      const h=state.pet.happy;
+      const e=state.pet.energy;
+      const c=state.pet.clean;
+      const avg = (h+e+c)/3;
+      if(avg>=80) return {text:'Joyful', color:'var(--brand2)'};
+      if(avg>=60) return {text:'Calm', color:'var(--brand)'};
+      if(avg>=40) return {text:'Okay', color:'var(--warn)'};
+      return {text:'Needs care', color:'var(--danger)'};
+    }
+
+    function render(){
+      els.todayCount.textContent = state.stats.today.completed;
+      els.xp.textContent = state.pet.xp;
+      els.level.textContent = state.pet.level;
+
+      els.petName.textContent = state.pet.name;
+
+      const m = mood();
+      els.moodDot.style.background = m.color;
+      els.moodText.textContent = m.text;
+
+      const hp = state.pet.happy;
+      const ep = state.pet.energy;
+      const cp = state.pet.clean;
+      els.happyPct.textContent = `${hp}%`;
+      els.happyLabel.textContent = `${hp}/100`;
+      els.energyLabel.textContent = `${ep}/100`;
+      els.cleanLabel.textContent = `${cp}/100`;
+
+      els.happyBar.style.width = `${hp}%`;
+      els.energyBar.style.width = `${ep}%`;
+      els.cleanBar.style.width = `${cp}%`;
+
+      // status
+      if(!state.started){
+        els.petStatus.textContent = 'Say hi to start your day.';
+        els.bird.classList.remove('birdAlive');
+      } else {
+        const next = nextLevelXP(state.pet.xp);
+        const into = next.into;
+        const cost = next.cost;
+        const progress = Math.round((into/cost)*100);
+        els.petStatus.textContent = `Today’s progress: ${progress}% toward level ${state.pet.level+1}.`;
+        els.bird.classList.add('birdAlive');
+      }
+
+      // log
+      els.log.innerHTML = '';
+      state.log.slice(0).reverse().forEach(item=>{
+        // ensure newest at top
+      });
+      // display newest first
+      const ordered = state.log.slice().reverse().slice(0,40);
+      ordered.forEach(item=>{
+        const div=document.createElement('div');
+        div.className='logLine';
+        div.innerHTML = `<b>${new Date(item.t).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b> ${escapeHtml(item.text)}`;
+        els.log.appendChild(div);
+      });
+
+      // quests list
+      const ritual = dailyRituals
+        .filter(r=>r.reqLevel<=state.pet.level)
+        .sort((a,b)=>b.reqLevel-a.reqLevel)[0];
+
+      els.quests.innerHTML = '';
+      const levelWeighted = baseQuests
+        .slice()
+        .sort((a,b)=> (b.reward.xp + (b.reward.happy||0)) - (a.reward.xp + (a.reward.happy||0)))
+        .slice(0, 8);
+
+      const headerTask = document.createElement('div');
+      headerTask.className='task';
+      headerTask.innerHTML = `
+        <div class="taskHead"><strong>Daily ritual</strong><span class="tag">Level ${ritual?.reqLevel ?? 1}</span></div>
+        <p>${escapeHtml(ritual?.title ?? 'Sparkle Soother')} — ${escapeHtml(ritual?.tip ?? 'Complete a quest to keep momentum.')}</p>
+        <div class="taskBottom">
+          <span class="muted" style="font-size:12px">Bonus vibes while you care</span>
+          <button class="smallBtn" data-act="ritual">Do ritual</button>
+        </div>
+      `;
+      els.quests.appendChild(headerTask);
+
+      levelWeighted.forEach(q=>{
+        const node=document.createElement('div');
+        node.className='task';
+        node.innerHTML = `
+          <div class="taskHead"><strong>${escapeHtml(q.title)}</strong><span class="tag">${escapeHtml(q.tag)}</span></div>
+          <p>${escapeHtml(q.desc)}</p>
+          <div class="taskBottom">
+            <span class="muted" style="font-size:12px">+${q.reward.xp} XP</span>
+            <button class="smallBtn" data-act="quest:${escapeHtml(q.id)}">Do</button>
+          </div>
+        `;
+        els.quests.appendChild(node);
+      });
+
+      els.nameInput.value = state.pet.name;
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;');
+    }
+
+    function pushLog(text){
+      state.log.push({t:Date.now(), text});
+      state.log = state.log.slice(-60);
+    }
+
+    function animatePet(){
+      els.birdWrap.classList.remove('grow');
+      void els.birdWrap.offsetWidth;
+      els.birdWrap.classList.add('grow');
+      els.bird.classList.remove('birdAlive');
+      void els.bird.offsetWidth;
+      els.bird.classList.add('birdAlive');
+    }
+
+    function applyReward(reward, label){
+      state.started = true;
+      state.pet.happy = clamp(state.pet.happy + (reward.happy||0), 0, 100);
+      state.pet.energy = clamp(state.pet.energy + (reward.energy||0), 0, 100);
+      state.pet.clean = clamp(state.pet.clean + (reward.clean||0), 0, 100);
+      const before = state.pet.level;
+      state.pet.xp += reward.xp || 0;
+      state.pet.level = levelFromXP(state.pet.xp);
+
+      state.stats.today.completed += 1;
+      state.stats.today.lastReward = label;
+
+      const gained = [];
+      if(reward.happy) gained.push(`+${reward.happy} happiness`);
+      if(reward.energy) gained.push(`+${reward.energy} energy`);
+      if(reward.clean) gained.push(`+${reward.clean} cleanliness`);
+
+      const levelUp = state.pet.level > before;
+      animatePet();
+
+      pushLog(`${label} — ${reward.xp} XP${gained.length? ' • ' + gained.join(' • ') : ''}${levelUp ? ` • LEVEL UP! → ${state.pet.level}` : ''}`);
+
+      // mystery
+      const bonuses = [
+        `You earned a little vibe boost: ${state.pet.level>=5?'“Cozy Courage”':'“Gentle Momentum”'}.`,
+        `Your pet collected a sparkle. Keep going!`,
+        `A new comfort unlocked: ${state.pet.level>=3?'Warm Light':'Soft Steps'}.`,
+        `Today’s diary sticker: “Did something kind.”`,
+      ];
+      const nextBonus = bonuses[Math.floor(Math.random()*bonuses.length)];
+      els.mysteryText.textContent = nextBonus;
+
+      saveToDisk();
+      render();
+    }
+
+    function doStartDay(){
+      if(state.started){
+        pushLog('You’re already taking care of your pet. ✨');
+        saveToDisk();
+        render();
+        return;
+      }
+      state.started = true;
+      state.pet.happy = clamp(state.pet.happy + 4, 0, 100);
+      state.pet.energy = clamp(state.pet.energy + 2, 0, 100);
+      pushLog('You said hi. Your pet feels the care.');
+      els.mysteryText.textContent = 'Choose a prompt, then watch your pet grow.';
+      saveToDisk();
+      render();
+      animatePet();
+    }
+
+    function doFeed(){
+      const reward = {xp:6, happy:6, energy:0, clean:-1};
+      applyReward(reward, 'Treat time');
+      // tiny penalty to keep it game-like
+    }
+
+    function doReset(){
+      if(!confirm('Start a new save? This clears your pet and progress in this browser.')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state = defaultSave();
+      saveToDisk();
+      els.mysteryText.textContent = 'Fresh start! Pick a prompt to begin.';
+      render();
+      pushLog('New save created.');
+    }
+
+    // Modal choices
+    function openModal(){
+      els.modal.style.display='flex';
+      // choose 4 random quests appropriate to level
+      const pool = baseQuests.slice();
+      // bias toward balanced tasks
+      pool.sort(()=>Math.random()-0.5);
+      const picks = pool.slice(0,4);
+      els.modalChoices.innerHTML='';
+      picks.forEach(q=>{
+        const node=document.createElement('div');
+        node.className='choice';
+        node.innerHTML = `
+          <b>${escapeHtml(q.title)}</b>
+          <p>${escapeHtml(q.desc)}</p>
+          <button class="smallBtn btnPrimary" style="margin-top:8px" data-do="quest:${escapeHtml(q.id)}">Do this</button>
+        `;
+        els.modalChoices.appendChild(node);
+      });
+    }
+    function closeModal(){
+      els.modal.style.display='none';
+    }
+
+    // Daily Mystery button
+    function dailyMystery(){
+      if(state.stats.today.completed<=0){
+        els.mysteryText.textContent = 'Complete at least one care prompt to unlock your Daily Mystery.';
+        const m = $('#petViz');
+        m.classList.remove('shake');
+        void m.offsetWidth;
+        m.classList.add('shake');
+        return;
+      }
+      const rewards=[
+        {xp:25, happy:10, energy:8, clean:0, label:'Mystery favor'},
+        {xp:18, happy:4, energy:4, clean:8, label:'Clean boost'},
+        {xp:22, happy:10, energy:0, clean:6, label:'Comfort pack'},
+        {xp:16, happy:6, energy:10, clean:0, label:'Energy snack'}
+      ];
+      const r = rewards[Math.floor(Math.random()*rewards.length)];
+      applyReward({xp:r.xp, happy:r.happy, energy:r.energy, clean:r.clean}, r.label);
+    }
+
+    // Event wiring
+    $('#btnStart').addEventListener('click', doStartDay);
+    $('#btnFeed').addEventListener('click', doFeed);
+    $('#btnReset').addEventListener('click', doReset);
+    $('#btnOpenModal').addEventListener('click', openModal);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $('#modal').addEventListener('click', (e)=>{ if(e.target===els.modal) closeModal(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key.toLowerCase()==='c') openModal(); if(e.key==='Escape') closeModal(); });
+
+    $('#btnRename').addEventListener('click', ()=>{
+      els.nameInput.focus();
+      els.nameInput.select();
+    });
+    $('#btnSaveName').addEventListener('click', ()=>{
+      const v = els.nameInput.value.trim();
+      if(!v) return;
+      state.pet.name = v.slice(0,26);
+      pushLog(`Pet renamed to “${state.pet.name}”.`);
+      saveToDisk();
+      render();
+    });
+
+    $('#btnExport').addEventListener('click', ()=>{
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'careQuest_export.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      pushLog('Exported your save snapshot.');
+      saveToDisk();
+      render();
+    });
+
+    $('#btnDailyMystery').addEventListener('click', dailyMystery);
+
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-act]') || e.target.closest('[data-do]');
+      if(!btn) return;
+      const v = btn.getAttribute('data-act') || btn.getAttribute('data-do');
+      if(!v) return;
+
+      // common actions
+      if(v==='ritual'){
+        const bonus = dailyRituals
+          .filter(r=>r.reqLevel<=state.pet.level)
+          .sort((a,b)=>b.reqLevel-a.reqLevel)[0];
+        applyReward({xp:14, happy:bonus?.style?.happy||0, energy:bonus?.style?.energy||0, clean:bonus?.style?.clean||0}, `Ritual: ${bonus?.title ?? 'Daily ritual'}`);
+        return;
+      }
+      if(v.startsWith('quest:')){
+        const id = v.split(':')[1];
+        const q = baseQuests.find(x=>x.id===id);
+        if(!q) return;
+        applyReward(q.reward, q.title);
+        // close modal if clicked there
+        closeModal();
+        return;
+      }
+
+      // quick action ids
+      if(v==='breathe'){
+        const q=baseQuests.find(x=>x.id==='breathe');
+        if(q) applyReward(q.reward, q.title);
+      }
+      if(v==='water'){
+        const q=baseQuests.find(x=>x.id==='water');
+        if(q) applyReward(q.reward, q.title);
+      }
+      if(v==='tidy'){
+        const q=baseQuests.find(x=>x.id==='tidy');
+        if(q) applyReward(q.reward, q.title);
+      }
+      if(v==='kind'){
+        const q=baseQuests.find(x=>x.id==='kind');
+        if(q) applyReward(q.reward, q.title);
+      }
+    });
+
+    // First render
+    state.pet.level = levelFromXP(state.pet.xp);
+    render();
+  </script>
+</body>
+</html>
