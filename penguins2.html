@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Penguins: Adaptations, Spots, and Survival</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#111b33; --muted:#9fb0d0; --text:#eaf1ff;
+      --accent:#4dd0e1; --accent2:#7c5cff; --border:rgba(255,255,255,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(124,92,255,.25), transparent 55%),
+                  radial-gradient(1000px 600px at 90% 0%, rgba(77,208,225,.20), transparent 50%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:1100px; margin:0 auto; padding:28px 18px 70px}
+
+    header{
+      display:flex; gap:18px; align-items:center; justify-content:space-between;
+      padding:18px 16px; border:1px solid var(--border);
+      border-radius:18px; background:rgba(17,27,51,.55);
+      backdrop-filter: blur(8px);
+    }
+    .brand{display:flex; align-items:center; gap:14px}
+    .logo{
+      width:46px; height:46px; border-radius:14px;
+      background: linear-gradient(135deg, rgba(124,92,255,.9), rgba(77,208,225,.9));
+      display:grid; place-items:center; box-shadow: 0 10px 40px rgba(124,92,255,.25);
+    }
+    .logo span{font-size:20px; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+    header h1{margin:0; font-size:18px; letter-spacing:.2px}
+    header p{margin:4px 0 0; color:var(--muted); font-size:13px}
+
+    nav{display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end}
+    .chip{
+      text-decoration:none; font-size:13px; color:var(--muted);
+      border:1px solid var(--border); padding:8px 10px; border-radius:999px;
+      background: rgba(255,255,255,.03);
+    }
+    .chip:hover{color:var(--text); border-color:rgba(77,208,225,.35)}
+
+    .hero{margin-top:18px; display:grid; grid-template-columns:1.35fr .85fr; gap:18px; align-items:stretch}
+    @media (max-width: 900px){.hero{grid-template-columns:1fr}}
+
+    .heroCard{
+      border:1px solid var(--border); border-radius:22px;
+      background: rgba(17,27,51,.55);
+      overflow:hidden;
+      position:relative;
+    }
+    .heroCard .pad{padding:22px 20px 18px}
+    .kicker{color:var(--accent); font-weight:700; font-size:13px; letter-spacing:.7px; text-transform:uppercase}
+    .heroCard h2{margin:10px 0 8px; font-size:28px; line-height:1.1}
+    .heroCard .lead{margin:0; color:var(--muted); font-size:15px; line-height:1.55; max-width:58ch}
+
+    .heroSide{
+      border:1px solid var(--border); border-radius:22px;
+      background: rgba(17,27,51,.55);
+      padding:18px;
+    }
+    .factGrid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .fact{
+      border:1px solid var(--border); border-radius:16px; padding:12px 12px;
+      background: rgba(255,255,255,.03);
+    }
+    .fact b{display:block; font-size:18px}
+    .fact span{display:block; color:var(--muted); font-size:12.5px; margin-top:4px}
+
+    .section{
+      margin-top:18px;
+      border:1px solid var(--border); border-radius:22px;
+      background: rgba(17,27,51,.45);
+      overflow:hidden;
+    }
+    .section .head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 18px; border-bottom:1px solid var(--border);
+      background: linear-gradient(90deg, rgba(124,92,255,.10), rgba(77,208,225,.06));
+    }
+    .section .head h3{margin:0; font-size:16px}
+    .section .head .note{color:var(--muted); font-size:12.5px}
+    .section .body{padding:18px}
+
+    .cols{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media (max-width: 900px){.cols{grid-template-columns:1fr}}
+
+    .card{
+      border:1px solid var(--border); border-radius:18px;
+      padding:14px 14px; background: rgba(255,255,255,.03);
+    }
+    .card h4{margin:0 0 8px; font-size:14.5px}
+    .card p{margin:0; color:var(--muted); line-height:1.6; font-size:13.5px}
+
+    ul{margin:10px 0 0; padding-left:18px; color:var(--muted); line-height:1.65; font-size:13.5px}
+
+    .quote{
+      border-left:4px solid rgba(77,208,225,.6);
+      padding:12px 12px;
+      background: rgba(77,208,225,.08);
+      border-radius:12px;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:13.5px;
+    }
+
+    /* Penguin hero illustration */
+    .penguinHero{
+      position:absolute; right:-40px; top:10px; width:240px; height:240px;
+      opacity:.95; pointer-events:none;
+      filter: drop-shadow(0 18px 50px rgba(0,0,0,.45));
+    }
+    @media (max-width: 900px){.penguinHero{display:none}}
+
+    /* Spots illustration */
+    .spotsWrap{display:grid; grid-template-columns:1fr 1.05fr; gap:14px; align-items:center}
+    @media (max-width: 900px){.spotsWrap{grid-template-columns:1fr}}
+    .spotsViz{
+      border:1px solid var(--border); border-radius:18px;
+      padding:12px; background: rgba(255,255,255,.02);
+    }
+    svg{width:100%; height:auto; display:block}
+
+    .legend{display:flex; flex-direction:column; gap:10px}
+    .legend .item{display:flex; gap:10px; align-items:flex-start}
+
+    .speciesGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+    @media (max-width: 1000px){.speciesGrid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 650px){.speciesGrid{grid-template-columns:1fr}}
+    .spec{
+      border:1px solid var(--border); border-radius:18px; padding:14px;
+      background: rgba(255,255,255,.03);
+      min-height:130px;
+    }
+    .spec b{font-size:14.5px}
+    .spec .t{color:var(--muted); font-size:13.2px; line-height:1.55; margin-top:6px}
+
+    footer{margin-top:18px; color:var(--muted); font-size:12.5px; line-height:1.5; text-align:center}
+    .src{opacity:.95}
+
+    .btnRow{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
+    button{
+      cursor:pointer; border:1px solid var(--border);
+      background: rgba(255,255,255,.03); color:var(--text);
+      padding:10px 12px; border-radius:14px; font-size:13.5px;
+    }
+    button:hover{border-color:rgba(124,92,255,.35)}
+
+    .smallLinks{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+    .smallLinks a{font-size:13px}
+
+    .kbd{font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace; font-size:12px; padding:2px 6px; border-radius:8px; border:1px solid var(--border); background: rgba(255,255,255,.03); color: var(--text)}
+
+    .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+    @media (max-width: 1000px){.grid4{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 650px){.grid4{grid-template-columns:1fr}}
+
+    .shakeTag{display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border:1px dashed rgba(77,208,225,.45); border-radius:16px; background: rgba(77,208,225,.06); color:var(--muted); font-size:13px; margin-top:12px}
+
+    /* Accessibility */
+    :focus-visible{outline:2px solid rgba(77,208,225,.55); outline-offset:2px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><span>🐧</span></div>
+        <div>
+          <h1>Penguins: Adaptations, Spots, and Survival</h1>
+          <p>Quick, visual guide to how penguins live—and what “spots” may have to do with recognition.</p>
+        </div>
+      </div>
+      <nav aria-label="Page sections">
+        <a class="chip" href="#adaptations">Adaptations</a>
+        <a class="chip" href="#diet">Diet</a>
+        <a class="chip" href="#behavior">Behavior</a>
+        <a class="chip" href="#spots">Spots &amp; recognition</a>
+        <a class="chip" href="#species">Species sampler</a>
+        <a class="chip" href="#help">How to help</a>
+      </nav>
+    </header>
+
+    <div class="hero">
+      <div class="heroCard">
+        <div class="pad">
+          <div class="kicker">Flightless • Streamlined • Social</div>
+          <h2>Built for swimming, raised on the shore.</h2>
+          <p class="lead">
+            Penguins are marine birds adapted for life in cold water: streamlined bodies, flipper propulsion, and
+            dense feathers that help trap warmth. Many species also form colonies—creating plenty of social
+            pressure where recognition, bonding, and timing matter.
+          </p>
+          <div class="btnRow">
+            <button type="button" onclick="scrollToId('spots')">Jump to spots</button>
+            <button type="button" onclick="scrollToId('adaptations')">See adaptations</button>
+            <button type="button" onclick="toggleMode()" aria-pressed="false" id="modeBtn">Reduce motion</button>
+          </div>
+          <div class="smallLinks" aria-label="Tips">
+            <a href="#help" class="chip" style="padding:8px 12px">Get conservation tips</a>
+            <span style="color:var(--muted); font-size:12.5px; align-self:center">Tip: Use <span class="kbd">Tab</span> to navigate.</span>
+          </div>
+          <div class="shakeTag" aria-hidden="true">✨ New: added a full penguin “hero” graphic + much more content below.</div>
+        </div>
+
+        <!-- Restored penguin graphic + extra flourishes -->
+        <svg class="penguinHero" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Penguin illustration">
+          <defs>
+            <radialGradient id="pgGlow" cx="35%" cy="25%" r="70%">
+              <stop offset="0" stop-color="rgba(124,92,255,.55)"/>
+              <stop offset="0.6" stop-color="rgba(77,208,225,.25)"/>
+              <stop offset="1" stop-color="rgba(0,0,0,0)"/>
+            </radialGradient>
+            <linearGradient id="pgBody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="rgba(234,241,255,.18)"/>
+              <stop offset="1" stop-color="rgba(234,241,255,.06)"/>
+            </linearGradient>
+            <linearGradient id="pgBlack" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="rgba(17,27,51,.95)"/>
+              <stop offset="1" stop-color="rgba(0,0,0,.70)"/>
+            </linearGradient>
+          </defs>
+          <circle cx="120" cy="120" r="96" fill="url(#pgGlow)"/>
+
+          <!-- ground -->
+          <path d="M28 192 C68 176, 172 176, 212 192 C186 218, 54 218, 28 192 Z" fill="rgba(77,208,225,.10)" stroke="rgba(77,208,225,.35)" stroke-width="2"/>
+
+          <!-- penguin group -->
+          <g transform="translate(0,2)">
+            <!-- feet -->
+            <g>
+              <ellipse cx="92" cy="186" rx="18" ry="8" fill="rgba(124,92,255,.28)" stroke="rgba(124,92,255,.55)" stroke-width="2"/>
+              <ellipse cx="152" cy="186" rx="18" ry="8" fill="rgba(124,92,255,.28)" stroke="rgba(124,92,255,.55)" stroke-width="2"/>
+            </g>
+
+            <!-- tail shadow -->
+            <ellipse cx="120" cy="150" rx="56" ry="26" fill="rgba(0,0,0,.22)"/>
+
+            <!-- body -->
+            <path d="M96 70
+                     C76 88, 70 126, 78 152
+                     C86 178, 110 196, 120 196
+                     C130 196, 154 178, 162 152
+                     C170 126, 164 88, 144 70
+                     C132 59, 108 59, 96 70 Z"
+                  fill="url(#pgBlack)" stroke="rgba(255,255,255,.22)" stroke-width="2"/>
+
+            <!-- belly -->
+            <path d="M110 100
+                     C94 120, 98 154, 120 172
+                     C142 154, 146 120, 130 100
+                     C123 92, 117 92, 110 100 Z"
+                  fill="rgba(234,241,255,.14)" stroke="rgba(255,255,255,.20)" stroke-width="2"/>
+
+            <!-- flippers -->
+            <path d="M84 120
+                     C66 116, 56 138, 64 152
+                     C70 164, 88 160, 92 148
+                     C95 138, 92 124, 84 120 Z"
+                  fill="rgba(17,27,51,.92)" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+            <path d="M156 120
+                     C174 116, 184 138, 176 152
+                     C170 164, 152 160, 148 148
+                     C145 138, 148 124, 156 120 Z"
+                  fill="rgba(17,27,51,.92)" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+
+            <!-- head -->
+            <path d="M112 34
+                     C94 44, 90 70, 100 85
+                     C110 100, 130 100, 140 85
+                     C150 70, 146 44, 128 34
+                     C122 30, 118 30, 112 34 Z"
+                  fill="rgba(17,27,51,.95)" stroke="rgba(255,255,255,.22)" stroke-width="2"/>
+
+            <!-- face -->
+            <ellipse cx="120" cy="60" rx="16" ry="12" fill="rgba(234,241,255,.10)" stroke="rgba(255,255,255,.20)" stroke-width="2"/>
+            <circle cx="114" cy="59" r="3.6" fill="#0b1220"/>
+            <circle cx="126" cy="59" r="3.6" fill="#0b1220"/>
+            <path d="M120 66 C116 71, 110 72, 106 68" stroke="rgba(124,92,255,.55)" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+            <!-- beak -->
+            <path d="M120 67 L134 75 L120 82 L106 75 Z" fill="rgba(77,208,225,.25)" stroke="rgba(77,208,225,.55)" stroke-width="2"/>
+
+            <!-- little spot marks (extra) -->
+            <g opacity="0.95">
+              <circle cx="106" cy="120" r="5" fill="rgba(124,92,255,.30)"/>
+              <circle cx="129" cy="118" r="4" fill="rgba(77,208,225,.26)"/>
+              <circle cx="142" cy="138" r="5" fill="rgba(124,92,255,.22)"/>
+              <circle cx="113" cy="145" r="4" fill="rgba(77,208,225,.24)"/>
+            </g>
+
+            <!-- highlights -->
+            <path d="M94 108 C88 134, 96 158, 112 174" stroke="rgba(77,208,225,.35)" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M146 108 C152 134, 144 158, 128 174" stroke="rgba(124,92,255,.35)" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+
+      <aside class="heroSide" aria-label="Quick facts">
+        <div class="factGrid">
+          <div class="fact"><b>Southern</b><span>Mostly in the Southern Hemisphere</span></div>
+          <div class="fact"><b>Waddlers</b><span>Energy-efficient land movement</span></div>
+          <div class="fact"><b>Flippers</b><span>Main “engine” in water</span></div>
+          <div class="fact"><b>Colony life</b><span>Recognition &amp; cooperation</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <section id="adaptations" class="section">
+      <div class="head">
+        <h3>Adaptations</h3>
+        <div class="note">How penguins stay warm, move well, and breed in harsh conditions</div>
+      </div>
+      <div class="body">
+        <div class="cols">
+          <div class="card">
+            <h4>Streamlined bodies</h4>
+            <p>Penguins look “sleek” because drag reduction helps them move through water efficiently—saving energy on long foraging trips.</p>
+          </div>
+          <div class="card">
+            <h4>Flipper propulsion</h4>
+            <p>Wings are modified into flippers. Many species use a powerful, shoulder-driven stroke to accelerate and steer through dense water.</p>
+          </div>
+          <div class="card">
+            <h4>Dense feathers + oil</h4>
+            <p>Feather structure and natural oils improve insulation and water resistance, keeping body heat from escaping in cold, windy conditions.</p>
+          </div>
+          <div class="card">
+            <h4>Talk-to-the-weather timing</h4>
+            <p>Breeding seasons and foraging trips are timed to food availability and local conditions—especially important where winters can be extreme.</p>
+          </div>
+          <div class="card">
+            <h4>Legs for “launch and landing”</h4>
+            <p>On land, many penguins waddle because their legs are positioned for swimming; their short bursts and belly-slides help them travel fast.</p>
+          </div>
+          <div class="card">
+            <h4>Salt + sleep strategies</h4>
+            <p>Some species handle salty environments and long days at sea with specialized physiology and resting rhythms between foraging dives.</p>
+          </div>
+        </div>
+
+        <div class="grid4" style="margin-top:16px">
+          <div class="card"><h4>Countershading</h4><p>Dark backs and light bellies help hide penguins from predators while hunting underwater.</p></div>
+          <div class="card"><h4>Thick fat reserves</h4><p>Energy stored as blubber supports long foraging trips and fasting during key breeding windows.</p></div>
+          <div class="card"><h4>Chick brooding</h4><p>Adults keep chicks warm using sheltering behavior—reducing heat loss when wind and cold are harsh.</p></div>
+          <div class="card"><h4>Colony heat sharing</h4><p>Many species rely on crowding and shifting positions to balance exposure and keep individuals warm.</p></div>
+        </div>
+
+        <div class="quote" style="margin-top:14px">
+          Bottom line: penguins trade flight for efficient swimming—then rely on colonies and cues to survive and raise chicks.
+        </div>
+      </div>
+    </section>
+
+    <section id="diet" class="section">
+      <div class="head">
+        <h3>Diet</h3>
+        <div class="note">What they eat, how they forage, and why timing matters</div>
+      </div>
+      <div class="body">
+        <div class="cols">
+          <div class="card">
+            <h4>Fish, krill, and more</h4>
+            <p>Most penguins are opportunistic hunters—often taking small schooling fish and crustaceans, depending on what’s abundant locally.</p>
+          </div>
+          <div class="card">
+            <h4>Foraging strategies</h4>
+            <p>Some dive shallow and frequently; others dive deeper. Diet and dive behavior shift with prey type, season, and colony distance to feeding grounds.</p>
+          </div>
+          <div class="card">
+            <h4>How chicks get fed</h4>
+            <p>Adults transport food back to the colony and feed chicks repeatedly. When prey is scarce, chick survival can drop quickly.</p>
+          </div>
+          <div class="card">
+            <h4>Energy is the limiting factor</h4>
+            <p>Foraging takes time and fuel. Successful colonies synchronize breeding and feeding so parents can keep up with chick demands.</p>
+          </div>
+        </div>
+
+        <div class="grid4" style="margin-top:16px">
+          <div class="card"><h4>Prey switching</h4><p>When one prey type declines, many penguins switch to other available targets rather than “specializing” only one food.</p></div>
+          <div class="card"><h4>Competition inside colonies</h4><p>More adults hunting means more pressure on local prey patches—especially during peak chick-feeding.</p></div>
+          <div class="card"><h4>Trip length</h4><p>Longer trips can mean less frequent feeds, increasing stress for chicks and raising the importance of timing.</p></div>
+          <div class="card"><h4>Ocean conditions</h4><p>Sea temperature, currents, and seasonal ice influence where prey is found and when it becomes available.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="behavior" class="section">
+      <div class="head">
+        <h3>Behavior</h3>
+        <div class="note">Social lives need cues</div>
+      </div>
+      <div class="body">
+        <div class="cols">
+          <div class="card">
+            <h4>Pair bonds &amp; timing</h4>
+            <p>Many species maintain breeding pairs and coordinate chick-rearing, using repeated contact and displays to stay together.</p>
+          </div>
+          <div class="card">
+            <h4>Colonies: benefits and challenges</h4>
+            <p>Colonies provide safety and social structure—but also make individual recognition harder because many similar-looking birds are close together.</p>
+          </div>
+          <div class="card">
+            <h4>Calls, posture, and group choreography</h4>
+            <p>Penguins communicate with vocalizations and body language. In crowded rookeries, repeated cues help partners and neighbors find the right individual.</p>
+          </div>
+          <div class="card">
+            <h4>Who goes first?</h4>
+            <p>During breeding, role-switching (who leaves to forage, who stays to guard) can be crucial. Colonies often show predictable patterns once feeding starts.</p>
+          </div>
+        </div>
+
+        <div class="grid4" style="margin-top:16px">
+          <div class="card"><h4>Territory vs. tolerance</h4><p>Some species are more tolerant of neighbors; others defend tighter spaces—both approaches affect pairing and recognition.</p></div>
+          <div class="card"><h4>Incubation routines</h4><p>Adults shift positions and adjust contact with chicks to manage heat and exposure.</p></div>
+          <div class="card"><h4>Navigation cues</h4><p>Returning to the colony often involves a mix of ocean landmarks, memory, and timing aligned with foraging success.</p></div>
+          <div class="card"><h4>Molting cycles</h4><p>Feather replacement changes swimming behavior and vulnerability, making the timing of molt a key part of survival.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="spots" class="section">
+      <div class="head">
+        <h3>Spots &amp; recognition</h3>
+        <div class="note">A visual, simplified way to think about “spot patterns”</div>
+      </div>
+      <div class="body">
+        <div class="spotsWrap">
+          <div class="spotsViz" role="img" aria-label="Illustration of penguin spot patterns">
+            <svg viewBox="0 0 460 340" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#eaf1ff" stop-opacity="0.16"/>
+                  <stop offset="1" stop-color="#eaf1ff" stop-opacity="0.06"/>
+                </linearGradient>
+              </defs>
+              <!-- silhouette -->
+              <g transform="translate(70,10)">
+                <ellipse cx="160" cy="290" rx="85" ry="18" fill="rgba(0,0,0,.35)"/>
+                <path d="M140,40
+                         C190,30 235,60 240,110
+                         C245,160 230,185 220,205
+                         C214,217 216,240 240,270
+                         C255,290 225,312 160,312
+                         C95,312 65,290 80,270
+                         C104,240 106,217 100,205
+                         C90,185 75,160 80,110
+                         C85,60 110,40 140,40 Z"
+                      fill="url(#body)" stroke="rgba(255,255,255,.22)" stroke-width="2"/>
+                <!-- head -->
+                <circle cx="170" cy="55" r="28" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.22)" stroke-width="2"/>
+                <circle cx="160" cy="58" r="6" fill="#0b1220"/>
+                <path d="M145,76 Q170,88 195,76" stroke="rgba(77,208,225,.45)" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                <!-- body spots (illustrative patching) -->
+                <g id="spots" fill="rgba(17,27,51,.92)">
+                  <circle cx="145" cy="150" r="10"/>
+                  <circle cx="175" cy="135" r="8"/>
+                  <circle cx="205" cy="150" r="6"/>
+                  <circle cx="150" cy="175" r="7"/>
+                  <circle cx="185" cy="190" r="9"/>
+                  <circle cx="220" cy="180" r="7"/>
+                  <circle cx="210" cy="160" r="5"/>
+                  <circle cx="160" cy="205" r="6"/>
+                </g>
+
+                <!-- highlight overlay -->
+                <path d="M120,100 C125,145 105,175 95,205" stroke="rgba(124,92,255,.35)" stroke-width="4" fill="none" stroke-linecap="round"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="legend">
+            <div class="card">
+              <h4>So—do penguins really have “spot patterns”?</h4>
+              <p>
+                Some penguins show dark, patchy markings on parts of the body. The clearest and most discussed
+                recognition angle is often about the <b>African penguin</b> and how its markings can help identify individuals.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Why recognition could matter</h4>
+              <p>
+                In crowded colonies, matching the right partner (or individual) can improve breeding success.
+                Spot-like patterns are one possible source of identity information—alongside calls and behavior.
+              </p>
+            </div>
+            <div class="card">
+              <h4>What researchers test</h4>
+              <p>
+                Experiments described in science summaries have examined how changing/removing markings can alter
+                recognition behavior, supporting a role for those cues in certain cases.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Not a universal “spot = identity” rule</h4>
+              <p>
+                Different species may have different marking styles, and penguins rely on multiple cues.
+                The “spot pattern → recognition” idea is strongest for specific cases, not across all penguins.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid4" style="margin-top:16px">
+          <div class="card"><h4>Other identity cues</h4><p>Calls, posture, and movement patterns can also carry individual information in rookeries.</p></div>
+          <div class="card"><h4>Lighting &amp; distance</h4><p>Markings may be easier to see under certain angles, weather, and distances—affecting how useful they are.</p></div>
+          <div class="card"><h4>Seasonal context</h4><p>During breeding, selection pressures on recognition and mate choice can be stronger.</p></div>
+          <div class="card"><h4>“Spot” can mean many things</h4><p>When you hear “spotted penguins,” it may refer to a hypothesis or a specific pattern—not a single trait shared by all.</p></div>
+        </div>
+
+        <div class="quote" style="margin-top:14px">
+          Quick interpretation: if you hear “spotted penguins,” it usually refers to a <i>research hypothesis</i> about recognition cues—not a guaranteed trait every penguin shares.
+        </div>
+      </div>
+    </section>
+
+    <section id="species" class="section">
+      <div class="head">
+        <h3>Species sampler</h3>
+        <div class="note">More examples to broaden the “spotting” context</div>
+      </div>
+      <div class="body">
+        <div class="speciesGrid">
+          <div class="spec"><b>African penguin</b><div class="t">Often highlighted in “spots &amp; recognition” discussions due to distinctive patchy markings.</div></div>
+          <div class="spec"><b>Emperor penguin</b><div class="t">Deep-diving specialist; famous for breeding in harsh winter conditions.</div></div>
+          <div class="spec"><b>Adélie penguin</b><div class="t">A close relative of Antarctic shore life; frequently observed in polar research.</div></div>
+          <div class="spec"><b>Gentoo penguin</b><div class="t">Known for a bold white stripe and agile swimming.</div></div>
+          <div class="spec"><b>Magellanic penguin</b><div class="t">Lives along parts of South America; colony behavior and local prey matter.</div></div>
+          <div class="spec"><b>Rockhopper penguin</b><div class="t">Compact and energetic; often associated with rocky nesting sites.</div></div>
+
+          <div class="spec"><b>Chinstrap penguin</b><div class="t">Distinctive narrow band under the chin; colony life and timing are key.</div></div>
+          <div class="spec"><b>Humboldt penguin</b><div class="t">Anchored to cooler coastal waters; prey availability and upwelling influence feeding.</div></div>
+          <div class="spec"><b>Macaroni penguin</b><div class="t">Often highlighted by abundance in certain regions; relies on reliable ocean conditions.</div></div>
+        </div>
+
+        <div class="quote" style="margin-top:14px">
+          Want a deeper dive? Treat this page as a “map”: pick a species above, then look at the Behavior + Spots sections to connect social context with possible recognition cues.
+        </div>
+      </div>
+    </section>
+
+    <section id="help" class="section">
+      <div class="head">
+        <h3>How to help</h3>
+        <div class="note">Practical conservation actions</div>
+      </div>
+      <div class="body">
+        <div class="cols">
+          <div class="card">
+            <h4>Support habitat protection</h4>
+            <p>Protecting breeding colonies and nearby feeding zones helps penguins survive long enough to raise chicks.</p>
+          </div>
+          <div class="card">
+            <h4>Back responsible fisheries</h4>
+            <p>Sustainable fishing reduces competition for prey and can improve food availability for colonies.</p>
+          </div>
+          <div class="card">
+            <h4>Reduce plastic &amp; pollution</h4>
+            <p>Cleaning up ocean waste lowers ingestion and entanglement risks for marine wildlife.</p>
+          </div>
+          <div class="card">
+            <h4>Learn and share</h4>
+            <p>More people aware of penguin ecology and threats can increase long-term support for conservation.</p>
+          </div>
+          <div class="card">
+            <h4>Choose climate-aware actions</h4>
+            <p>Because ocean conditions shift with climate, supporting emissions cuts and climate resilience can help protect future food webs.</p>
+          </div>
+          <div class="card">
+            <h4>Be a responsible visitor</h4>
+            <p>If you visit colonies, keep distance, follow local rules, and avoid disturbing nesting areas—stress can reduce breeding success.</p>
+          </div>
+        </div>
+
+        <div class="grid4" style="margin-top:16px">
+          <div class="card"><h4>Support monitoring</h4><p>Back projects that track population trends, foraging success, and breeding timing.</p></div>
+          <div class="card"><h4>Reduce bycatch</h4><p>Encourage fishing practices that minimize accidental capture of seabirds and marine prey.</p></div>
+          <div class="card"><h4>Support rescue networks</h4><p>Some regions run wildlife response teams for oil spills and weather-driven events.</p></div>
+          <div class="card"><h4>Respect protected zones</h4><p>Follow closures around nesting, feeding, and seasonal habitat areas to avoid disruption.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="src">
+        Sources used for background (high-level): general penguin overviews (e.g., Britannica) plus web summaries discussing
+        “spot patterns” and recognition in specific penguin cases.
+        If you want, I can add a dedicated Sources section with exact citations.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    let reduceMotion = false;
+
+    function scrollToId(id){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth', block:'start'});
+    }
+
+    function toggleMode(){
+      reduceMotion = !reduceMotion;
+      const btn = document.getElementById('modeBtn');
+      if(btn){
+        btn.setAttribute('aria-pressed', reduceMotion ? 'true' : 'false');
+        btn.textContent = reduceMotion ? 'Enable motion' : 'Reduce motion';
+      }
+    }
+  </script>
+</body>
+</html>
