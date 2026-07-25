@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Penguins 101</title>
+  <style>
+    :root{
+      --bg:#071018;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.12);
+      --text:#e8f3ff;
+      --muted:#b7c7da;
+      --accent:#66e3ff;
+      --accent2:#ffd166;
+      --ring: rgba(102,227,255,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1000px 600px at 15% 0%, rgba(102,227,255,.16), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(255,209,102,.12), transparent 55%),
+        linear-gradient(180deg, #050a10, var(--bg));
+      color:var(--text);
+    }
+    header{
+      padding: 56px 16px 26px;
+      text-align:center;
+    }
+    .wrap{max-width:1040px; margin:0 auto; padding:0 16px;}
+    h1{
+      margin:0;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{margin-top:10px; color:var(--muted); font-size:1.05rem}
+
+    .hero{
+      margin-top:26px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:16px;
+      align-items:stretch;
+    }
+    @media (max-width: 900px){
+      .hero{grid-template-columns:1fr;}
+    }
+    .panel{
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(8px);
+    }
+    .panel h2{margin:0 0 10px; font-size:1.25rem}
+    .kicker{color:var(--accent); font-weight:700; letter-spacing:.2px; text-transform:uppercase; font-size:.85rem}
+    .lead{color:var(--muted); line-height:1.55; margin:0}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+      margin-top: 16px;
+    }
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+    .card{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .card::after{
+      content:"";
+      position:absolute; inset:auto -40px -60px auto;
+      width:120px; height:120px;
+      background: radial-gradient(circle at 30% 30%, rgba(102,227,255,.35), transparent 60%);
+      transform: rotate(25deg);
+      pointer-events:none;
+    }
+    .card h3{margin:0 0 6px; font-size:1.05rem}
+    .card p{margin:0; color:var(--muted); line-height:1.5}
+
+    .penguin-svg{
+      width:100%; height:100%; display:block;
+    }
+
+    .list{
+      margin: 10px 0 0; padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    footer{
+      padding: 26px 16px 46px;
+      color: rgba(232,243,255,.75);
+      text-align:center;
+      font-size:.95rem;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 8px 12px;
+      border-radius: 999px;
+      margin-top: 14px;
+      color: var(--muted);
+    }
+    .dot{width:10px; height:10px; border-radius:50%; background: var(--accent); box-shadow: 0 0 0 5px rgba(102,227,255,.12)}
+    .btns{display:flex; gap:10px; flex-wrap:wrap; margin-top: 14px;}
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button:focus{outline: 2px solid var(--ring); outline-offset:2px}
+    .primary{border-color: rgba(102,227,255,.35); background: rgba(102,227,255,.12)}
+
+    .section-title{margin: 26px 0 10px; font-size:1.35rem}
+
+    details{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 14px;
+    }
+    summary{cursor:pointer; font-weight:800}
+    details + details{margin-top: 12px;}
+    .small{font-size:.95rem; color:var(--muted); line-height:1.6}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="kicker">Penguins • 101</div>
+      <h1>Meet the birds that can’t fly—but can swim</h1>
+      <p class="subtitle">A quick, friendly guide to penguin basics: what they look like, where they live, how they breed, and why their body design matters.</p>
+
+      <div class="badge" aria-label="Fun fact">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Many penguins use bold black-and-white patterns for camouflage.</span>
+      </div>
+
+      <div class="hero">
+        <section class="panel" aria-label="Overview">
+          <h2>What makes a penguin a penguin?</h2>
+          <p class="lead">Penguins are flightless birds with streamlined bodies, flipper-like wings, and layers of insulation to handle cold ocean climates. Their countershading (dark backs, pale bellies) helps them blend in while swimming.</p>
+
+          <div class="grid" role="list" aria-label="Key traits">
+            <div class="card" role="listitem">
+              <h3>Built for the sea</h3>
+              <p>Wings act as flippers; bodies are streamlined for efficient swimming.</p>
+            </div>
+            <div class="card" role="listitem">
+              <h3>Cold-weather armor</h3>
+              <p>Dense feathers + fat layers + behavior help keep heat in.</p>
+            </div>
+            <div class="card" role="listitem">
+              <h3>Bold patterning</h3>
+              <p>Black-and-white markings can include patches/“spots” on the head or face.</p>
+            </div>
+          </div>
+
+          <div class="btns" aria-label="Quick actions">
+            <button class="primary" id="btnStart">Read the essentials</button>
+            <button id="btnSurprise">Show a spotty-face fact</button>
+          </div>
+        </section>
+
+        <aside class="panel" aria-label="Penguin illustration">
+          <!-- Simple inline SVG “penguin” that doesn’t claim exact species realism -->
+          <svg class="penguin-svg" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stylized penguin">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="#66e3ff" stop-opacity="0.45"/>
+                <stop offset="1" stop-color="#66e3ff" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stop-color="#111a24"/>
+                <stop offset="1" stop-color="#071018"/>
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="520" height="520" rx="24" fill="url(#g1)"/>
+            <ellipse cx="260" cy="420" rx="120" ry="30" fill="rgba(0,0,0,.25)"/>
+
+            <!-- Body -->
+            <ellipse cx="260" cy="280" rx="120" ry="155" fill="url(#g2)" stroke="rgba(255,255,255,.18)" stroke-width="3"/>
+            <!-- Belly -->
+            <path d="M150 292c16 92 66 145 110 145s96-53 110-145c-34-45-71-66-110-66s-76 21-110 66z" fill="#f2fbff" opacity="0.95"/>
+            <!-- Face/patches -->
+            <g>
+              <ellipse cx="255" cy="205" rx="55" ry="45" fill="#f2fbff"/>
+              <ellipse cx="235" cy="205" rx="18" ry="16" fill="#071018" opacity="0.95"/>
+              <ellipse cx="285" cy="205" rx="18" ry="16" fill="#071018" opacity="0.95"/>
+              <circle cx="245" cy="200" r="6" fill="#071018"/>
+              <circle cx="275" cy="200" r="6" fill="#071018"/>
+            </g>
+
+            <!-- Beak -->
+            <path d="M255 235l35 20-35 20-35-20z" fill="#ffd166" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <!-- Flippers -->
+            <g opacity="0.98">
+              <path d="M160 310c-40 10-60-20-58-45 3-30 30-50 68-35 20 8 28 28 22 43-6 16-20 33-32 37z" fill="#071018" stroke="rgba(255,255,255,.15)" stroke-width="3"/>
+              <path d="M360 310c40 10 60-20 58-45-3-30-30-50-68-35-20 8-28 28-22 43 6 16 20 33 32 37z" fill="#071018" stroke="rgba(255,255,255,.15)" stroke-width="3"/>
+            </g>
+
+            <!-- Feet -->
+            <path d="M210 438c-26 12-35 33-20 45 13 10 52-3 60-18" fill="#ffd166" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <path d="M310 438c26 12 35 33 20 45-13 10-52-3-60-18" fill="#ffd166" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+
+            <!-- Water sparkle -->
+            <g opacity="0.55">
+              <circle cx="110" cy="380" r="4" fill="#66e3ff"/>
+              <circle cx="420" cy="360" r="3" fill="#66e3ff"/>
+              <circle cx="380" cy="415" r="2.8" fill="#ffd166"/>
+            </g>
+          </svg>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="section-title" id="essentials">Penguin essentials</div>
+
+    <details open>
+      <summary>Where do penguins live?</summary>
+      <div class="small">Penguins are found in the Southern Hemisphere, with species ranging from cold Antarctic regions to temperate coasts. Many live in colonies near productive feeding areas.</div>
+    </details>
+
+    <details>
+      <summary>What do they eat?</summary>
+      <div class="small">Most penguins are fish and krill eaters. Diet varies by species and season, but many are adapted for hunting underwater with quick bursts of swimming.</div>
+    </details>
+
+    <details>
+      <summary>How do they breed?</summary>
+      <div class="small">Many penguins form breeding colonies and show strong site fidelity (returning to familiar nesting areas). Courtship and parental care are common, often with teamwork between partners.</div>
+    </details>
+
+    <details>
+      <summary>Why the “spots” / patches?</summary>
+      <div class="small">Some penguins have extra face or head markings that can look like spots or patches on the head/neck. These high-contrast patterns can help with recognition among birds in crowded colonies.</div>
+    </details>
+  </main>
+
+  <footer>
+    <div>Made as a simple, single-file website. Replace the text/images later with sources you trust.</div>
+    <div style="margin-top:8px; color: rgba(232,243,255,.6);">Tip: If you want, tell me which penguin species you care about (e.g., emperor, king, gentoo, African), and I’ll tailor the page.</div>
+  </footer>
+
+  <script>
+    const essentialsEl = document.getElementById('essentials');
+    document.getElementById('btnStart').addEventListener('click', () => {
+      essentialsEl.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+
+    document.getElementById('btnSurprise').addEventListener('click', () => {
+      const msg = document.createElement('div');
+      msg.style.position = 'fixed';
+      msg.style.left = '50%';
+      msg.style.top = '16px';
+      msg.style.transform = 'translateX(-50%)';
+      msg.style.padding = '10px 14px';
+      msg.style.background = 'rgba(7,16,24,.86)';
+      msg.style.border = '1px solid rgba(255,255,255,.16)';
+      msg.style.borderRadius = '14px';
+      msg.style.color = '#e8f3ff';
+      msg.style.boxShadow = '0 16px 40px rgba(0,0,0,.35)';
+      msg.style.zIndex = '9999';
+      msg.innerHTML = 'Spotty-looking face patches can help penguins identify each other in crowded colonies.';
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 2400);
+    });
+  </script>
+</body>
+</html>
