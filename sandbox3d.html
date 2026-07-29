@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3D Sandbox Simulator (Three.js)</title>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; background: #070A12; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    #hud {
+      position: absolute; left: 12px; top: 12px; z-index: 10; color: #EAF2FF;
+      background: rgba(10, 16, 35, 0.55); border: 1px solid rgba(120, 160, 255, 0.25);
+      backdrop-filter: blur(6px);
+      padding: 10px 12px; border-radius: 12px;
+      max-width: 420px;
+    }
+    #hud .title { font-weight: 800; letter-spacing: 0.2px; margin-bottom: 6px; }
+    #hud .row { display:flex; gap:10px; flex-wrap: wrap; }
+    .pill { font-size: 12px; padding: 6px 8px; border-radius: 999px; border: 1px solid rgba(120,160,255,0.25); background: rgba(0,0,0,0.15); }
+    #controls { margin-top: 10px; display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { border: 1px solid rgba(120,160,255,0.25); background: rgba(0,0,0,0.12); border-radius: 12px; padding: 8px 10px; }
+    .label { font-size: 12px; color: rgba(234,242,255,0.85); margin-bottom: 6px; }
+    input[type="range"] { width: 100%; }
+    button {
+      cursor: pointer; color: #EAF2FF; background: rgba(70,120,255,0.22);
+      border: 1px solid rgba(120,160,255,0.35);
+      padding: 8px 10px; border-radius: 10px; font-weight: 700;
+    }
+    button:hover { background: rgba(70,120,255,0.30); }
+    #btnRow { display:flex; gap:10px; margin-top: 10px; flex-wrap: wrap; }
+    #toast {
+      position: absolute; left: 12px; bottom: 12px; z-index: 10;
+      color: #EAF2FF; background: rgba(10, 16, 35, 0.55);
+      border: 1px solid rgba(120, 160, 255, 0.25);
+      backdrop-filter: blur(6px);
+      padding: 10px 12px; border-radius: 12px; max-width: 520px;
+      transform: translateY(14px); opacity: 0; transition: opacity 250ms ease, transform 250ms ease;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    a { color: #9BD1FF; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div class="title">3D Sandbox Simulator</div>
+    <div class="row">
+      <div class="pill">Click: place object</div>
+      <div class="pill">Drag: move with grab</div>
+      <div class="pill">Wheel: scale/brush radius</div>
+      <div class="pill">R: reset</div>
+      <div class="pill">T: toggle gravity</div>
+      <div class="pill">G: toggle ground</div>
+      <div class="pill">1/2/3: cube / sphere / capsule</div>
+    </div>
+
+    <div id="controls">
+      <div class="card">
+        <div class="label">Brush radius: <span id="radiusVal">2.0</span></div>
+        <input id="radius" type="range" min="0.5" max="6" step="0.1" value="2" />
+      </div>
+      <div class="card">
+        <div class="label">Spawn power (impulse): <span id="impVal">8.0</span></div>
+        <input id="impulse" type="range" min="0" max="25" step="0.1" value="8" />
+      </div>
+    </div>
+
+    <div id="btnRow">
+      <button id="btnClear">Clear objects</button>
+      <button id="btnRandom">Drop a stack</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x070A12);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.05, 500);
+    camera.position.set(6, 7, 12);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+    document.body.appendChild(renderer.domElement);
+
+    // Lights
+    const hemi = new THREE.HemisphereLight(0x88B7FF, 0x0B122A, 0.9);
+    scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xFFFFFF, 1.1);
+    dir.position.set(8, 14, 6);
+    scene.add(dir);
+
+    // Subtle grid/ground
+    let groundMesh = null;
+    function setGround(enabled) {
+      if (!groundMesh) {
+        const grid = new THREE.GridHelper(80, 80, 0x2D4A7A, 0x14304E);
+        grid.position.y = 0;
+        groundMesh = grid;
+        scene.add(groundMesh);
+
+        const planeGeo = new THREE.PlaneGeometry(200, 200);
+        const planeMat = new THREE.MeshStandardMaterial({ color: 0x0A1430, roughness: 1, metalness: 0.0, opacity: 0.25, transparent: true });
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = 0;
+        plane.name = 'groundPlane';
+        groundMesh.add(plane);
+      }
+      groundMesh.visible = enabled;
+    }
+    setGround(true);
+
+    // Camera controls (minimal orbit + pan/zoom)
+    let isOrbiting = false;
+    let lastX = 0, lastY = 0;
+    let target = new THREE.Vector3(0, 2, 0);
+    const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(target));
+    spherical.radius = camera.position.distanceTo(target);
+    spherical.phi = Math.max(0.2, Math.min(Math.PI - 0.2, spherical.phi));
+
+    function updateCamera() {
+      const pos = new THREE.Vector3().setFromSpherical(spherical).add(target);
+      camera.position.copy(pos);
+      camera.lookAt(target);
+    }
+    updateCamera();
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      // only orbit if not dragging object (handled elsewhere)
+      if (!dragging) {
+        isOrbiting = true;
+        lastX = e.clientX; lastY = e.clientY;
+      }
+    });
+    window.addEventListener('pointerup', () => { isOrbiting = false; });
+    window.addEventListener('pointermove', (e) => {
+      if (!isOrbiting) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+
+      spherical.theta -= dx * 0.005;
+      spherical.phi -= dy * 0.005;
+      spherical.phi = Math.max(0.15, Math.min(Math.PI - 0.15, spherical.phi));
+      updateCamera();
+    });
+
+    window.addEventListener('wheel', (e) => {
+      const delta = Math.sign(e.deltaY);
+      spherical.radius = Math.max(3, Math.min(45, spherical.radius + delta * 1.0));
+      updateCamera();
+    }, { passive: true });
+
+    // Physics (simple verlet-ish with impulses + ground collision)
+    const objects = [];
+    const tmpV = new THREE.Vector3();
+    const gravity = new THREE.Vector3(0, -9.8, 0);
+    let useGravity = true;
+    const groundY = 0.0;
+
+    function makeMaterial(kind) {
+      const palette = {
+        cube: 0x66CCFF,
+        sphere: 0xA78BFA,
+        capsule: 0x34D399
+      };
+      const base = palette[kind] ?? 0x66CCFF;
+      return new THREE.MeshStandardMaterial({ color: base, roughness: 0.35, metalness: 0.15, emissive: 0x000000 });
+    }
+
+    function addObject(type, position, initialImpulse) {
+      const mass = type === 'cube' ? 1.2 : type === 'sphere' ? 1.0 : 1.3;
+      let mesh;
+      if (type === 'cube') {
+        const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+        mesh = new THREE.Mesh(geo, makeMaterial(type));
+      } else if (type === 'sphere') {
+        const geo = new THREE.SphereGeometry(0.55, 28, 20);
+        mesh = new THREE.Mesh(geo, makeMaterial(type));
+      } else {
+        const geo = new THREE.CapsuleGeometry(0.42, 0.95, 10, 18);
+        mesh = new THREE.Mesh(geo, makeMaterial(type));
+      }
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      mesh.position.copy(position);
+      scene.add(mesh);
+
+      objects.push({
+        id: cryptoRandomId(),
+        type,
+        mesh,
+        mass,
+        radiusApprox: type === 'cube' ? 0.75 : type === 'sphere' ? 0.6 : 0.65,
+        vel: new THREE.Vector3(),
+        angVel: new THREE.Vector3(),
+        spin: new THREE.Quaternion().identity()
+      });
+
+      if (initialImpulse) {
+        tmpV.copy(initialImpulse).divideScalar(mass);
+        objects[objects.length - 1].vel.add(tmpV);
+      }
+    }
+
+    function cryptoRandomId() {
+      // avoids importing UUID
+      const a = new Uint32Array(4);
+      crypto.getRandomValues(a);
+      return Array.from(a).map(x => x.toString(16).padStart(8,'0')).join('');
+    }
+
+    // Raycasting for placement/grab
+    const raycaster = new THREE.Raycaster();
+    const mouseNDC = new THREE.Vector2();
+    const groundCollider = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+
+    let selectedType = 'cube';
+
+    function getPlacementPoint(e) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      mouseNDC.set(x, y);
+      raycaster.setFromCamera(mouseNDC, camera);
+
+      // Intersect with ground plane y=0
+      const t = raycaster.ray.intersectPlane(groundCollider, tmpV);
+      return t ? tmpV.clone() : null;
+    }
+
+    // Drag/grab
+    let dragging = false;
+    let grabbed = null;
+    let grabOffset = new THREE.Vector3();
+    let grabTarget = new THREE.Vector3();
+
+    function findObjectUnderPointer(e) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      mouseNDC.set(x, y);
+      raycaster.setFromCamera(mouseNDC, camera);
+
+      const meshes = objects.map(o => o.mesh);
+      const hits = raycaster.intersectObjects(meshes, false);
+      if (!hits.length) return null;
+      const hit = hits[0];
+      return objects.find(o => o.mesh === hit.object) ?? null;
+    }
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      const hitObj = findObjectUnderPointer(e);
+      if (hitObj) {
+        dragging = true;
+        grabbed = hitObj;
+
+        // set grab target point on ray at current depth
+        const rect = renderer.domElement.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+        mouseNDC.set(x, y);
+        raycaster.setFromCamera(mouseNDC, camera);
+
+        // plane through object facing camera to get stable offset
+        const camDir = camera.getWorldDirection(new THREE.Vector3());
+        const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir, grabbed.mesh.position);
+        const ok = raycaster.ray.intersectPlane(plane, grabTarget);
+        if (ok) {
+          grabOffset.copy(grabbed.mesh.position).sub(grabTarget);
+        } else {
+          grabOffset.set(0,0,0);
+        }
+
+        // stop motion
+        grabbed.vel.set(0,0,0);
+        grabbed.angVel.set(0,0,0);
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (dragging) {
+        dragging = false;
+        grabbed = null;
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!dragging || !grabbed) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      mouseNDC.set(x, y);
+      raycaster.setFromCamera(mouseNDC, camera);
+
+      const camDir = camera.getWorldDirection(new THREE.Vector3());
+      const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir, grabbed.mesh.position);
+      const ok = raycaster.ray.intersectPlane(plane, grabTarget);
+      if (ok) {
+        grabbed.mesh.position.copy(grabTarget).add(grabOffset);
+      }
+    });
+
+    // Placement on click (if not dragging and clicked empty)
+    let lastPointerDownAt = 0;
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      lastPointerDownAt = performance.now();
+    });
+
+    renderer.domElement.addEventListener('click', (e) => {
+      if (dragging) return;
+
+      // if clicking on object, ignore (grab handles pointerdown)
+      const hitObj = findObjectUnderPointer(e);
+      if (hitObj) return;
+
+      const p = getPlacementPoint(e);
+      if (!p) return;
+
+      const radius = parseFloat(radiusEl.value);
+      const impulseMag = parseFloat(impulseEl.value);
+
+      // scatter within brush radius
+      const jitter = new THREE.Vector3(
+        (Math.random() * 2 - 1),
+        0,
+        (Math.random() * 2 - 1)
+      ).multiplyScalar(radius * 0.5);
+
+      const pos = p.clone().add(jitter);
+      pos.y = 0.25;
+
+      // impulse roughly along camera-to-point direction
+      const dir = p.clone().sub(camera.position).normalize();
+      const impulse = dir.multiplyScalar(impulseMag);
+      impulse.y = impulse.y + (impulseMag * 0.12 + Math.random() * 1.2);
+
+      addObject(selectedType, pos, impulse);
+    });
+
+    // UI
+    const radiusEl = document.getElementById('radius');
+    const radiusVal = document.getElementById('radiusVal');
+    const impulseEl = document.getElementById('impulse');
+    const impVal = document.getElementById('impVal');
+
+    radiusEl.addEventListener('input', () => radiusVal.textContent = Number(radiusEl.value).toFixed(1));
+    impulseEl.addEventListener('input', () => impVal.textContent = Number(impulseEl.value).toFixed(1));
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      for (const o of objects) scene.remove(o.mesh);
+      objects.length = 0;
+      showToast('Cleared objects.');
+    });
+
+    document.getElementById('btnRandom').addEventListener('click', () => {
+      const center = new THREE.Vector3(0, 0, 0);
+      for (let i = 0; i < 28; i++) {
+        const type = i % 3 === 0 ? 'cube' : i % 3 === 1 ? 'sphere' : 'capsule';
+        const pos = center.clone();
+        pos.x += (Math.random() * 2 - 1) * 2.8;
+        pos.z += (Math.random() * 2 - 1) * 2.8;
+        pos.y = 6 + Math.random() * 6;
+
+        const impulse = new THREE.Vector3(
+          (Math.random()*2-1) * 2.5,
+          0,
+          (Math.random()*2-1) * 2.5
+        );
+        addObject(type, pos, impulse);
+      }
+      showToast('Dropped a stack.');
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => t.classList.remove('show'), 1800);
+    }
+
+    // Keys
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'r' || e.key === 'R') {
+        for (const o of objects) scene.remove(o.mesh);
+        objects.length = 0;
+        showToast('Reset.');
+      }
+      if (e.key === 't' || e.key === 'T') {
+        useGravity = !useGravity;
+        showToast(useGravity ? 'Gravity: ON' : 'Gravity: OFF');
+      }
+      if (e.key === 'g' || e.key === 'G') {
+        setGround(!groundMesh.visible);
+        showToast(groundMesh.visible ? 'Ground: ON' : 'Ground: OFF');
+      }
+      if (e.key === '1') selectedType = 'cube';
+      if (e.key === '2') selectedType = 'sphere';
+      if (e.key === '3') selectedType = 'capsule';
+    });
+
+    // Collision (cheap) between objects + ground
+    function resolveCollisions(dt) {
+      // ground
+      for (const o of objects) {
+        if (!groundMesh.visible) continue;
+        const bottom = o.mesh.position.y - o.radiusApprox;
+        if (bottom < groundY) {
+          o.mesh.position.y += (groundY - bottom);
+          if (o.vel.y < 0) o.vel.y *= -0.45;
+          o.vel.x *= 0.92;
+          o.vel.z *= 0.92;
+        }
+      }
+
+      // object-object sphere-sphere approximation
+      for (let i = 0; i < objects.length; i++) {
+        for (let j = i + 1; j < objects.length; j++) {
+          const a = objects[i];
+          const b = objects[j];
+          const diff = a.mesh.position.clone().sub(b.mesh.position);
+          const dist = diff.length();
+          const minDist = a.radiusApprox + b.radiusApprox;
+          if (dist === 0 || dist >= minDist) continue;
+
+          diff.multiplyScalar(1 / dist);
+          const penetration = minDist - dist;
+
+          // positional correction (split by mass)
+          const totalMass = a.mass + b.mass;
+          const aShare = b.mass / totalMass;
+          const bShare = a.mass / totalMass;
+          a.mesh.position.addScaledVector(diff, penetration * aShare);
+          b.mesh.position.addScaledVector(diff, -penetration * bShare);
+
+          // velocity impulse (elastic-ish)
+          const relVel = a.vel.clone().sub(b.vel);
+          const relAlong = relVel.dot(diff);
+          if (relAlong > 0) continue;
+
+          const restitution = 0.25;
+          const jImpulse = -(1 + restitution) * relAlong / (1 / a.mass + 1 / b.mass);
+          const impulse = diff.multiplyScalar(jImpulse);
+          a.vel.addScaledVector(impulse, 1 / a.mass);
+          b.vel.addScaledVector(impulse, -1 / b.mass);
+
+          // some angular wobble
+          a.angVel.add(new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).multiplyScalar(0.6));
+          b.angVel.add(new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).multiplyScalar(0.6));
+        }
+      }
+    }
+
+    // Animation loop
+    let last = performance.now();
+    function tick() {
+      const now = performance.now();
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+
+      // Apply physics
+      for (const o of objects) {
+        if (o === grabbed) continue; // grabbed object is controlled by pointer
+
+        if (useGravity) o.vel.addScaledVector(gravity, dt);
+
+        // damping
+        o.vel.multiplyScalar(Math.pow(0.985, dt * 60));
+
+        o.mesh.position.addScaledVector(o.vel, dt);
+
+        // spin
+        const ang = o.angVel.length();
+        if (ang > 0.0001) {
+          const axis = o.angVel.clone().normalize();
+          const q = new THREE.Quaternion().setFromAxisAngle(axis, ang * dt);
+          o.mesh.quaternion.premultiply(q);
+          o.angVel.multiplyScalar(Math.pow(0.92, dt * 60));
+        }
+      }
+
+      resolveCollisions(dt);
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    // Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Intro
+    showToast('Choose 1/2/3, then click to place. Drag objects to move.');
+  </script>
+</body>
+</html>
