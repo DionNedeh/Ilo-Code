@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Penguins — A Friendly Overview</title>
+  <style>
+    :root{
+      --bg:#07121f;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.09);
+      --text:#eaf2ff;
+      --muted: rgba(234,242,255,.72);
+      --accent:#4fd1ff;
+      --accent2:#7cdb7c;
+      --warn:#ffd166;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --max: 1060px;
+    }
+
+    /* Prefer reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      *{scroll-behavior:auto !important; animation:none !important; transition:none !important}
+    }
+
+    .heroVisuals{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    @media (max-width: 900px){
+      .heroVisuals{grid-template-columns:1fr;}
+    }
+
+    .visualCard{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,.20);
+    }
+    .visualCard::before{
+      content:"";
+      position:absolute;
+      inset:-80px -80px auto auto;
+      width:180px; height:180px;
+      background: radial-gradient(circle at 30% 30%, rgba(79,209,255,.25), transparent 60%);
+      transform: rotate(10deg);
+      pointer-events:none;
+    }
+    .visualTop{display:flex; align-items:center; gap:10px;}
+    .visualTop .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(234,242,255,.9);
+      font-weight: 650;
+      letter-spacing: .2px;
+      font-size: 13px;
+    }
+    .pillDot{width:10px;height:10px;border-radius:50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(79,209,255,.16)}
+    .pillDot2{background: var(--accent2); box-shadow: 0 0 0 4px rgba(124,219,124,.16)}
+
+    .visualMeta{margin-top: 10px; color: var(--muted); font-size: 13px;}
+    .sparkline{
+      margin-top: 12px;
+      width:100%;
+      height:92px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(79,209,255,.10), rgba(255,255,255,0));
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .bubbleField{
+      margin-top: 12px;
+      height: 92px;
+      width:100%;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(124,219,124,.10), rgba(255,255,255,0));
+      border: 1px solid rgba(255,255,255,.10);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .bubble{
+      position:absolute;
+      bottom: -18px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: rgba(124,219,124,.65);
+      box-shadow: 0 0 0 4px rgba(124,219,124,.14);
+      opacity:.85;
+      animation: floatUp 3.8s linear infinite;
+    }
+    .bubble.b2{width: 18px; height: 18px; left: 18%; animation-duration: 4.6s; background: rgba(79,209,255,.65); box-shadow: 0 0 0 6px rgba(79,209,255,.14)}
+    .bubble.b3{width: 9px; height: 9px; left: 52%; animation-duration: 3.4s; background: rgba(255,209,102,.70); box-shadow: 0 0 0 4px rgba(255,209,102,.14)}
+    .bubble.b4{width: 14px; height: 14px; left: 76%; animation-duration: 5.1s; background: rgba(124,219,124,.60)}
+    .bubble.b5{width: 10px; height: 10px; left: 34%; animation-duration: 4.1s; background: rgba(79,209,255,.55)}
+
+    @keyframes floatUp{
+      0%{transform: translateY(0); opacity:.0}
+      10%{opacity:.85}
+      100%{transform: translateY(-145px); opacity:.0}
+    }
+
+    .caption2{margin-top: 10px; color: var(--muted); font-size: 13px;}
+
+    figure{margin:0}
+
+    .skipLink{
+      position:absolute;
+      left:-9999px;
+      top: 10px;
+      background: rgba(79,209,255,.20);
+      border:1px solid rgba(79,209,255,.35);
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration:none;
+      z-index: 999;
+    }
+    .skipLink:focus{left: 12px}
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1000px 600px at 15% -10%, rgba(79,209,255,.30), transparent 55%),
+        radial-gradient(900px 540px at 95% 10%, rgba(124,219,124,.25), transparent 52%),
+        radial-gradient(800px 600px at 40% 110%, rgba(255,209,102,.18), transparent 55%),
+        linear-gradient(180deg, #06101d 0%, #040b14 100%);
+      color:var(--text);
+      line-height:1.5;
+    }
+    header{
+      padding: 42px 18px 22px;
+      text-align:center;
+    }
+    .wrap{max-width:var(--max); margin:0 auto;}
+    .hero{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 18px;
+      align-items:stretch;
+    }
+    @media (max-width: 900px){
+      .hero{grid-template-columns:1fr;}
+    }
+    .hero .titleCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 20px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero .titleCard:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(500px 120px at 20% 0%, rgba(79,209,255,.35), transparent 55%),
+        radial-gradient(420px 160px at 90% 20%, rgba(124,219,124,.28), transparent 60%);
+      opacity:.75;
+      pointer-events:none;
+    }
+    .hero .titleCard > *{position:relative}
+    h1{margin:0; font-size: clamp(28px, 4vw, 44px); letter-spacing:.2px}
+    .sub{
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 62ch;
+    }
+    .chips{display:flex; flex-wrap:wrap; gap:10px; margin-top:16px}
+    .chip{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      padding:8px 10px;
+      border-radius: 999px;
+      color: rgba(234,242,255,.9);
+      font-size: 13px;
+      backdrop-filter: blur(6px);
+    }
+
+    .sideCard{
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .badge{
+      display:flex; align-items:center; gap:10px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .dot{width:12px; height:12px; border-radius:50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(79,209,255,.15)}
+    .badge strong{display:block; font-size:14px}
+    .badge span{display:block; color: var(--muted); font-size: 13px}
+
+    main{padding: 10px 18px 60px;}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .card{
+      grid-column: span 4;
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      padding: 16px 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.24);
+      overflow:hidden;
+      position:relative;
+    }
+    .card:after{
+      content:"";
+      position:absolute;
+      right:-60px; top:-60px;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle at 30% 30%, rgba(79,209,255,.25), transparent 60%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .card > *{position:relative}
+    .card h2{margin:0 0 8px; font-size: 18px}
+    .card p{margin:0; color: var(--muted)}
+
+    @media (max-width: 980px){
+      .card{grid-column: span 6;}
+    }
+    @media (max-width: 640px){
+      .card{grid-column: span 12;}
+    }
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media (max-width: 900px){
+      .twoCol{grid-template-columns: 1fr;}
+    }
+    .list{
+      margin: 10px 0 0;
+      padding: 0;
+      list-style:none;
+      display:grid;
+      gap:10px;
+    }
+    .li{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 12px;
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+    }
+    .icon{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      display:grid; place-items:center;
+      background: rgba(79,209,255,.12);
+      border:1px solid rgba(79,209,255,.25);
+      flex: 0 0 auto;
+    }
+    .icon svg{width:18px; height:18px; fill: var(--accent)}
+    .li strong{display:block; font-size: 14px; margin-top:2px}
+    .li span{display:block; color: var(--muted); font-size: 13px; margin-top: 2px}
+
+    footer{
+      padding: 22px 18px 40px;
+      color: rgba(234,242,255,.65);
+      text-align:center;
+      font-size: 13px;
+    }
+
+    /* Penguin card: decorative SVG */
+    .penguinWrap{
+      display:flex; align-items:center; justify-content:center;
+      padding: 6px 4px 2px;
+    }
+    .caption{color: var(--muted); font-size: 12.5px; text-align:center; margin-top:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <section class="titleCard" aria-label="Penguins overview">
+        <h1>Penguins — masters of the cold seas</h1>
+        <p class="sub">
+          Penguins are flightless, semi-aquatic birds built for swimming. They spend much of their lives in water,
+          using streamlined bodies, strong flippers, and dense feathers to stay warm and hunt for food.
+        </p>
+        <div class="chips" aria-label="Quick facts">
+          <div class="chip">Family: Spheniscidae</div>
+          <div class="chip">Mostly Southern Hemisphere</div>
+          <div class="chip">Flightless—but great swimmers</div>
+          <div class="chip">Rely on colonies for breeding</div>
+        </div>
+      </section>
+
+      <aside class="sideCard" aria-label="At a glance">
+        <div style="display:grid; gap:12px">
+          <div class="badge">
+            <div class="dot" aria-hidden="true"></div>
+            <div>
+              <strong>What they’re like</strong>
+              <span>Curious, social, and well adapted to cold.</span>
+            </div>
+          </div>
+          <div class="badge">
+            <div class="dot" style="background: var(--accent2); box-shadow: 0 0 0 4px rgba(124,219,124,.15)" aria-hidden="true"></div>
+            <div>
+              <strong>How they survive</strong>
+              <span>Insulation + waterproofing + huddling behavior.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="heroVisuals" aria-label="Extra visuals">
+          <figure class="visualCard" aria-label="Warmth layer diagram">
+            <div class="visualTop">
+              <span class="pill"><span class="pillDot" aria-hidden="true"></span> Warmth layers</span>
+            </div>
+            <svg class="visualSvg" style="width:100%; height:84px; margin-top:10px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03)" viewBox="0 0 360 120" role="img" aria-label="Layered feathers illustration">
+              <path d="M30 95 C 80 70, 120 70, 180 55 C 235 41, 285 35, 330 30" fill="none" stroke="rgba(79,209,255,.65)" stroke-width="10" stroke-linecap="round" opacity=".25"/>
+              <g opacity=".92">
+                <rect x="60" y="28" width="240" height="16" rx="8" fill="rgba(79,209,255,.30)"/>
+                <rect x="46" y="52" width="268" height="18" rx="9" fill="rgba(255,255,255,.12)"/>
+                <rect x="64" y="78" width="232" height="16" rx="8" fill="rgba(124,219,124,.20)"/>
+              </g>
+              <g font-family="ui-sans-serif, system-ui" font-size="12" fill="rgba(234,242,255,.85)">
+                <text x="78" y="40">Air-trapping</text>
+                <text x="62" y="73">Feathers</text>
+                <text x="76" y="103">Blubber</text>
+              </g>
+            </svg>
+            <figcaption class="caption2">Many layers trap warm air and resist wetness.</figcaption>
+          </figure>
+
+          <figure class="visualCard" aria-label="Colony cohesion illustration">
+            <div class="visualTop">
+              <span class="pill"><span class="pillDot" aria-hidden="true" style="background: var(--accent2); box-shadow: 0 0 0 4px rgba(124,219,124,.16)"></span> Colony cohesion</span>
+            </div>
+            <div class="bubbleField" aria-hidden="true">
+              <span class="bubble b1"></span>
+              <span class="bubble b2"></span>
+              <span class="bubble b3"></span>
+              <span class="bubble b4"></span>
+              <span class="bubble b5"></span>
+            </div>
+            <figcaption class="caption2">Huddling reduces heat loss and strengthens bonds.</figcaption>
+          </figure>
+        </div>
+
+        <div class="penguinWrap" aria-hidden="true">
+          <!-- Simple decorative penguin SVG -->
+          <svg width="210" height="170" viewBox="0 0 210 170" role="img" aria-label="Penguin illustration">
+            <defs>
+              <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#2b2f3a"/>
+                <stop offset="1" stop-color="#141826"/>
+              </linearGradient>
+              <linearGradient id="gBelly" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#f7fbff" stop-opacity=".98"/>
+                <stop offset="1" stop-color="#d9e7ff" stop-opacity=".92"/>
+              </linearGradient>
+            </defs>
+
+            <!-- feet -->
+            <path d="M78 144c-10 3-15 10-14 17h34c1-7-5-15-20-17z" fill="#ffcc66"/>
+            <path d="M139 144c-10 3-15 10-14 17h34c1-7-5-15-20-17z" fill="#ffcc66"/>
+
+            <!-- tail -->
+            <path d="M91 98c-6 20-6 38 6 47 16 12 40 4 52-14-16-5-32-12-58-33z" fill="#1c2233" opacity=".95"/>
+
+            <!-- flippers -->
+            <path d="M55 106c-16 8-23 23-20 36 2 9 14 9 30-1 7-4 8-20 5-28-2-5-7-9-15-7z" fill="#1b2030"/>
+            <path d="M156 106c16 8 23 23 20 36-2 9-14 9-30-1-7-4-8-20-5-28 2-5 7-9 15-7z" fill="#1b2030"/>
+
+            <!-- body -->
+            <ellipse cx="106" cy="103" rx="54" ry="56" fill="url(#gBody)"/>
+            <ellipse cx="106" cy="120" rx="45" ry="40" fill="url(#gBelly)"/>
+
+            <!-- head -->
+            <ellipse cx="106" cy="56" rx="34" ry="28" fill="#1b2030"/>
+
+            <!-- face -->
+            <ellipse cx="106" cy="62" rx="22" ry="18" fill="#f4f9ff" opacity=".95"/>
+            <path d="M84 53c-2 10 3 20 11 26 6 4 13 6 20 4" fill="none" stroke="#2b2f3a" stroke-width="5" stroke-linecap="round" opacity=".35"/>
+
+            <!-- eyes -->
+            <circle cx="97" cy="56" r="4.2" fill="#0a0d14"/>
+            <circle cx="116" cy="56" r="4.2" fill="#0a0d14"/>
+
+            <!-- beak -->
+            <path d="M100 72l6 10 10-5-16-5z" fill="#ffb020"/>
+            <path d="M100 72l10-4 6 9-16-5z" fill="#ffcc66"/>
+
+            <!-- highlight -->
+            <path d="M70 104c6-24 30-42 55-39" fill="none" stroke="#4fd1ff" stroke-opacity=".25" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="caption">A decorative penguin (not to scale).</div>
+      </aside>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid" aria-label="Key sections">
+      <article class="card">
+        <h2>Built for swimming</h2>
+        <p>Flippers act like wings underwater, while dense bones and a streamlined body help penguins dive efficiently.</p>
+      </article>
+      <article class="card">
+        <h2>Warmth and waterproofing</h2>
+        <p>Feathers trap air for insulation, and oil from the uropygial gland helps repel water.</p>
+      </article>
+      <article class="card">
+        <h2>Colony life</h2>
+        <p>Many species breed in large groups, which can support social bonding and improve protection of chicks.</p>
+      </article>
+    </div>
+
+    <section class="twoCol" aria-label="More details">
+      <div class="card" style="grid-column: auto;">
+        <h2>Diet &amp; foraging</h2>
+        <p>Penguins typically eat fish, krill, and other small marine animals they catch while swimming and diving.</p>
+        <ul class="list">
+          <li class="li">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 2c3.5 3 7 6.7 7 11.2A7 7 0 1 1 5 13.2C5 8.7 8.5 5 12 2z"/></svg>
+            </div>
+            <div>
+              <strong>Search</strong>
+              <span>They scan water for prey and swim in efficient patterns.</span>
+            </div>
+          </li>
+          <li class="li">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 17c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V7H7v10zm2-9h6v8H9V8z"/></svg>
+            </div>
+            <div>
+              <strong>Dive</strong>
+              <span>Strong, flexible flippers help them chase and capture food.</span>
+            </div>
+          </li>
+          <li class="li">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-7-10A4 4 0 0 1 12 8a4 4 0 0 1 7 3c0 5.6-7 10-7 10z"/></svg>
+            </div>
+            <div>
+              <strong>Return</strong>
+              <span>Many penguins shuttle food back to chicks during breeding.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card" style="grid-column: auto;">
+        <h2>Conservation notes</h2>
+        <p>Penguins face pressure from climate shifts and human activities. Protecting habitat and managing fisheries can help.</p>
+        <ul class="list">
+          <li class="li">
+            <div class="icon" aria-hidden="true" style="background: rgba(255,209,102,.12); border-color: rgba(255,209,102,.25)">
+              <svg viewBox="0 0 24 24" style="fill: var(--warn)" ><path d="M12 2l3 7h7l-5.6 4.1L18.9 21 12 16.9 5.1 21l2.5-7.9L2 9h7l3-7z"/></svg>
+            </div>
+            <div>
+              <strong>Climate impacts</strong>
+              <span>Changes in sea ice and ocean conditions can affect food availability.</span>
+            </div>
+          </li>
+          <li class="li">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M3 17l3-10h4l-2 8h4l2-8h4l-3 10H3z"/></svg>
+            </div>
+            <div>
+              <strong>Fisheries &amp; bycatch</strong>
+              <span>Competing for prey and accidental capture can reduce breeding success.</span>
+            </div>
+          </li>
+          <li class="li">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 1 3 3c0 1-.5 2-1.3 2.6L14 9h-4l.3-2.4C9.5 6 9 5 9 4a3 3 0 0 1 3-3zm-7 20c0-4 6-7 7-7s7 3 7 7H5z"/></svg>
+            </div>
+            <div>
+              <strong>Habitat protection</strong>
+              <span>Safeguarding breeding areas and reducing pollution supports recovery.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Tip: Save this file as <code>penguins-website.html</code> and open it in your browser to see the layout.
+  </footer>
+</body>
+</html>
