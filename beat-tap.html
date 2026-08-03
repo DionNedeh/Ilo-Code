@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1026" />
+  <title>Beatline — Rhythm Game</title>
+  <style>
+    :root {
+      --bg: #090d20;
+      --panel: rgba(21, 28, 62, .86);
+      --panel-2: rgba(30, 37, 79, .92);
+      --text: #f6f7ff;
+      --muted: #aeb6dc;
+      --cyan: #49e7ff;
+      --purple: #a875ff;
+      --pink: #ff6fb7;
+      --gold: #ffd86a;
+      --green: #59f5b1;
+      --danger: #ff758b;
+      --line: rgba(170, 188, 255, .14);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 5%, rgba(78, 63, 182, .45), transparent 35%),
+        radial-gradient(circle at 88% 18%, rgba(0, 169, 200, .18), transparent 32%),
+        linear-gradient(145deg, #080b1d 0%, #101535 52%, #090d20 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+    button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+
+    .app {
+      width: min(100%, 560px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 16px 16px calc(26px + env(safe-area-inset-bottom));
+      position: relative;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 44px;
+      margin-bottom: 8px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      letter-spacing: .18em;
+      font-size: .72rem;
+      font-weight: 900;
+    }
+
+    .brand-mark {
+      width: 27px;
+      height: 27px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      color: #07101c;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      box-shadow: 0 0 22px rgba(73,231,255,.32);
+      transform: rotate(-10deg);
+    }
+
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    .icon-button:hover { background: rgba(255,255,255,.11); color: var(--text); }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .hero-card {
+      min-height: calc(100vh - 94px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 28px 4px 40px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--cyan);
+      font-size: .72rem;
+      letter-spacing: .24em;
+      font-weight: 900;
+    }
+
+    h1, h2, p { margin-top: 0; }
+    h1 {
+      max-width: 460px;
+      margin-bottom: 15px;
+      font-size: clamp(3.5rem, 18vw, 6.4rem);
+      line-height: .84;
+      letter-spacing: -.07em;
+      font-weight: 950;
+      background: linear-gradient(120deg, #fff 15%, #c4b2ff 49%, #53e4ff 93%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .tagline {
+      max-width: 390px;
+      margin-bottom: 30px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 1rem;
+    }
+
+    .song-card {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      max-width: 430px;
+      padding: 14px;
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(120deg, rgba(30,39,87,.83), rgba(20,24,55,.72));
+      box-shadow: 0 18px 48px rgba(0,0,0,.2);
+    }
+
+    .cover {
+      width: 64px;
+      height: 64px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      overflow: hidden;
+      font-size: 1.35rem;
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.18), transparent 38%),
+        radial-gradient(circle at 75% 28%, var(--pink), transparent 22%),
+        linear-gradient(135deg, #4536b8, #0eb6cc);
+      box-shadow: 0 0 22px rgba(101, 111, 255, .3);
+    }
+    .song-info { min-width: 0; }
+    .song-info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.03rem; }
+    .song-info span { display: block; margin-top: 4px; color: var(--muted); font-size: .78rem; }
+
+    .primary {
+      min-height: 54px;
+      padding: 0 25px;
+      border-radius: 17px;
+      background: linear-gradient(110deg, #6855ec, #b15bde 55%, #ef6eaa);
+      box-shadow: 0 12px 28px rgba(134, 79, 222, .32), inset 0 1px rgba(255,255,255,.24);
+      font-weight: 900;
+      letter-spacing: .03em;
+      transition: transform .16s ease, filter .16s ease;
+    }
+    .primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
+    .primary:active { transform: translateY(1px); }
+
+    .howto {
+      margin-top: 40px;
+      color: var(--muted);
+      font-size: .79rem;
+      line-height: 1.65;
+    }
+    .howto b { color: var(--text); }
+
+    .game-head { padding: 2px 0 10px; }
+    .song-strip { display: flex; align-items: center; gap: 11px; }
+    .mini-cover { width: 42px; height: 42px; border-radius: 12px; font-size: .95rem; }
+    .song-strip p { margin: 0; color: var(--muted); font-size: .74rem; }
+    .song-strip strong { display: block; margin-top: 2px; font-size: .94rem; }
+    .score-block { margin-left: auto; text-align: right; }
+    .score-block span { display: block; color: var(--muted); font-size: .65rem; letter-spacing: .12em; }
+    .score-block strong { display: block; margin-top: 1px; font-size: 1.18rem; }
+
+    .progress-wrap { height: 4px; margin: 8px 0 13px; border-radius: 10px; background: rgba(255,255,255,.1); overflow: hidden; }
+    .progress { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink)); transition: width .1s linear; }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: .74rem;
+    }
+    .combo { color: var(--gold); font-size: 1rem; font-weight: 900; }
+    .combo span { color: var(--text); font-size: .74rem; font-weight: 700; }
+    .multiplier { color: var(--green); font-weight: 800; }
+
+    .board {
+      --lane-gap: 7px;
+      position: relative;
+      height: min(69vh, 620px);
+      min-height: 450px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--lane-gap);
+      padding: 0 6px 4px;
+      border: 1px solid rgba(178, 190, 255, .16);
+      border-radius: 24px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(20, 27, 64, .65), rgba(9, 13, 31, .95));
+      box-shadow: inset 0 0 55px rgba(72, 87, 209, .1), 0 20px 50px rgba(0,0,0,.26);
+      touch-action: none;
+    }
+    .board::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(180deg, transparent 0, transparent 48px, rgba(255,255,255,.027) 49px, transparent 50px);
+    }
+
+    .lane {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border-left: 1px solid rgba(192, 205, 255, .07);
+      border-right: 1px solid rgba(192, 205, 255, .07);
+      background: linear-gradient(180deg, rgba(100,115,225,.035), rgba(27,33,77,.16));
+    }
+    .lane:nth-child(1) { --lane-color: var(--cyan); }
+    .lane:nth-child(2) { --lane-color: var(--purple); }
+    .lane:nth-child(3) { --lane-color: var(--pink); }
+    .lane-flash { position: absolute; inset: 0; pointer-events: none; background: var(--lane-color); opacity: 0; transition: opacity .1s; }
+    .lane.flash .lane-flash { opacity: .1; }
+
+    .hit-line {
+      position: absolute;
+      z-index: 4;
+      left: 0;
+      right: 0;
+      bottom: 16%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, var(--cyan) 30%, #fff 50%, var(--pink) 70%, transparent 100%);
+      box-shadow: 0 0 18px rgba(115, 231, 255, .85);
+      pointer-events: none;
+    }
+    .hit-line::before, .hit-line::after { content: ""; position: absolute; top: -7px; width: 17px; height: 17px; border: 2px solid rgba(255,255,255,.75); transform: rotate(45deg); }
+    .hit-line::before { left: 5px; border-right: 0; border-top: 0; }
+    .hit-line::after { right: 5px; border-left: 0; border-bottom: 0; }
+
+    .tile {
+      position: absolute;
+      z-index: 3;
+      left: 9%;
+      width: 82%;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      border: 2px solid color-mix(in srgb, var(--lane-color), white 18%);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--lane-color), #111735 65%), color-mix(in srgb, var(--lane-color), #111735 30%));
+      box-shadow: 0 0 22px color-mix(in srgb, var(--lane-color), transparent 45%), inset 0 1px rgba(255,255,255,.35);
+      font-size: 1.05rem;
+      font-weight: 950;
+      transform: translateY(0);
+      will-change: transform;
+      pointer-events: none;
+    }
+    .tile::after { content: ""; width: 28px; height: 3px; border-radius: 8px; background: rgba(255,255,255,.75); box-shadow: 0 -7px rgba(255,255,255,.25), 0 7px rgba(255,255,255,.25); }
+    .tile.hit { animation: hit .22s ease-out forwards; }
+    .tile.missed { opacity: .16; filter: grayscale(1); transition: opacity .18s; }
+    @keyframes hit { to { transform: translateY(14px) scale(.72); opacity: 0; } }
+
+    .lane-button {
+      position: absolute;
+      z-index: 6;
+      left: 6px;
+      right: 6px;
+      bottom: 4%;
+      height: 12%;
+      min-height: 53px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 15px;
+      background: linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.035));
+      color: rgba(255,255,255,.48);
+      font-size: .7rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      transition: background .1s, transform .1s, color .1s;
+      touch-action: manipulation;
+    }
+    .lane-button:active, .lane-button.pressed { transform: scale(.96); color: white; background: color-mix(in srgb, var(--lane-color), transparent 67%); }
+    .lane-button small { display: block; margin-top: 4px; color: rgba(255,255,255,.34); font-size: .58rem; letter-spacing: .05em; }
+
+    .feedback {
+      position: absolute;
+      z-index: 10;
+      top: 47%;
+      left: 0;
+      right: 0;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      font-size: 1.25rem;
+      font-weight: 950;
+      letter-spacing: .1em;
+      text-shadow: 0 0 15px currentColor;
+    }
+    .feedback.show { animation: feedback .56s ease-out; }
+    .feedback.perfect { color: var(--gold); }
+    .feedback.great { color: var(--green); }
+    .feedback.good { color: var(--cyan); }
+    .feedback.miss { color: var(--danger); }
+    @keyframes feedback { 0% { opacity: 0; transform: translateY(9px) scale(.88); } 22%, 68% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-14px) scale(1.04); } }
+
+    .pause-overlay, .result-card {
+      position: absolute;
+      z-index: 20;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 25px;
+      text-align: center;
+      background: rgba(7, 10, 27, .78);
+      backdrop-filter: blur(10px);
+    }
+    .pause-overlay.open { display: grid; }
+    .overlay-box { width: min(100%, 310px); padding: 28px 22px; border: 1px solid var(--line); border-radius: 23px; background: rgba(25,31,69,.95); box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+    .overlay-box h2 { margin-bottom: 8px; font-size: 1.8rem; }
+    .overlay-box p { color: var(--muted); font-size: .88rem; line-height: 1.5; }
+    .overlay-actions { display: flex; gap: 9px; justify-content: center; margin-top: 19px; }
+    .secondary { min-height: 44px; padding: 0 17px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.07); font-weight: 800; }
+    .secondary:hover { background: rgba(255,255,255,.13); }
+
+    .results {
+      min-height: calc(100vh - 94px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px 4px 45px;
+    }
+    .results h2 { margin-bottom: 4px; font-size: 2.5rem; letter-spacing: -.06em; }
+    .results-sub { margin-bottom: 23px; color: var(--muted); }
+    .final-score { margin-bottom: 20px; font-size: 4.8rem; line-height: 1; letter-spacing: -.08em; font-weight: 950; background: linear-gradient(120deg, #fff, var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; max-width: 420px; margin-bottom: 25px; }
+    .stat { padding: 14px 8px; border: 1px solid var(--line); border-radius: 15px; text-align: center; background: rgba(255,255,255,.045); }
+    .stat strong { display: block; font-size: 1.25rem; }
+    .stat span { display: block; margin-top: 4px; color: var(--muted); font-size: .64rem; letter-spacing: .08em; }
+    .results .primary { width: min(100%, 330px); }
+    .results .secondary { width: min(100%, 330px); margin-top: 10px; }
+    .new-record { display: none; margin-bottom: 11px; color: var(--gold); font-size: .76rem; font-weight: 900; letter-spacing: .15em; }
+    .new-record.show { display: block; }
+
+    @media (min-width: 700px) {
+      body { display: grid; place-items: center; padding: 20px 0; }
+      .app { min-height: min(900px, 100vh - 40px); border: 1px solid rgba(176,190,255,.11); border-radius: 30px; background: rgba(6,9,25,.22); box-shadow: 0 25px 90px rgba(0,0,0,.2); }
+      .hero-card, .results { min-height: calc(min(900px, 100vh - 40px) - 94px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span> BEATLINE</div>
+      <button class="icon-button" id="soundButton" aria-label="Toggle sound">♫</button>
+    </header>
+
+    <section class="screen active" id="startScreen" aria-label="Start game">
+      <div class="hero-card">
+        <p class="eyebrow">RHYTHM / REACTION / FLOW</p>
+        <h1>Hit the<br>beat.</h1>
+        <p class="tagline">Tiles fall with the music. Tap them in the zone, build your streak, and find your flow.</p>
+        <div class="song-card">
+          <div class="cover">◒</div>
+          <div class="song-info"><strong>Neon Sunrise</strong><span>Placeholder Mix · 100 BPM · 3 lanes</span></div>
+          <span style="margin-left:auto;color:var(--green);font-size:.7rem;font-weight:900">READY</span>
+        </div>
+        <button class="primary" id="startButton">PLAY SONG&nbsp; →</button>
+        <p class="howto"><b>How to play:</b> Tap a lane when its tile reaches the glowing line. Keyboard players can use <b>A</b>, <b>S</b>, and <b>D</b>. Stay close to the line for a Perfect.</p>
+      </div>
+    </section>
+
+    <section class="screen" id="gameScreen" aria-label="Rhythm game">
+      <div class="game-head">
+        <div class="song-strip">
+          <div class="cover mini-cover">◒</div>
+          <div><p>NOW PLAYING</p><strong>Neon Sunrise</strong></div>
+          <button class="icon-button game-pause" id="pauseButton" aria-label="Pause game">Ⅱ</button>
+          <div class="score-block"><span>SCORE</span><strong id="score">000000</strong></div>
+        </div>
+        <div class="progress-wrap"><div class="progress" id="progress"></div></div>
+        <div class="hud"><span class="combo"><span>STREAK</span> <b id="combo">0</b></span><span class="multiplier" id="multiplier">×1 MULTIPLIER</span><span id="accuracy">100% ACC</span></div>
+      </div>
+
+      <div class="board" id="board">
+        <div class="lane" data-lane="0"><div class="lane-flash"></div><button class="lane-button" data-lane="0">A<small>TAP</small></button></div>
+        <div class="lane" data-lane="1"><div class="lane-flash"></div><button class="lane-button" data-lane="1">S<small>TAP</small></button></div>
+        <div class="lane" data-lane="2"><div class="lane-flash"></div><button class="lane-button" data-lane="2">D<small>TAP</small></button></div>
+        <div class="hit-line"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="pause-overlay" id="pauseOverlay"><div class="overlay-box"><h2>Paused</h2><p>The beat is waiting for you.</p><div class="overlay-actions"><button class="primary" id="resumeButton">RESUME</button><button class="secondary" id="quitButton">QUIT</button></div></div></div>
+      </div>
+    </section>
+
+    <section class="screen" id="resultScreen" aria-label="Results">
+      <div class="results">
+        <p class="eyebrow">SONG COMPLETE</p>
+        <h2 id="resultTitle">Nice run.</h2>
+        <p class="results-sub">Neon Sunrise · Placeholder Mix</p>
+        <div class="final-score" id="finalScore">0</div>
+        <div class="new-record" id="newRecord">✦ NEW HIGH SCORE ✦</div>
+        <div class="stats">
+          <div class="stat"><strong id="perfectCount">0</strong><span>PERFECT</span></div>
+          <div class="stat"><strong id="greatCount">0</strong><span>GREAT</span></div>
+          <div class="stat"><strong id="missCount">0</strong><span>MISSED</span></div>
+        </div>
+        <button class="primary" id="againButton">PLAY AGAIN&nbsp; →</button>
+        <button class="secondary" id="homeButton">BACK TO SONGS</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = (id) => document.getElementById(id);
+      const screens = { start: $("startScreen"), game: $("gameScreen"), result: $("resultScreen") };
+      const board = $("board");
+      const lanes = [...document.querySelectorAll(".lane")];
+      const laneButtons = [...document.querySelectorAll(".lane-button")];
+      const feedback = $("feedback");
+      const BPM = 100;
+      const BEAT = 60000 / BPM;
+      const HIT_WINDOW = { perfect: 72, great: 138, good: 205 };
+      const SONG_LENGTH = 32;
+
+      // A compact, hand-authored placeholder chart. Time is measured in beats.
+      const chartPattern = [
+        0, 1, 2, 1, 0, 2, 1, 0, 2, 1, 0, 1,
+        2, 0, 1, 2, 1, 0, 2, 0, 1, 2, 1, 0,
+        1, 2, 0, 2, 1, 0, 1, 2
+      ];
+      const chart = [];
+      for (let beat = 2; beat < SONG_LENGTH; beat += 1) {
+        const lane = chartPattern[(beat - 2) % chartPattern.length];
+        chart.push({ beat, lane, time: beat * BEAT, judged: false, element: null });
+        if (beat > 10 && beat % 4 === 3) {
+          chart.push({ beat: beat + .5, lane: (lane + 1) % 3, time: (beat + .5) * BEAT, judged: false, element: null });
+        }
+      }
+      chart.sort((a, b) => a.time - b.time);
+
+      let audioContext = null;
+      let musicTimer = null;
+      let game = null;
+      let muted = false;
+      let highScore = Number(localStorage.getItem("beatline-high-score") || 0);
+
+      function showScreen(name) {
+        Object.values(screens).forEach((screen) => screen.classList.remove("active"));
+        screens[name].classList.add("active");
+      }
+
+      function ensureAudio() {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === "suspended") audioContext.resume();
+      }
+
+      function tone(time, frequency, duration, type = "sine", volume = .045) {
+        if (muted || !audioContext) return;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, time);
+        gain.gain.setValueAtTime(.0001, time);
+        gain.gain.exponentialRampToValueAtTime(volume, time + .008);
+        gain.gain.exponentialRampToValueAtTime(.0001, time + duration);
+        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.start(time);
+        oscillator.stop(time + duration + .02);
+      }
+
+      function schedulePlaceholderMusic(startTime) {
+        if (musicTimer) clearInterval(musicTimer);
+        if (!audioContext || muted) return;
+        const notes = [220, 277.18, 329.63, 277.18, 246.94, 329.63, 369.99, 329.63];
+        let step = 0;
+        const schedule = () => {
+          if (!game || game.ended || game.paused) return;
+          const now = audioContext.currentTime;
+          for (let i = 0; i < 4; i += 1) {
+            const t = Math.max(now, startTime + (step + i) * BEAT / 1000);
+            const note = notes[(step + i) % notes.length];
+            tone(t, note, .18, "triangle", .045);
+            if ((step + i) % 2 === 0) tone(t, note / 2, .27, "sine", .033);
+            tone(t, 70, .045, "square", .024);
+          }
+          step += 4;
+        };
+        schedule();
+        musicTimer = setInterval(schedule, BEAT * 4);
+      }
+
+      function resetChart() {
+        chart.forEach((note) => { note.judged = false; note.element = null; });
+      }
+
+      function startGame() {
+        ensureAudio();
+        resetChart();
+        game = {
+          startedAt: performance.now() + 850,
+          pausedAt: 0,
+          pausedDuration: 0,
+          lastFrame: 0,
+          nextNote: 0,
+          score: 0,
+          combo: 0,
+          maxCombo: 0,
+          judged: 0,
+          perfect: 0,
+          great: 0,
+          good: 0,
+          miss: 0,
+          ended: false,
+          paused: false
+        };
+        board.querySelectorAll(".tile").forEach((tile) => tile.remove());
+        $("score").textContent = "000000";
+        $("combo").textContent = "0";
+        $("accuracy").textContent = "100% ACC";
+        $("multiplier").textContent = "×1 MULTIPLIER";
+        $("progress").style.width = "0%";
+        showScreen("game");
+        requestAnimationFrame(frame);
+        schedulePlaceholderMusic(audioContext.currentTime + .85);
+      }
+
+      function currentSongTime(now = performance.now()) {
+        return Math.max(0, now - game.startedAt - game.pausedDuration);
+      }
+
+      function spawnNote(note, boardHeight) {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.setAttribute("aria-hidden", "true");
+        tile.textContent = "•";
+        lanes[note.lane].appendChild(tile);
+        note.element = tile;
+        positionNote(note, boardHeight, currentSongTime());
+      }
+
+      function positionNote(note, boardHeight, songTime) {
+        if (!note.element) return;
+        const hitY = boardHeight * .84;
+        const travel = boardHeight * .93;
+        const lead = 1700;
+        const y = hitY - ((note.time - songTime) / lead) * travel;
+        note.element.style.transform = `translateY(${y}px)`;
+      }
+
+      function frame(now) {
+        if (!game || game.ended) return;
+        if (game.paused) { game.lastFrame = now; requestAnimationFrame(frame); return; }
+        const songTime = currentSongTime(now);
+        const height = board.clientHeight;
+        const lead = 1700;
+
+        while (game.nextNote < chart.length && chart[game.nextNote].time - songTime <= lead) {
+          spawnNote(chart[game.nextNote], height);
+          game.nextNote += 1;
+        }
+
+        chart.forEach((note) => {
+          if (note.element && !note.judged) positionNote(note, height, songTime);
+          if (!note.judged && songTime - note.time > HIT_WINDOW.good) judge(note, "miss");
+        });
+
+        $("progress").style.width = `${Math.min(100, (songTime / (SONG_LENGTH * BEAT)) * 100)}%`;
+        if (songTime > SONG_LENGTH * BEAT + 700) finishGame();
+        else requestAnimationFrame(frame);
+      }
+
+      function getCandidate(lane) {
+        const time = currentSongTime();
+        return chart.filter((note) => !note.judged && note.lane === lane && Math.abs(note.time - time) <= HIT_WINDOW.good)
+          .sort((a, b) => Math.abs(a.time - time) - Math.abs(b.time - time))[0];
+      }
+
+      function pressLane(lane) {
+        if (!game || game.ended || game.paused) return;
+        const button = laneButtons[lane];
+        button.classList.add("pressed");
+        lanes[lane].classList.add("flash");
+        setTimeout(() => { button.classList.remove("pressed"); lanes[lane].classList.remove("flash"); }, 100);
+        const note = getCandidate(lane);
+        if (!note) { game.combo = 0; showFeedback("MISS", "miss"); updateHud(); return; }
+        const delta = Math.abs(note.time - currentSongTime());
+        judge(note, delta <= HIT_WINDOW.perfect ? "perfect" : delta <= HIT_WINDOW.great ? "great" : "good");
+      }
+
+      function judge(note, result) {
+        if (note.judged) return;
+        note.judged = true;
+        game.judged += 1;
+        if (note.element) {
+          note.element.classList.add(result === "miss" ? "missed" : "hit");
+          if (result !== "miss") setTimeout(() => note.element && note.element.remove(), 240);
+          else setTimeout(() => note.element && note.element.remove(), 190);
+        }
+        if (result === "miss") {
+          game.miss += 1;
+          game.combo = 0;
+          showFeedback("MISS", "miss");
+        } else {
+          game[result] += 1;
+          game.combo += 1;
+          game.maxCombo = Math.max(game.maxCombo, game.combo);
+          const base = result === "perfect" ? 100 : result === "great" ? 70 : 40;
+          const multiplier = Math.min(5, 1 + Math.floor(game.combo / 10));
+          game.score += base * multiplier;
+          showFeedback(result.toUpperCase(), result);
+          tone(audioContext.currentTime, result === "perfect" ? 880 : 660, .1, "sine", .035);
+        }
+        updateHud();
+      }
+
+      function showFeedback(text, type) {
+        feedback.textContent = text;
+        feedback.className = `feedback ${type}`;
+        void feedback.offsetWidth;
+        feedback.classList.add("show");
+      }
+
+      function updateHud() {
+        $("score").textContent = String(game.score).padStart(6, "0");
+        $("combo").textContent = String(game.combo);
+        $("multiplier").textContent = `×${Math.min(5, 1 + Math.floor(game.combo / 10))} MULTIPLIER`;
+        const accuracy = game.judged ? Math.round(((game.perfect + game.great + game.good) / game.judged) * 100) : 100;
+        $("accuracy").textContent = `${accuracy}% ACC`;
+      }
+
+      function finishGame() {
+        if (!game || game.ended) return;
+        game.ended = true;
+        if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+        chart.filter((note) => !note.judged).forEach((note) => judge(note, "miss"));
+        const isRecord = game.score > highScore;
+        if (isRecord) { highScore = game.score; localStorage.setItem("beatline-high-score", String(highScore)); }
+        $("finalScore").textContent = game.score.toLocaleString();
+        $("perfectCount").textContent = game.perfect;
+        $("greatCount").textContent = game.great + game.good;
+        $("missCount").textContent = game.miss;
+        $("newRecord").classList.toggle("show", isRecord);
+        $("resultTitle").textContent = game.miss === 0 ? "Flawless flow." : game.score > highScore / 2 ? "Nice run." : "Keep the beat.";
+        showScreen("result");
+      }
+
+      function togglePause() {
+        if (!game || game.ended) return;
+        game.paused = !game.paused;
+        if (game.paused) {
+          game.pausedAt = performance.now();
+          $("pauseOverlay").classList.add("open");
+          if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+        } else {
+          game.pausedDuration += performance.now() - game.pausedAt;
+          $("pauseOverlay").classList.remove("open");
+          schedulePlaceholderMusic(audioContext.currentTime + .04);
+        }
+      }
+
+      function goHome() {
+        if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+        if (game) game.ended = true;
+        $("pauseOverlay").classList.remove("open");
+        showScreen("start");
+      }
+
+      laneButtons.forEach((button) => button.addEventListener("pointerdown", (event) => { event.preventDefault(); pressLane(Number(button.dataset.lane)); }));
+      document.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+        if (key === "a" || key === "s" || key === "d") { event.preventDefault(); pressLane({ a: 0, s: 1, d: 2 }[key]); }
+        if (key === "p" || key === "escape") togglePause();
+      });
+      $("startButton").addEventListener("click", startGame);
+      $("againButton").addEventListener("click", startGame);
+      $("homeButton").addEventListener("click", goHome);
+      $("resumeButton").addEventListener("click", togglePause);
+      $("quitButton").addEventListener("click", goHome);
+      $("soundButton").addEventListener("click", () => {
+        muted = !muted;
+        $("soundButton").textContent = muted ? "♩̸" : "♫";
+        $("soundButton").setAttribute("aria-label", muted ? "Turn sound on" : "Turn sound off");
+        if (!muted && game && !game.paused && !game.ended) { ensureAudio(); schedulePlaceholderMusic(audioContext.currentTime + .04); }
+      });
+    })();
+  </script>
+</body>
+</html>
